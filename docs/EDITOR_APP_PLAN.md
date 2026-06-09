@@ -33,7 +33,7 @@ apps/
       editor-pane.tsx
       preview-pane.tsx
       diagnostics-pane.tsx
-      theme/default-browser-theme.ts
+      theme-provider.ts
       examples.ts
       styles.css
 ```
@@ -60,33 +60,78 @@ Use mature, fast libraries:
 
 CodeMirror is the right first editor dependency because it is fast, browser-native, extensible, and works well for Markdown-like languages. We can start with Markdown highlighting and later add an MDS language extension.
 
-## Theme Loading In Browser
+## Theme Loading
 
-The current file theme loader reads from disk, which is right for CLI but not for browser preview. Do not put browser file-loading logic into `@mds/renderer-html`.
+Theme loading must be a lower-level abstraction. The editor app should never import scattered theme files such as `style.css`, `shell.html`, or `blocks/hero.html` directly.
 
-Add a source-based theme factory to `@mds/theme-default`:
+The editor should only ask for a theme:
+
+```ts
+const theme = await themeProvider.loadTheme("default");
+```
+
+Recommended contract:
+
+```ts
+interface ThemeProvider {
+  listThemes(): Promise<ThemeSummary[]>;
+  loadTheme(ref: string): Promise<HtmlTheme>;
+}
+
+interface ThemeSummary {
+  name: string;
+  label: string;
+}
+```
+
+The implementation can use different loaders internally:
+
+```txt
+CLI:
+theme directory -> loadThemeDirectory -> HtmlTheme
+
+Editor MVP:
+bundled default theme -> loadTheme("default") -> HtmlTheme
+
+Future browser custom theme:
+File System Access API or uploaded directory -> loadThemeFromFileMap -> HtmlTheme
+
+Future hosted editor:
+server theme endpoint -> loadTheme("theme-name") -> HtmlTheme
+```
+
+This keeps the app UI clean and keeps theme source handling inside theme packages.
+
+### Source-Based Factory
+
+`@mds/theme-default` can still expose a source-based factory internally:
 
 ```ts
 createThemeFromSources({
-  rootName: "default",
   manifest,
   files
 })
 ```
 
-CLI path:
+But the editor should not assemble `files` itself. That factory is for loaders and package build steps, not app UI code.
 
-```txt
-theme directory -> loadThemeDirectory -> createThemeFromSources -> HtmlTheme
+### Bundled Default Theme
+
+For the default theme, add a browser-safe export:
+
+```ts
+import { defaultTheme } from "@mds/theme-default";
 ```
 
-Editor path:
+`defaultTheme` should be built from the same file-based theme sources used by CLI. The package can achieve this with a small build script that generates a TypeScript module from `themes/default`, or with an internal bundler entry. Either way, the editor imports one stable theme object, not individual files.
+
+The renderer stays independent:
 
 ```txt
-Vite ?raw imports -> createThemeFromSources -> HtmlTheme
+editor -> theme provider -> HtmlTheme
+editor -> renderHtml(document, { theme })
+renderer-html does not know where the theme came from
 ```
-
-This keeps renderer clean and lets the browser app reuse the same theme template logic.
 
 ## MVP UI
 
@@ -140,30 +185,28 @@ Diagnostics should be visible but not noisy:
 
 MVP can start with a diagnostics list. Editor decorations can come after the preview loop is solid.
 
-## Browser Theme Assets
+## Theme Provider In The Editor
 
-For MVP, import the default theme files with Vite raw imports:
-
-```ts
-import manifest from "../../../../themes/default/theme.json";
-import css from "../../../../themes/default/style.css?raw";
-import js from "../../../../themes/default/script.js?raw";
-import shell from "../../../../themes/default/shell.html?raw";
-import hero from "../../../../themes/default/blocks/hero.html?raw";
-```
-
-Then build a `files` map:
+The editor app owns only a tiny adapter:
 
 ```ts
-const files = {
-  "style.css": css,
-  "script.js": js,
-  "shell.html": shell,
-  "blocks/hero.html": hero
+import type { HtmlTheme } from "@mds/renderer-html";
+import { defaultTheme } from "@mds/theme-default";
+
+export const themeProvider = {
+  async listThemes() {
+    return [{ name: "default", label: "Default" }];
+  },
+  async loadTheme(ref: string): Promise<HtmlTheme> {
+    if (ref === "default") {
+      return defaultTheme;
+    }
+    throw new Error(`Unknown theme: ${ref}`);
+  }
 };
 ```
 
-This is explicit, simple, and keeps normal content creators on the file-directory model.
+This adapter can later switch to a server-backed registry or a browser directory loader without changing the editor preview flow.
 
 ## Package Responsibilities
 
@@ -174,13 +217,16 @@ This is explicit, simple, and keeps normal content creators on the file-director
 - Example source state.
 - Preview iframe.
 - Diagnostics display.
-- Browser raw imports for theme files.
+- Theme provider calls.
+- No direct imports of individual theme asset files.
 
 ### `@mds/theme-default`
 
 - Template rendering.
-- `createThemeFromSources`.
+- Bundled `defaultTheme` export.
+- Internal `createThemeFromSources`.
 - `loadThemeDirectory` for CLI/Node.
+- Optional `loadThemeFromFileMap` for future browser custom themes.
 
 ### `@mds/renderer-html`
 
@@ -197,14 +243,15 @@ This is explicit, simple, and keeps normal content creators on the file-director
 - Add `apps/editor` with Vite + React + TypeScript.
 - Add CodeMirror editor pane.
 - Add preview iframe using `parseMds` and `renderHtml`.
-- Add source-based theme factory in `@mds/theme-default`.
-- Import default theme files with `?raw`.
+- Add a bundled `defaultTheme` export in `@mds/theme-default`.
+- Add an editor `themeProvider` that calls `loadTheme("default")`.
 
 Acceptance:
 
 - `pnpm dev:editor` starts the app.
 - Editing source updates preview.
 - Landing example renders with default theme CSS/JS.
+- `apps/editor` does not import individual theme asset files.
 
 ### Phase 2: Diagnostics And Examples
 
