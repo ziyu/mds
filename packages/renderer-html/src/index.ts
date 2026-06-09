@@ -132,10 +132,18 @@ function renderNode(node: MdsNode, context: RenderContext): string {
   switch (node.type) {
     case "document":
       return renderChildren(node.children, context);
+    case "text":
+      return escapeHtml(node.value);
     case "markdown":
       return renderMarkdown(interpolate(node.value, context));
     case "block":
       return renderBlock(node, context);
+    case "conditionBlock":
+      return renderConditionBlock(node, context);
+    case "eachBlock":
+      return renderEachBlock(node, context);
+    case "dataBlock":
+      return renderDataNode(node, context);
     case "slot":
       return renderSlot(node, context);
     case "actionLink":
@@ -155,6 +163,31 @@ function renderNode(node: MdsNode, context: RenderContext): string {
 function renderBlock(block: MdsBlockNode, context: RenderContext): string {
   const renderer = context.blockRenderers[block.blockType] ?? renderFallbackBlock;
   return renderer(block, context);
+}
+
+function renderConditionBlock(
+  block: { condition: "if" | "unless"; name: string; children: MdsNode[] },
+  context: HtmlRenderContext
+): string {
+  const truthy = isTruthy(context.resolveValue(block.name));
+  const shouldRender = block.condition === "if" ? truthy : !truthy;
+  return shouldRender ? context.renderChildren(block.children) : "";
+}
+
+function renderEachBlock(block: { listName: string; children: MdsNode[] }, context: HtmlRenderContext): string {
+  const items = context.lists.get(block.listName) ?? [];
+
+  return items
+    .map((item) => {
+      const locals = new Map<string, string>();
+      locals.set("item", item);
+      return context.renderChildrenWithLocals(block.children, locals);
+    })
+    .join("\n");
+}
+
+function renderDataNode(block: { name: string; value: string }, context: HtmlRenderContext): string {
+  return `<script type="application/json" data-data="${context.escapeAttribute(block.name)}">${context.escapeHtml(block.value)}</script>`;
 }
 
 const defaultBlockRenderers: HtmlBlockRenderers = {
@@ -410,7 +443,14 @@ function collectStates(children: MdsNode[], states = new Map<string, string>()):
   for (const child of children) {
     if (child.type === "stateDeclaration") {
       states.set(child.name, child.value);
-    } else if (child.type === "block" || child.type === "slot" || child.type === "document") {
+    } else if (
+      child.type === "block" ||
+      child.type === "slot" ||
+      child.type === "document" ||
+      child.type === "conditionBlock" ||
+      child.type === "eachBlock" ||
+      child.type === "dataBlock"
+    ) {
       collectStates(child.children, states);
     }
   }
@@ -422,7 +462,14 @@ function collectLists(children: MdsNode[], lists = new Map<string, string[]>()):
   for (const child of children) {
     if (child.type === "listDeclaration") {
       lists.set(child.name, child.items);
-    } else if (child.type === "block" || child.type === "slot" || child.type === "document") {
+    } else if (
+      child.type === "block" ||
+      child.type === "slot" ||
+      child.type === "document" ||
+      child.type === "conditionBlock" ||
+      child.type === "eachBlock" ||
+      child.type === "dataBlock"
+    ) {
       collectLists(child.children, lists);
     }
   }

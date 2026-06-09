@@ -106,6 +106,14 @@ Initial node families:
 
 The AST package should avoid dependencies where possible. It is the shared contract for the rest of the ecosystem.
 
+Current AST design separates generic semantic blocks from control/data syntax:
+
+- `MdsBlock` for ordinary semantic and extension blocks.
+- `ConditionBlock` for `::: if` and `::: unless`.
+- `EachBlock` for `::: each`.
+- `DataBlock` for `::: data`.
+- `Markdown` nodes retain raw Markdown text and discovered inline syntax metadata.
+
 ### `@mds/parser`
 
 Parses `.mds` source into the MDS AST.
@@ -124,6 +132,13 @@ Responsibilities:
 - Produce diagnostics with line and column locations.
 
 The parser should not render HTML and should not know theme behavior.
+
+The parser is split into focused modules:
+
+- `parser.ts` for line-level document/block parsing.
+- `inline.ts` for inline action links and interpolation metadata.
+- `patterns.ts` for syntax patterns and known action names.
+- `utils.ts` for source location and syntax utility helpers.
 
 ### `@mds/renderer-html`
 

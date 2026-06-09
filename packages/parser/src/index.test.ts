@@ -102,7 +102,7 @@ inside code
     expect(document.children).toHaveLength(1);
     expect(document.children[0]).toMatchObject({
       type: "markdown",
-      value: "\\::: hero\n\n```mds\n::: warning\ninside code\n:::\n```\n"
+      value: "::: hero\n\n```mds\n::: warning\ninside code\n:::\n```\n"
     });
   });
 
@@ -207,6 +207,131 @@ comment
       expect.objectContaining({
         code: "unclosed-block"
       })
+    ]);
+  });
+
+  it("parses condition, each, data, inline actions, and interpolation nodes", () => {
+    const document = parseMds(`@state liked true
+@list features
+- fast
+- small
+
+Inline {{ liked }} and [Docs -> /docs].
+
+::: if liked
+Visible
+:::
+
+::: unless hidden
+Fallback
+:::
+
+::: each features
+- {{ item }}
+:::
+
+::: data products
+- name: Basic
+  price: 0
+:::
+`);
+
+    expect(document.diagnostics).toEqual([]);
+    expect(document.children).toMatchObject([
+      {
+        type: "stateDeclaration",
+        name: "liked",
+        value: "true"
+      },
+      {
+        type: "listDeclaration",
+        name: "features",
+        items: ["fast", "small"]
+      },
+      {
+        type: "markdown",
+        inlines: [
+          expect.objectContaining({
+            type: "text"
+          }),
+          {
+            type: "interpolation",
+            path: "liked",
+            position: expect.any(Object)
+          },
+          expect.objectContaining({
+            type: "text"
+          }),
+          {
+            type: "actionLink",
+            label: "Docs",
+            kind: "primary",
+            target: "/docs",
+            args: [],
+            position: expect.any(Object)
+          },
+          expect.objectContaining({
+            type: "text"
+          })
+        ]
+      },
+      {
+        type: "conditionBlock",
+        condition: "if",
+        name: "liked"
+      },
+      {
+        type: "conditionBlock",
+        condition: "unless",
+        name: "hidden"
+      },
+      {
+        type: "eachBlock",
+        listName: "features"
+      },
+      {
+        type: "dataBlock",
+        name: "products",
+        value: "- name: Basic\n  price: 0"
+      }
+    ]);
+  });
+
+  it("reports invalid action usage, invalid interpolation, unmatched close, and missing semantic names", () => {
+    const document = parseMds(`:::
+
+Bad {{ user.name.toUpperCase() }}.
+
+[Nope !eval alert]
+[Back !back home]
+
+::: if
+missing
+:::
+`);
+
+    expect(document.diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
+      "unmatched-block-close",
+      "unknown-action",
+      "invalid-interpolation",
+      "invalid-action-args",
+      "missing-block-name"
+    ]);
+  });
+
+  it("keeps data block contents raw", () => {
+    const document = parseMds(`::: data demo
+::: warning
+not a block here
+:::
+`);
+
+    expect(document.children).toMatchObject([
+      {
+        type: "dataBlock",
+        name: "demo",
+        value: "::: warning\nnot a block here"
+      }
     ]);
   });
 });

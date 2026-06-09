@@ -1,6 +1,7 @@
 export type MdsNode =
   | DocumentNode
   | MarkdownNode
+  | TextNode
   | MdsBlockNode
   | SlotNode
   | ActionLinkNode
@@ -8,7 +9,12 @@ export type MdsNode =
   | FormFieldNode
   | StateDeclarationNode
   | ListDeclarationNode
-  | InterpolationNode;
+  | InterpolationNode
+  | ConditionBlockNode
+  | EachBlockNode
+  | DataBlockNode;
+
+export type MarkdownInlineNode = TextNode | ActionLinkNode | InterpolationNode;
 
 export interface PositionPoint {
   line: number;
@@ -21,6 +27,11 @@ export interface Position {
   end: PositionPoint;
 }
 
+export interface BaseNode {
+  type: string;
+  position?: Position;
+}
+
 export type DiagnosticSeverity = "error" | "warning" | "info";
 
 export interface Diagnostic {
@@ -30,46 +41,47 @@ export interface Diagnostic {
   position?: Position;
 }
 
-export interface DocumentNode {
+export interface DocumentNode extends BaseNode {
   type: "document";
   frontmatter: Record<string, unknown>;
   children: MdsNode[];
   diagnostics: Diagnostic[];
-  position?: Position;
 }
 
-export interface MarkdownNode {
+export interface TextNode extends BaseNode {
+  type: "text";
+  value: string;
+}
+
+export interface MarkdownNode extends BaseNode {
   type: "markdown";
   value: string;
-  position?: Position;
+  inlines: MarkdownInlineNode[];
 }
 
-export interface MdsBlockNode {
+export interface MdsBlockNode extends BaseNode {
   type: "block";
   blockType: string;
   name?: string;
   children: MdsNode[];
   slots?: SlotNode[];
-  position?: Position;
 }
 
-export interface SlotNode {
+export interface SlotNode extends BaseNode {
   type: "slot";
   name: string;
   children: MdsNode[];
-  position?: Position;
 }
 
 export type ActionLinkKind = "primary" | "secondary" | "external" | "command";
 
-export interface ActionLinkNode {
+export interface ActionLinkNode extends BaseNode {
   type: "actionLink";
   label: string;
   kind: ActionLinkKind;
   target?: string;
   action?: string;
   args: string[];
-  position?: Position;
 }
 
 export type MediaDirectiveKind =
@@ -82,38 +94,55 @@ export type MediaDirectiveKind =
   | "file"
   | "download";
 
-export interface MediaDirectiveNode {
+export interface MediaDirectiveNode extends BaseNode {
   type: "mediaDirective";
   mediaType: MediaDirectiveKind;
   target: string;
-  position?: Position;
 }
 
-export interface FormFieldNode {
+export interface FormFieldNode extends BaseNode {
   type: "formField";
   name: string;
   fieldType: string;
   label: string;
   options?: string[];
-  position?: Position;
 }
 
-export interface StateDeclarationNode {
+export interface StateDeclarationNode extends BaseNode {
   type: "stateDeclaration";
   name: string;
   value: string;
-  position?: Position;
 }
 
-export interface ListDeclarationNode {
+export interface ListDeclarationNode extends BaseNode {
   type: "listDeclaration";
   name: string;
   items: string[];
-  position?: Position;
 }
 
-export interface InterpolationNode {
+export interface InterpolationNode extends BaseNode {
   type: "interpolation";
   path: string;
-  position?: Position;
+}
+
+export interface ConditionBlockNode extends BaseNode {
+  type: "conditionBlock";
+  condition: "if" | "unless";
+  name: string;
+  children: MdsNode[];
+  slots?: SlotNode[];
+}
+
+export interface EachBlockNode extends BaseNode {
+  type: "eachBlock";
+  listName: string;
+  children: MdsNode[];
+  slots?: SlotNode[];
+}
+
+export interface DataBlockNode extends BaseNode {
+  type: "dataBlock";
+  name: string;
+  value: string;
+  children: MdsNode[];
 }
