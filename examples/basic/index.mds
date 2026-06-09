@@ -1,0 +1,21 @@
+---
+title: MDS Basic
+theme: default
+layout: page
+---
+
+# MDS Basic
+
+Plain Markdown stays valid.
+
+::: hero
+# Write pages like Markdown
+
+[Start -> /docs]
+:::
+
+::: details faq
+# What is MDS?
+
+MDS is a semantic layer on top of Markdown.
+:::

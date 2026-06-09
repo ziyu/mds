@@ -1,0 +1,33 @@
+{
+  "name": "@mds/renderer-html",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@mds/ast": "workspace:*",
+    "@mds/theme-default": "workspace:*",
+    "hast-util-sanitize": "^5.0.2",
+    "hast-util-to-html": "^9.0.5",
+    "html-escaper": "^3.0.3",
+    "mdast-util-to-hast": "^13.2.0",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}

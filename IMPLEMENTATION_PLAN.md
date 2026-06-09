@@ -1,0 +1,449 @@
+# MDS Implementation Plan
+
+MDS is a Markdown-based semantic authoring language. Its job is to let authors express page intent with a small set of syntax extensions, then compile that intent into HTML.
+
+This document defines the first implementation plan for MDS v0.1.
+
+## Product Direction
+
+MDS should feel like Markdown to authors and like HTML to browsers.
+
+The language keeps authoring simple:
+
+- Plain Markdown remains valid.
+- Semantic blocks express page intent.
+- Authors do not write HTML attributes, JSX, XML-style tags, event handlers, CSS parameters, or animation parameters.
+- Themes and renderers decide the final HTML structure and styling.
+
+The implementation keeps the platform simple:
+
+- MDS has its own AST layer.
+- MDS does not ship a dedicated browser runtime.
+- All MDS source is ultimately compiled to HTML.
+- Interactions should prefer native HTML elements and static HTML patterns.
+- Any client-side JavaScript, if later needed by a theme, belongs to that theme output, not to a required MDS runtime.
+
+## Core Constraints
+
+1. **No MDS runtime**
+   MDS compilation produces HTML. Runtime behavior should come from native browser features whenever possible, such as links, anchors, `<details>`, `<summary>`, `<dialog>`, forms, and CSS.
+
+2. **AST as the extension boundary**
+   MDS needs a first-class AST so future tooling can add formatters, linters, editor support, transforms, theme renderers, docs generators, and plugins without reparsing raw text.
+
+3. **Do not reinvent Markdown**
+   The MVP should use mature parsing and rendering libraries for Markdown, frontmatter, HTML sanitation, AST traversal, and CLI ergonomics.
+
+4. **Monorepo from day one**
+   The project should be structured as packages so parser, AST, renderer, CLI, themes, and examples can evolve independently.
+
+5. **Spec compliance over feature breadth**
+   The first MVP should preserve the spirit of `SPEC.md`: semantic intent over implementation detail.
+
+## Proposed Monorepo Layout
+
+```txt
+mds/
+  package.json
+  pnpm-workspace.yaml
+  tsconfig.base.json
+  SPEC.md
+  IMPLEMENTATION_PLAN.md
+
+  packages/
+    ast/
+      src/
+      package.json
+
+    parser/
+      src/
+      package.json
+
+    renderer-html/
+      src/
+      package.json
+
+    cli/
+      src/
+      package.json
+
+    theme-default/
+      src/
+      package.json
+
+  examples/
+    basic/
+      index.mds
+      expected.html
+
+    landing/
+      index.mds
+
+  tests/
+    fixtures/
+    snapshots/
+```
+
+## Package Responsibilities
+
+### `@mds/ast`
+
+Defines stable AST types and helper utilities.
+
+Initial node families:
+
+- `Document`
+- `Frontmatter`
+- `Markdown`
+- `MdsBlock`
+- `Slot`
+- `ActionLink`
+- `MediaDirective`
+- `FormField`
+- `StateDeclaration`
+- `Interpolation`
+- `Diagnostic`
+
+The AST package should avoid dependencies where possible. It is the shared contract for the rest of the ecosystem.
+
+### `@mds/parser`
+
+Parses `.mds` source into the MDS AST.
+
+Responsibilities:
+
+- Parse YAML frontmatter.
+- Preserve normal Markdown compatibility.
+- Detect MDS block boundaries with `:::` syntax.
+- Parse optional block names.
+- Reject block attributes such as `{columns=3}` or `key=value`.
+- Parse slot markers like `--- title`, `--- left`, and `--- item`.
+- Parse action links such as `[Start -> /docs]` and `[Open !toggle faq]`.
+- Parse media directives such as `!video /demo.mp4`.
+- Parse comments and escaped special syntax.
+- Produce diagnostics with line and column locations.
+
+The parser should not render HTML and should not know theme behavior.
+
+### `@mds/renderer-html`
+
+Turns MDS AST into HTML.
+
+Responsibilities:
+
+- Render standard Markdown to HTML.
+- Render semantic blocks into HTML structures.
+- Delegate block rendering to theme/component handlers.
+- Provide safe fallback HTML for unknown blocks.
+- Generate document-level HTML from frontmatter.
+- Escape and sanitize output where required.
+
+This package should compile everything to HTML strings or HTML AST. It should not require a browser runtime.
+
+### `@mds/theme-default`
+
+Provides the first built-in theme renderer.
+
+Responsibilities:
+
+- Map common semantic blocks to practical HTML:
+  - `hero`
+  - `section`
+  - `aside`
+  - `footer`
+  - `note`
+  - `info`
+  - `warning`
+  - `danger`
+  - `success`
+  - `card`
+  - `cards`
+  - `details`
+  - `tabs`
+  - `accordion`
+  - `dialog`
+  - `drawer`
+  - `form`
+- Provide minimal CSS.
+- Prefer native HTML behavior.
+
+Examples:
+
+- `details` should compile to `<details>`.
+- `accordion` can compile to grouped `<details>` sections.
+- `dialog` can compile to a `<section role="dialog">` fallback for MVP, then optionally support native `<dialog>` in a theme-specific enhancement.
+- `tabs` can initially compile to accessible static sections with anchors, then later to a CSS-only pattern if needed.
+
+### `@mds/cli`
+
+Provides command-line workflows.
+
+Initial commands:
+
+```txt
+mds build input.mds -o output.html
+mds ast input.mds
+mds check input.mds
+```
+
+Later commands:
+
+```txt
+mds init
+mds build-dir docs/ -o site/
+```
+
+## Recommended Libraries
+
+Use mature libraries to accelerate the MVP.
+
+### Markdown and AST Ecosystem
+
+- `unified`
+- `remark-parse`
+- `remark-frontmatter`
+- `remark-gfm`
+- `mdast-util-to-hast`
+- `hast-util-to-html`
+- `unist-util-visit`
+
+Rationale: this ecosystem is stable, extensible, and already models Markdown and HTML as ASTs.
+
+### Frontmatter
+
+- `vfile-matter` or `gray-matter`
+- `yaml`
+
+Rationale: avoid ad hoc YAML parsing.
+
+### HTML Safety and Serialization
+
+- `hast-util-sanitize`
+- `hast-util-to-html`
+- `html-escaper`
+
+Rationale: keep output generation predictable and safe.
+
+### CLI
+
+- `commander` or `cac`
+- `chokidar` only if watch mode is added later.
+
+Rationale: small, proven tools with low implementation overhead.
+
+### Testing
+
+- `vitest`
+- `tsx`
+
+Rationale: fast TypeScript testing and local execution.
+
+## MVP Syntax Scope
+
+The MVP should implement enough syntax to validate the language design without building every advanced feature immediately.
+
+### Phase 1 Syntax
+
+- Frontmatter
+- Normal Markdown
+- Semantic blocks
+- Optional block names
+- Nested blocks
+- Slots
+- Action links
+- Media directives
+- Comments
+- Escaping
+- Diagnostics for forbidden attributes
+
+### Phase 2 Syntax
+
+- Forms
+- State declarations as AST metadata
+- Static interpolation support where values are known at build time
+- `if` and `unless`
+- Data blocks
+
+### Phase 3 Syntax
+
+- `each`
+- More advanced data-driven components
+- Theme/plugin extension registry
+- Formatter and linter rules
+
+## HTML Rendering Strategy
+
+MDS should output semantic, inspectable HTML.
+
+Suggested block mappings:
+
+```txt
+::: page       -> <main class="mds-page">
+::: section    -> <section class="mds-section">
+::: hero       -> <section class="mds-hero">
+::: aside      -> <aside class="mds-aside">
+::: footer     -> <footer class="mds-footer">
+::: card       -> <article class="mds-card">
+::: details    -> <details class="mds-details">
+::: warning    -> <aside class="mds-callout mds-callout-warning">
+::: tabs       -> static accessible sections for MVP
+::: accordion  -> multiple <details> elements
+::: form       -> <form>
+```
+
+Unknown blocks should render safely:
+
+```html
+<section class="mds-block mds-block-x-name" data-mds-block="x-name">
+  ...
+</section>
+```
+
+This keeps output useful while preserving extension metadata.
+
+## Action Link Strategy Without Runtime
+
+Because MDS has no required runtime, action links need careful treatment.
+
+Initial HTML output:
+
+```txt
+[Start -> /docs]        -> <a class="mds-action mds-action-primary" href="/docs">
+[More => /docs]         -> <a class="mds-action mds-action-secondary" href="/docs">
+[Site >> https://x.io]  -> <a class="mds-action mds-action-external" href="https://x.io" rel="noopener noreferrer">
+```
+
+For command-style actions:
+
+```txt
+[Open !toggle faq]
+[Close !close menu]
+[Next !next docs]
+```
+
+MVP behavior:
+
+- Preserve them as semantic HTML metadata.
+- Render as inert buttons or links with `data-mds-action`.
+- Emit diagnostics when the action cannot be represented without runtime.
+- Let future themes decide whether to add optional theme-specific JavaScript.
+
+Example:
+
+```html
+<button type="button" class="mds-action" data-mds-action="toggle" data-mds-target="faq">
+  Open
+</button>
+```
+
+This is still compiled HTML, but not a required MDS runtime.
+
+## AST Design Draft
+
+```ts
+type MdsNode =
+  | DocumentNode
+  | MarkdownNode
+  | MdsBlockNode
+  | SlotNode
+  | ActionLinkNode
+  | MediaDirectiveNode
+  | FormFieldNode
+  | StateDeclarationNode
+  | InterpolationNode;
+
+interface DocumentNode {
+  type: "document";
+  frontmatter: Record<string, unknown>;
+  children: MdsNode[];
+  diagnostics: Diagnostic[];
+}
+
+interface MdsBlockNode {
+  type: "block";
+  blockType: string;
+  name?: string;
+  children: MdsNode[];
+  slots?: SlotNode[];
+  position?: Position;
+}
+
+interface SlotNode {
+  type: "slot";
+  name: string;
+  children: MdsNode[];
+  position?: Position;
+}
+
+interface ActionLinkNode {
+  type: "actionLink";
+  label: string;
+  kind: "primary" | "secondary" | "external" | "command";
+  target?: string;
+  action?: string;
+  args: string[];
+  position?: Position;
+}
+```
+
+The actual AST can later align more closely with `unist` so existing tools can traverse it naturally.
+
+## Implementation Milestones
+
+### Milestone 1: Monorepo Foundation
+
+- Add workspace configuration.
+- Add shared TypeScript config.
+- Add package directories.
+- Add build and test scripts.
+- Add example `.mds` files.
+
+### Milestone 2: AST and Parser MVP
+
+- Define AST types.
+- Implement frontmatter parsing.
+- Integrate Markdown parsing.
+- Parse MDS block syntax.
+- Parse slots and action links.
+- Add diagnostics.
+- Add parser snapshot tests.
+
+### Milestone 3: HTML Renderer MVP
+
+- Render Markdown and MDS blocks to HTML.
+- Add default theme handlers.
+- Add fallback rendering for unknown blocks.
+- Add HTML snapshot tests.
+
+### Milestone 4: CLI MVP
+
+- Implement `mds build`.
+- Implement `mds ast`.
+- Implement `mds check`.
+- Add fixture-based CLI tests.
+
+### Milestone 5: Spec Expansion
+
+- Add forms.
+- Add state and interpolation as compile-time AST features.
+- Add `if` and `unless`.
+- Add `data` blocks.
+- Add more theme handlers.
+
+## Open Design Questions
+
+1. Should the parser expose a pure MDS AST, a `unist`-compatible AST, or both?
+2. Should command-style action links produce warnings by default because there is no required runtime?
+3. Should `tabs` be rendered as static sections first, or should the default theme use a CSS-only tab pattern?
+4. Should invalid syntax fail the build, or should `mds check` be stricter than `mds build`?
+5. Should generated HTML include embedded CSS by default, or write separate CSS files?
+
+## Immediate Next Step
+
+Initialize the monorepo foundation and implement the first parser slice:
+
+1. Create workspace config.
+2. Create `@mds/ast`.
+3. Create `@mds/parser`.
+4. Parse frontmatter, Markdown, and basic `::: block` structures.
+5. Add a basic fixture from `SPEC.md`.

@@ -1,0 +1,20 @@
+---
+title: MDS Landing
+theme: default
+layout: landing
+---
+
+::: hero
+# MDS
+
+Use minimal syntax to express page intent.
+
+[Read the docs -> /docs]
+[View examples => /examples]
+:::
+
+::: section
+## Why MDS?
+
+Markdown is simple. HTML is rich. MDS keeps authoring simple while compiling to HTML.
+:::

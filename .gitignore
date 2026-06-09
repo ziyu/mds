@@ -1,0 +1,5 @@
+node_modules/
+packages/*/dist/
+coverage/
+.vitest/
+.DS_Store
