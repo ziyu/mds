@@ -175,7 +175,7 @@ This package exists to avoid a dependency cycle between `@mds/renderer-html` and
 
 ### `@mds/theme-default`
 
-Provides the first built-in theme renderer.
+Provides the first built-in theme renderer and default file-based theme assets.
 
 Responsibilities:
 
@@ -220,6 +220,109 @@ interface HtmlTheme {
 ```
 
 The default theme is an implementation detail of the default build path, not part of MDS syntax. Users should be able to supply a different theme without changing parser behavior.
+
+## File-Based Themes
+
+The primary theme customization path should be folder-based, because many MDS users are expected to be content authors rather than TypeScript package authors.
+
+Authors should be able to install or create a theme by placing files in a directory:
+
+```txt
+themes/
+  default/
+    theme.json
+    style.css
+    script.js
+    shell.html
+    blocks/
+      page.html
+      hero.html
+      card.html
+      warning.html
+      details.html
+      tabs.html
+```
+
+Then select it from frontmatter:
+
+```mds
+---
+title: Demo
+theme: default
+---
+```
+
+or with a path:
+
+```mds
+---
+theme: ./themes/my-theme
+---
+```
+
+### `theme.json`
+
+```json
+{
+  "name": "default",
+  "css": "style.css",
+  "js": "script.js",
+  "shell": "shell.html",
+  "blocks": {
+    "hero": "blocks/hero.html",
+    "card": "blocks/card.html",
+    "warning": "blocks/warning.html"
+  }
+}
+```
+
+### Shell Template
+
+```html
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }}</title>
+  {{ head }}
+</head>
+<body>
+  {{ body }}
+  {{ scripts }}
+</body>
+</html>
+```
+
+### Block Template
+
+```html
+<section id="{{ id }}" class="hero">
+  {{ children }}
+</section>
+```
+
+Supported template variables should stay intentionally small:
+
+```txt
+{{ children }} rendered child HTML
+{{ slots }}    rendered slot HTML
+{{ name }}     block name
+{{ id }}       escaped id attribute value
+{{ type }}     block type
+{{ title }}    document title
+{{ lang }}     document lang
+{{ head }}     generated head additions
+{{ body }}     rendered document body
+{{ scripts }}  generated script tags
+```
+
+Programmatic `HtmlTheme` remains available for developers, but file-based themes are the default author-facing extension model.
+
+The renderer/CLI should support both:
+
+- `HtmlTheme` object for developer integrations.
+- Theme directory path for author workflows.
 
 ### `@mds/cli`
 

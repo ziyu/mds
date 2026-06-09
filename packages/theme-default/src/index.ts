@@ -1,4 +1,6 @@
 import type { HtmlBlockRenderers, HtmlRenderContext, HtmlTheme } from "@mds/html-types";
+export { loadThemeDirectory } from "./file-theme.js";
+export type { ThemeManifest } from "./file-theme.js";
 
 export interface ThemeDefaultOptions {
   includeCss?: boolean;

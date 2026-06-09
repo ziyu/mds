@@ -44,7 +44,26 @@ export function renderHtml(document: DocumentNode, options: RenderHtmlOptions = 
   });
   const body = renderDocumentBody(document.children, context);
   const theme = options.theme ?? defaultTheme;
-  const css = options.includeCss === false || theme.css === undefined ? "" : `\n  <style>${theme.css}</style>`;
+  const head = [
+    description === undefined
+      ? ""
+      : `  <meta name="description" content="${escapeAttribute(description)}">`,
+    options.includeCss === false || theme.css === undefined ? "" : `  <style>${theme.css}</style>`
+  ]
+    .filter((line) => line.length > 0)
+    .join("\n");
+  const scripts = theme.js === undefined ? "" : `<script>${theme.js}</script>`;
+
+  if (theme.shell !== undefined) {
+    return theme.shell({
+      title,
+      lang,
+      ...(description === undefined ? {} : { description }),
+      head,
+      body,
+      scripts
+    });
+  }
 
   return [
     "<!doctype html>",
@@ -53,13 +72,11 @@ export function renderHtml(document: DocumentNode, options: RenderHtmlOptions = 
     '  <meta charset="utf-8">',
     '  <meta name="viewport" content="width=device-width, initial-scale=1">',
     `  <title>${escapeHtml(title)}</title>`,
-    description === undefined
-      ? ""
-      : `  <meta name="description" content="${escapeAttribute(description)}">`,
-    css,
+    head,
     "</head>",
     "<body>",
     body,
+    scripts,
     "</body>",
     "</html>"
   ]

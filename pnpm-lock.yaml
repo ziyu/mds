@@ -38,6 +38,9 @@ importers:
       '@mds/renderer-html':
         specifier: workspace:*
         version: link:../renderer-html
+      '@mds/theme-default':
+        specifier: workspace:*
+        version: link:../theme-default
       cac:
         specifier: ^6.7.14
         version: 6.7.14
@@ -141,10 +144,16 @@ importers:
 
   packages/theme-default:
     dependencies:
+      '@mds/ast':
+        specifier: workspace:*
+        version: link:../ast
       '@mds/html-types':
         specifier: workspace:*
         version: link:../html-types
     devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.1
       typescript:
         specifier: ^5.8.0
         version: 5.9.3

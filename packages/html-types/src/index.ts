@@ -3,12 +3,25 @@ import type { MdsBlockNode, MdsNode, SlotNode } from "@mds/ast";
 export interface HtmlTheme {
   name: string;
   css?: string;
+  js?: string;
+  shell?: HtmlShellRenderer;
   blockRenderers?: HtmlBlockRenderers;
 }
 
 export type HtmlBlockRenderer = (block: MdsBlockNode, context: HtmlRenderContext) => string;
 
 export type HtmlBlockRenderers = Partial<Record<string, HtmlBlockRenderer>>;
+
+export type HtmlShellRenderer = (input: HtmlShellInput) => string;
+
+export interface HtmlShellInput {
+  title: string;
+  lang: string;
+  description?: string;
+  head: string;
+  body: string;
+  scripts: string;
+}
 
 export interface HtmlRenderContext {
   states: ReadonlyMap<string, string>;

@@ -1,0 +1,30 @@
+{
+  "name": "default",
+  "css": "style.css",
+  "js": "script.js",
+  "shell": "shell.html",
+  "blocks": {
+    "page": "blocks/page.html",
+    "section": "blocks/section.html",
+    "hero": "blocks/section.html",
+    "scene": "blocks/section.html",
+    "reveal": "blocks/section.html",
+    "float": "blocks/section.html",
+    "sticky": "blocks/section.html",
+    "motion": "blocks/section.html",
+    "aside": "blocks/aside.html",
+    "footer": "blocks/footer.html",
+    "note": "blocks/callout.html",
+    "info": "blocks/callout.html",
+    "warning": "blocks/callout.html",
+    "danger": "blocks/callout.html",
+    "success": "blocks/callout.html",
+    "quote": "blocks/quote.html",
+    "card": "blocks/card.html",
+    "cards": "blocks/cards.html",
+    "details": "blocks/details.html",
+    "dialog": "blocks/dialog.html",
+    "drawer": "blocks/drawer.html",
+    "form": "blocks/form.html"
+  }
+}

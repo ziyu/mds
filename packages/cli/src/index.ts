@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import { parseMds } from "@mds/parser";
-import { renderHtml } from "@mds/renderer-html";
+import { renderHtml, type HtmlTheme } from "@mds/renderer-html";
+import { loadThemeDirectory } from "@mds/theme-default";
 import { cac } from "cac";
 
 const cli = cac("mds");
@@ -11,19 +12,20 @@ const cli = cac("mds");
 cli
   .command("build <input>", "Compile an MDS file to HTML")
   .option("-o, --output <path>", "Output HTML path")
+  .option("--theme <path>", "Theme directory path")
   .option("--no-css", "Do not embed default CSS")
-  .action(async (input: string, options: { output?: string; css?: boolean }) => {
+  .action(async (input: string, options: { output?: string; theme?: string; css?: boolean }) => {
     const source = await readFile(input, "utf8");
     const document = parseMds(source, {
       filePath: input
     });
+    const theme = await resolveTheme(input, options.theme, document.frontmatter.theme);
     const html = renderHtml(
       document,
-      options.css === undefined
-        ? {}
-        : {
-            includeCss: options.css
-          }
+      {
+        ...(theme === undefined ? {} : { theme }),
+        ...(options.css === undefined ? {} : { includeCss: options.css })
+      }
     );
 
     printDiagnostics(document.diagnostics);
@@ -80,4 +82,23 @@ function printDiagnostics(diagnostics: Array<{ code: string; message: string; se
 
 function hasErrors(document: { diagnostics: Array<{ severity: string }> }): boolean {
   return document.diagnostics.some((diagnostic) => diagnostic.severity === "error");
+}
+
+async function resolveTheme(
+  input: string,
+  optionTheme: string | undefined,
+  frontmatterTheme: unknown
+): Promise<HtmlTheme | undefined> {
+  const themeRef = optionTheme ?? (typeof frontmatterTheme === "string" ? frontmatterTheme : undefined);
+  if (themeRef === undefined || themeRef.length === 0) {
+    return undefined;
+  }
+
+  const inputDirectory = dirname(resolve(input));
+  if (themeRef === "default") {
+    return loadThemeDirectory(resolve("themes/default"));
+  }
+
+  const themeDirectory = isAbsolute(themeRef) ? themeRef : join(inputDirectory, themeRef);
+  return loadThemeDirectory(themeDirectory);
 }
