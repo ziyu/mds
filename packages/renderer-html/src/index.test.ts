@@ -80,4 +80,34 @@ FAQ
     expect(html).not.toContain("data-mds");
     expect(html).not.toContain("<script");
   });
+
+  it("supports custom block renderers for theme and plugin extensions", () => {
+    const document = parseMds(`::: x-feature
+# Custom
+
+Body
+:::
+`);
+    const html = renderHtml(document, {
+      blockRenderers: {
+        "x-feature": (block, context) =>
+          `<article class="feature-card">${context.renderChildren(block.children)}</article>`
+      }
+    });
+
+    expect(html).toContain('<article class="feature-card"><h1>Custom</h1>');
+    expect(html).not.toContain('data-block="x-feature"');
+  });
+
+  it("allows default block renderers to be disabled", () => {
+    const document = parseMds(`::: hero
+# Hero
+:::
+`);
+    const html = renderHtml(document, {
+      includeDefaultBlockRenderers: false
+    });
+
+    expect(html).toContain('<section class="block hero" data-block="hero">');
+  });
 });

@@ -301,6 +301,32 @@ Unknown blocks should render safely:
 
 This keeps output useful while preserving extension metadata.
 
+### Renderer Extension Registry
+
+The HTML renderer exposes a block renderer registry so themes and plugins can override built-in blocks or render custom blocks.
+
+```ts
+renderHtml(document, {
+  blockRenderers: {
+    "x-feature": (block, context) =>
+      `<article class="feature">${context.renderChildren(block.children)}</article>`
+  }
+})
+```
+
+Default block renderers can be disabled for tests or specialized renderers:
+
+```ts
+renderHtml(document, {
+  includeDefaultBlockRenderers: false,
+  blockRenderers: {
+    hero: customHeroRenderer
+  }
+})
+```
+
+The registry keeps MDS extensible without requiring an MDS browser runtime.
+
 ## Action Link Strategy Without Runtime
 
 Because MDS has no required runtime, action links need careful treatment.
