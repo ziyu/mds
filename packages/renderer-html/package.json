@@ -13,10 +13,11 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "check": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@mds/ast": "workspace:*",
+    "@mds/parser": "workspace:*",
     "@mds/theme-default": "workspace:*",
     "hast-util-sanitize": "^5.0.2",
     "hast-util-to-html": "^9.0.5",

@@ -7,6 +7,7 @@ export type MdsNode =
   | MediaDirectiveNode
   | FormFieldNode
   | StateDeclarationNode
+  | ListDeclarationNode
   | InterpolationNode;
 
 export interface PositionPoint {
@@ -101,6 +102,13 @@ export interface StateDeclarationNode {
   type: "stateDeclaration";
   name: string;
   value: string;
+  position?: Position;
+}
+
+export interface ListDeclarationNode {
+  type: "listDeclaration";
+  name: string;
+  items: string[];
   position?: Position;
 }
 

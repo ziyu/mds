@@ -105,4 +105,108 @@ inside code
       value: "\\::: hero\n\n```mds\n::: warning\ninside code\n:::\n```\n"
     });
   });
+
+  it("parses slots, action links, media, forms, state, lists, and comments", () => {
+    const document = parseMds(`@state liked false
+@list features
+- simple
+- rich
+
+%% hidden %%
+
+::: hero landing
+--- title
+# Hello
+
+--- actions
+[Start -> /docs]
+[More => /more]
+[Site >> https://example.com]
+[Open !toggle faq]
+!video /demo.mp4
+:::
+
+::: form contact
+? email 邮箱 邮箱地址
+? role 选择 你的身份
+- 开发者
+- 设计师
+
+[提交 !submit contact]
+:::
+`);
+
+    expect(document.diagnostics).toEqual([]);
+    expect(document.children).toMatchObject([
+      {
+        type: "stateDeclaration",
+        name: "liked",
+        value: "false"
+      },
+      {
+        type: "listDeclaration",
+        name: "features",
+        items: ["simple", "rich"]
+      },
+      {
+        type: "block",
+        blockType: "hero",
+        name: "landing",
+        slots: [
+          {
+            type: "slot",
+            name: "title"
+          },
+          {
+            type: "slot",
+            name: "actions"
+          }
+        ]
+      },
+      {
+        type: "block",
+        blockType: "form",
+        name: "contact",
+        children: [
+          {
+            type: "formField",
+            name: "email",
+            fieldType: "邮箱",
+            label: "邮箱地址"
+          },
+          {
+            type: "formField",
+            name: "role",
+            fieldType: "选择",
+            label: "你的身份",
+            options: ["开发者", "设计师"]
+          },
+          {
+            type: "actionLink",
+            kind: "command",
+            action: "submit",
+            args: ["contact"]
+          }
+        ]
+      }
+    ]);
+  });
+
+  it("reports unclosed blocks and comments", () => {
+    const document = parseMds(`::: note
+content
+
+%%%
+comment
+`);
+
+    expect(document.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "unclosed-comment"
+      }),
+      expect.objectContaining({
+        code: "unclosed-block"
+      })
+    ]);
+  });
 });

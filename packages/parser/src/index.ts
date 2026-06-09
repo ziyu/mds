@@ -1,5 +1,16 @@
 import matter from "gray-matter";
-import type { Diagnostic, DocumentNode, MdsBlockNode, MdsNode, Position } from "@mds/ast";
+import type {
+  ActionLinkNode,
+  Diagnostic,
+  DocumentNode,
+  FormFieldNode,
+  ListDeclarationNode,
+  MdsBlockNode,
+  MdsNode,
+  Position,
+  SlotNode,
+  StateDeclarationNode
+} from "@mds/ast";
 
 export interface ParseOptions {
   filePath?: string;
@@ -12,11 +23,30 @@ interface ParseContext {
 interface ParseResult {
   children: MdsNode[];
   nextIndex: number;
+  stoppedBy?: "blockClose" | "slot";
+}
+
+interface ParseSpecialResult {
+  node?: MdsNode;
+  nextIndex: number;
+}
+
+interface ParseLineOptions {
+  stopAtBlockClose?: boolean;
+  stopAtSlot?: boolean;
+  allowSlots?: boolean;
 }
 
 const blockOpenPattern = /^:::\s+(.+?)\s*$/;
 const blockClosePattern = /^:::\s*$/;
+const slotPattern = /^---\s+(.+?)\s*$/;
 const identifierPattern = /^[A-Za-z][A-Za-z0-9_-]*$/;
+const mediaDirectivePattern = /^!(video|audio|embed|model|chart|map|file|download)\s+(.+?)\s*$/;
+const stateDeclarationPattern = /^@state\s+([A-Za-z][A-Za-z0-9_.-]*)\s+(.+?)\s*$/;
+const listDeclarationPattern = /^@list\s+([A-Za-z][A-Za-z0-9_.-]*)\s*$/;
+const formFieldPattern = /^\?\s+([A-Za-z][A-Za-z0-9_-]*)\s+(\S+)\s+(.+?)\s*$/;
+const singleLineCommentPattern = /^%%(?!%).*%%\s*$/;
+const multilineCommentPattern = /^%%%\s*$/;
 
 export function parseMds(source: string, _options: ParseOptions = {}): DocumentNode {
   const normalizedSource = source.replace(/\r\n?/g, "\n");
@@ -41,7 +71,7 @@ function parseLines(
   startIndex: number,
   baseLine: number,
   context: ParseContext,
-  stopAtBlockClose = false
+  options: ParseLineOptions = {}
 ): ParseResult {
   const children: MdsNode[] = [];
   let markdownStart = startIndex;
@@ -72,12 +102,31 @@ function parseLines(
     activeFence = updateFence(activeFence, line);
 
     if (activeFence === undefined) {
-      if (stopAtBlockClose && blockClosePattern.test(line)) {
+      if (options.stopAtBlockClose && blockClosePattern.test(line)) {
         flushMarkdown(index);
         return {
           children,
-          nextIndex: index + 1
+          nextIndex: index,
+          stoppedBy: "blockClose"
         };
+      }
+
+      if (options.stopAtSlot && slotPattern.test(line)) {
+        flushMarkdown(index);
+        return {
+          children,
+          nextIndex: index,
+          stoppedBy: "slot"
+        };
+      }
+
+      if (options.allowSlots === true && slotPattern.test(line)) {
+        flushMarkdown(index);
+        const slot = parseSlot(lines, index, baseLine, context);
+        children.push(slot.node);
+        index = slot.nextIndex;
+        markdownStart = index;
+        continue;
       }
 
       if (blockOpenPattern.test(line)) {
@@ -88,6 +137,17 @@ function parseLines(
         markdownStart = index;
         continue;
       }
+
+      const special = parseSpecialLine(lines, index, baseLine, context);
+      if (special !== undefined) {
+        flushMarkdown(index);
+        if (special.node !== undefined) {
+          children.push(special.node);
+        }
+        index = special.nextIndex;
+        markdownStart = index;
+        continue;
+      }
     }
 
     index += 1;
@@ -95,7 +155,7 @@ function parseLines(
 
   flushMarkdown(index);
 
-  if (stopAtBlockClose) {
+  if (options.stopAtBlockClose === true) {
     context.diagnostics.push({
       code: "unclosed-block",
       message: "MDS block is missing a closing ::: marker.",
@@ -123,19 +183,238 @@ function parseBlock(
 
   validateBlockHeader(header, parts, startIndex, baseLine, context);
 
-  const inner = parseLines(lines, startIndex + 1, baseLine, context, true);
-  const endLine = inner.nextIndex > startIndex + 1 ? inner.nextIndex : startIndex + 1;
+  const inner = parseLines(lines, startIndex + 1, baseLine, context, {
+    stopAtBlockClose: true,
+    allowSlots: true
+  });
+  const nextIndex = inner.stoppedBy === "blockClose" ? inner.nextIndex + 1 : inner.nextIndex;
+  const endLine = nextIndex > startIndex + 1 ? nextIndex : startIndex + 1;
+  const slots = inner.children.filter((node): node is SlotNode => node.type === "slot");
   const node: MdsBlockNode = {
     type: "block",
     blockType,
     children: inner.children,
     position: lineRange(baseLine + startIndex, baseLine + endLine),
-    ...(name === undefined ? {} : { name })
+    ...(name === undefined ? {} : { name }),
+    ...(slots.length === 0 ? {} : { slots })
   };
 
   return {
     node,
+    nextIndex
+  };
+}
+
+function parseSlot(
+  lines: string[],
+  startIndex: number,
+  baseLine: number,
+  context: ParseContext
+): { node: SlotNode; nextIndex: number } {
+  const name = (lines[startIndex] ?? "").match(slotPattern)?.[1]?.trim() ?? "";
+  const inner = parseLines(lines, startIndex + 1, baseLine, context, {
+    stopAtBlockClose: true,
+    stopAtSlot: true
+  });
+
+  return {
+    node: {
+      type: "slot",
+      name,
+      children: inner.children,
+      position: lineRange(baseLine + startIndex, baseLine + inner.nextIndex)
+    },
     nextIndex: inner.nextIndex
+  };
+}
+
+function parseSpecialLine(
+  lines: string[],
+  index: number,
+  baseLine: number,
+  context: ParseContext
+): ParseSpecialResult | undefined {
+  const line = lines[index] ?? "";
+  const trimmed = line.trim();
+
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+
+  if (singleLineCommentPattern.test(trimmed)) {
+    return {
+      nextIndex: index + 1
+    };
+  }
+
+  if (multilineCommentPattern.test(trimmed)) {
+    return parseMultilineComment(lines, index, baseLine, context);
+  }
+
+  const actionLink = parseActionLink(trimmed, baseLine + index);
+  if (actionLink !== undefined) {
+    return {
+      node: actionLink,
+      nextIndex: index + 1
+    };
+  }
+
+  const media = trimmed.match(mediaDirectivePattern);
+  if (media !== null) {
+    return {
+      node: {
+        type: "mediaDirective",
+        mediaType: media[1] as never,
+        target: media[2] ?? "",
+        position: lineRange(baseLine + index, baseLine + index + 1)
+      },
+      nextIndex: index + 1
+    };
+  }
+
+  const state = trimmed.match(stateDeclarationPattern);
+  if (state !== null) {
+    const node: StateDeclarationNode = {
+      type: "stateDeclaration",
+      name: state[1] ?? "",
+      value: unquoteValue(state[2] ?? ""),
+      position: lineRange(baseLine + index, baseLine + index + 1)
+    };
+    return {
+      node,
+      nextIndex: index + 1
+    };
+  }
+
+  const list = trimmed.match(listDeclarationPattern);
+  if (list !== null) {
+    return parseListDeclaration(lines, index, baseLine, list[1] ?? "");
+  }
+
+  const formField = trimmed.match(formFieldPattern);
+  if (formField !== null) {
+    return parseFormField(lines, index, baseLine, formField);
+  }
+
+  return undefined;
+}
+
+function parseActionLink(trimmed: string, line: number): ActionLinkNode | undefined {
+  const command = trimmed.match(/^\[(.+?)\s+!(\S+)(?:\s+(.+?))?\]$/);
+  if (command !== null) {
+    return {
+      type: "actionLink",
+      label: command[1] ?? "",
+      kind: "command",
+      action: command[2] ?? "",
+      args: splitArgs(command[3] ?? ""),
+      position: lineRange(line, line + 1)
+    };
+  }
+
+  const navigation = trimmed.match(/^\[(.+?)\s+(->|=>|>>)\s+(.+?)\]$/);
+  if (navigation === null) {
+    return undefined;
+  }
+
+  const operator = navigation[2];
+  return {
+    type: "actionLink",
+    label: navigation[1] ?? "",
+    kind: operator === "->" ? "primary" : operator === "=>" ? "secondary" : "external",
+    target: navigation[3] ?? "",
+    args: [],
+    position: lineRange(line, line + 1)
+  };
+}
+
+function parseMultilineComment(
+  lines: string[],
+  startIndex: number,
+  baseLine: number,
+  context: ParseContext
+): ParseSpecialResult {
+  for (let index = startIndex + 1; index < lines.length; index += 1) {
+    if (multilineCommentPattern.test((lines[index] ?? "").trim())) {
+      return {
+        nextIndex: index + 1
+      };
+    }
+  }
+
+  context.diagnostics.push({
+    code: "unclosed-comment",
+    message: "MDS multiline comment is missing a closing %%% marker.",
+    severity: "error",
+    position: lineRange(baseLine + startIndex, baseLine + lines.length)
+  });
+
+  return {
+    nextIndex: lines.length
+  };
+}
+
+function parseListDeclaration(
+  lines: string[],
+  startIndex: number,
+  baseLine: number,
+  name: string
+): ParseSpecialResult {
+  const items: string[] = [];
+  let index = startIndex + 1;
+
+  while (index < lines.length) {
+    const item = (lines[index] ?? "").match(/^\s*-\s+(.+?)\s*$/);
+    if (item === null) {
+      break;
+    }
+    items.push(item[1] ?? "");
+    index += 1;
+  }
+
+  const node: ListDeclarationNode = {
+    type: "listDeclaration",
+    name,
+    items,
+    position: lineRange(baseLine + startIndex, baseLine + index)
+  };
+
+  return {
+    node,
+    nextIndex: index
+  };
+}
+
+function parseFormField(
+  lines: string[],
+  startIndex: number,
+  baseLine: number,
+  match: RegExpMatchArray
+): ParseSpecialResult {
+  const options: string[] = [];
+  let index = startIndex + 1;
+
+  while (index < lines.length) {
+    const option = (lines[index] ?? "").match(/^\s*-\s+(.+?)\s*$/);
+    if (option === null) {
+      break;
+    }
+    options.push(option[1] ?? "");
+    index += 1;
+  }
+
+  const node: FormFieldNode = {
+    type: "formField",
+    name: match[1] ?? "",
+    fieldType: match[2] ?? "",
+    label: match[3] ?? "",
+    position: lineRange(baseLine + startIndex, baseLine + index),
+    ...(options.length === 0 ? {} : { options })
+  };
+
+  return {
+    node,
+    nextIndex: index
   };
 }
 
@@ -180,7 +459,7 @@ function validateBlockHeader(
 
 function updateFence(activeFence: string | undefined, line: string): string | undefined {
   if (activeFence !== undefined) {
-    const fenceClosePattern = new RegExp(`^\\s*${escapeRegExp(activeFence)}+\\s*$`);
+    const fenceClosePattern = new RegExp(`^\\s*${escapeRegExp(activeFence)}{3,}\\s*$`);
     return fenceClosePattern.test(line) ? undefined : activeFence;
   }
 
@@ -201,6 +480,24 @@ function getContentStartLine(source: string): number {
   }
 
   return 1;
+}
+
+function unquoteValue(value: string): string {
+  const trimmed = value.trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1);
+  }
+  return trimmed;
+}
+
+function splitArgs(value: string): string[] {
+  return value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
 }
 
 function lineRange(startLine: number, endLine: number): Position {

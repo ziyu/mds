@@ -88,6 +88,9 @@ importers:
       '@mds/ast':
         specifier: workspace:*
         version: link:../ast
+      '@mds/parser':
+        specifier: workspace:*
+        version: link:../parser
       '@mds/theme-default':
         specifier: workspace:*
         version: link:../theme-default
