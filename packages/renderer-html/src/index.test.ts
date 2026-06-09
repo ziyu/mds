@@ -50,17 +50,19 @@ Markdown 内容。
     expect(html).toContain('<html lang="zh-CN">');
     expect(html).toContain("<title>Demo</title>");
     expect(html).toContain('<meta name="description" content="A demo page">');
-    expect(html).toContain('<section class="mds-hero">');
-    expect(html).toContain('<a class="mds-action mds-action-primary" href="/docs">开始</a>');
+    expect(html).toContain('<section class="hero">');
+    expect(html).toContain('<a class="action primary" href="/docs">开始</a>');
     expect(html).toContain('target="_blank"');
-    expect(html).toContain('<section class="mds-tabs">');
+    expect(html).toContain('<section class="tabs">');
     expect(html).toContain("谢谢喜欢。");
     expect(html).toContain("<li>简洁</li>");
     expect(html).toContain("<li>丰富</li>");
-    expect(html).toContain('<form id="contact" class="mds-form" method="post">');
+    expect(html).toContain('<form id="contact" class="form" method="post">');
     expect(html).toContain('<input id="field-email" name="email" type="email">');
     expect(html).toContain('<textarea id="field-message" name="message"></textarea>');
-    expect(html).toContain('data-mds-action="submit"');
+    expect(html).toContain('data-action="submit"');
+    expect(html).not.toContain("mds-");
+    expect(html).not.toContain("data-mds");
   });
 
   it("preserves command actions as HTML metadata without a runtime script", () => {
@@ -72,8 +74,10 @@ FAQ
 `);
     const html = renderHtml(document);
 
-    expect(html).toContain('data-mds-action="toggle"');
-    expect(html).toContain('data-mds-target="faq"');
+    expect(html).toContain('data-action="toggle"');
+    expect(html).toContain('data-target="faq"');
+    expect(html).not.toContain("mds-");
+    expect(html).not.toContain("data-mds");
     expect(html).not.toContain("<script");
   });
 });

@@ -278,14 +278,14 @@ MDS should output semantic, inspectable HTML.
 Suggested block mappings:
 
 ```txt
-::: page       -> <main class="mds-page">
-::: section    -> <section class="mds-section">
-::: hero       -> <section class="mds-hero">
-::: aside      -> <aside class="mds-aside">
-::: footer     -> <footer class="mds-footer">
-::: card       -> <article class="mds-card">
-::: details    -> <details class="mds-details">
-::: warning    -> <aside class="mds-callout mds-callout-warning">
+::: page       -> <main class="page">
+::: section    -> <section class="section">
+::: hero       -> <section class="hero">
+::: aside      -> <aside class="aside">
+::: footer     -> <footer class="footer">
+::: card       -> <article class="card">
+::: details    -> <details class="details">
+::: warning    -> <aside class="callout warning">
 ::: tabs       -> static accessible sections for MVP
 ::: accordion  -> multiple <details> elements
 ::: form       -> <form>
@@ -294,7 +294,7 @@ Suggested block mappings:
 Unknown blocks should render safely:
 
 ```html
-<section class="mds-block mds-block-x-name" data-mds-block="x-name">
+<section class="block x-name" data-block="x-name">
   ...
 </section>
 ```
@@ -308,9 +308,9 @@ Because MDS has no required runtime, action links need careful treatment.
 Initial HTML output:
 
 ```txt
-[Start -> /docs]        -> <a class="mds-action mds-action-primary" href="/docs">
-[More => /docs]         -> <a class="mds-action mds-action-secondary" href="/docs">
-[Site >> https://x.io]  -> <a class="mds-action mds-action-external" href="https://x.io" rel="noopener noreferrer">
+[Start -> /docs]        -> <a class="action primary" href="/docs">
+[More => /docs]         -> <a class="action secondary" href="/docs">
+[Site >> https://x.io]  -> <a class="action external" href="https://x.io" rel="noopener noreferrer">
 ```
 
 For command-style actions:
@@ -324,14 +324,14 @@ For command-style actions:
 MVP behavior:
 
 - Preserve them as semantic HTML metadata.
-- Render as inert buttons or links with `data-mds-action`.
+- Render as inert buttons or links with `data-action`.
 - Emit diagnostics when the action cannot be represented without runtime.
 - Let future themes decide whether to add optional theme-specific JavaScript.
 
 Example:
 
 ```html
-<button type="button" class="mds-action" data-mds-action="toggle" data-mds-target="faq">
+<button type="button" class="action command" data-action="toggle" data-target="faq">
   Open
 </button>
 ```

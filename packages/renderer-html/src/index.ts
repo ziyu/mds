@@ -68,7 +68,7 @@ function renderDocumentBody(children: MdsNode[], context: RenderContext): string
   const body = renderChildren(children, context);
   const hasPageBlock = children.some((child) => child.type === "block" && child.blockType === "page");
 
-  return hasPageBlock ? body : `<main class="mds-page">${body}</main>`;
+  return hasPageBlock ? body : `<main class="page">${body}</main>`;
 }
 
 function renderNode(node: MdsNode, context: RenderContext): string {
@@ -97,13 +97,13 @@ function renderNode(node: MdsNode, context: RenderContext): string {
 
 function renderBlock(block: MdsBlockNode, context: RenderContext): string {
   const id = block.name === undefined ? "" : ` id="${escapeAttribute(block.name)}"`;
-  const className = `mds-${escapeAttribute(block.blockType)}`;
+  const className = escapeAttribute(block.blockType);
   const children = block.children.filter((child) => child.type !== "slot");
   const slots = getSlots(block);
 
   switch (block.blockType) {
     case "page":
-      return `<main${id} class="mds-page">${renderChildren(children, context)}</main>`;
+      return `<main${id} class="page">${renderChildren(children, context)}</main>`;
     case "section":
     case "hero":
     case "scene":
@@ -113,33 +113,33 @@ function renderBlock(block: MdsBlockNode, context: RenderContext): string {
     case "motion":
       return `<section${id} class="${className}">${renderChildren(children, context)}</section>`;
     case "aside":
-      return `<aside${id} class="mds-aside">${renderChildren(children, context)}</aside>`;
+      return `<aside${id} class="aside">${renderChildren(children, context)}</aside>`;
     case "footer":
-      return `<footer${id} class="mds-footer">${renderChildren(children, context)}</footer>`;
+      return `<footer${id} class="footer">${renderChildren(children, context)}</footer>`;
     case "note":
     case "info":
     case "warning":
     case "danger":
     case "success":
-      return `<aside${id} class="mds-callout ${className}" role="note">${renderChildren(children, context)}</aside>`;
+      return `<aside${id} class="callout ${className}" role="note">${renderChildren(children, context)}</aside>`;
     case "quote":
-      return `<blockquote${id} class="mds-quote">${renderChildren(children, context)}</blockquote>`;
+      return `<blockquote${id} class="quote">${renderChildren(children, context)}</blockquote>`;
     case "card":
-      return `<article${id} class="mds-card">${renderChildren(children, context)}</article>`;
+      return `<article${id} class="card">${renderChildren(children, context)}</article>`;
     case "cards":
-      return `<div${id} class="mds-cards">${renderChildren(children, context)}</div>`;
+      return `<div${id} class="cards">${renderChildren(children, context)}</div>`;
     case "details":
-      return `<details${id} class="mds-details"><summary>${escapeHtml(block.name ?? "Details")}</summary>${renderChildren(children, context)}</details>`;
+      return `<details${id} class="details"><summary>${escapeHtml(block.name ?? "Details")}</summary>${renderChildren(children, context)}</details>`;
     case "tabs":
       return renderTabs(block, slots, context);
     case "accordion":
       return renderAccordion(block, slots, context);
     case "carousel":
-      return renderSlottedContainer(block, slots, "mds-carousel", context);
+      return renderSlottedContainer(block, slots, "carousel", context);
     case "dialog":
-      return `<section${id} class="mds-dialog" role="dialog" aria-modal="true">${renderChildren(children, context)}</section>`;
+      return `<section${id} class="dialog" role="dialog" aria-modal="true">${renderChildren(children, context)}</section>`;
     case "drawer":
-      return `<aside${id} class="mds-drawer">${renderChildren(children, context)}</aside>`;
+      return `<aside${id} class="drawer">${renderChildren(children, context)}</aside>`;
     case "split":
     case "grid":
     case "grid-2":
@@ -147,7 +147,7 @@ function renderBlock(block: MdsBlockNode, context: RenderContext): string {
     case "grid-auto":
       return renderSlottedContainer(block, slots, className, context);
     case "form":
-      return `<form${id} class="mds-form" method="post">${renderChildren(children, context)}</form>`;
+      return `<form${id} class="form" method="post">${renderChildren(children, context)}</form>`;
     case "if":
       return isTruthy(resolveValue(block.name ?? "", context)) ? renderChildren(children, context) : "";
     case "unless":
@@ -157,13 +157,13 @@ function renderBlock(block: MdsBlockNode, context: RenderContext): string {
     case "data":
       return renderDataBlock(block, children);
     default:
-      return `<section${id} class="mds-block ${className}" data-mds-block="${escapeAttribute(block.blockType)}">${renderChildren(children, context)}</section>`;
+      return `<section${id} class="block ${className}" data-block="${escapeAttribute(block.blockType)}">${renderChildren(children, context)}</section>`;
   }
 }
 
 function renderTabs(block: MdsBlockNode, slots: SlotNode[], context: RenderContext): string {
   if (slots.length === 0) {
-    return renderSlottedContainer(block, slots, "mds-tabs", context);
+    return renderSlottedContainer(block, slots, "tabs", context);
   }
 
   const baseId = block.name ?? "tabs";
@@ -176,26 +176,26 @@ function renderTabs(block: MdsBlockNode, slots: SlotNode[], context: RenderConte
   const panels = slots
     .map((slot, index) => {
       const id = `${baseId}-${index + 1}`;
-      return `<section id="${escapeAttribute(id)}" class="mds-tab-panel"><h2>${escapeHtml(slot.name)}</h2>${renderChildren(slot.children, context)}</section>`;
+      return `<section id="${escapeAttribute(id)}" class="tab-panel"><h2>${escapeHtml(slot.name)}</h2>${renderChildren(slot.children, context)}</section>`;
     })
     .join("\n");
 
-  return `<section class="mds-tabs"><nav class="mds-tab-list">${nav}</nav>${panels}</section>`;
+  return `<section class="tabs"><nav class="tab-list">${nav}</nav>${panels}</section>`;
 }
 
 function renderAccordion(block: MdsBlockNode, slots: SlotNode[], context: RenderContext): string {
   if (slots.length === 0) {
-    return renderSlottedContainer(block, slots, "mds-accordion", context);
+    return renderSlottedContainer(block, slots, "accordion", context);
   }
 
   const items = slots
     .map(
       (slot) =>
-        `<details class="mds-accordion-item"><summary>${escapeHtml(slot.name)}</summary>${renderChildren(slot.children, context)}</details>`
+        `<details class="accordion-item"><summary>${escapeHtml(slot.name)}</summary>${renderChildren(slot.children, context)}</details>`
     )
     .join("\n");
 
-  return `<section class="mds-accordion">${items}</section>`;
+  return `<section class="accordion">${items}</section>`;
 }
 
 function renderSlottedContainer(
@@ -214,7 +214,7 @@ function renderSlottedContainer(
   const renderedSlots = slots
     .map(
       (slot) =>
-        `<section class="${className}-item" data-mds-slot="${escapeAttribute(slot.name)}">${renderChildren(slot.children, context)}</section>`
+        `<section class="${className}-item" data-slot="${escapeAttribute(slot.name)}">${renderChildren(slot.children, context)}</section>`
     )
     .join("\n");
 
@@ -244,11 +244,11 @@ function renderDataBlock(block: MdsBlockNode, children: MdsNode[]): string {
     .join("\n");
   const name = block.name ?? "data";
 
-  return `<script type="application/json" data-mds-data="${escapeAttribute(name)}">${escapeHtml(raw)}</script>`;
+  return `<script type="application/json" data-data="${escapeAttribute(name)}">${escapeHtml(raw)}</script>`;
 }
 
 function renderSlot(slot: SlotNode, context: RenderContext): string {
-  return `<section class="mds-slot" data-mds-slot="${escapeAttribute(slot.name)}">${renderChildren(slot.children, context)}</section>`;
+  return `<section class="slot" data-slot="${escapeAttribute(slot.name)}">${renderChildren(slot.children, context)}</section>`;
 }
 
 function renderActionLink(link: ActionLinkNode): string {
@@ -259,8 +259,8 @@ function renderActionLink(link: ActionLinkNode): string {
     const type = action === "submit" ? "submit" : action === "reset" ? "reset" : "button";
     const target = link.args[0];
 
-    return `<button type="${type}" class="mds-action mds-action-command" data-mds-action="${escapeAttribute(action)}"${
-      target === undefined ? "" : ` data-mds-target="${escapeAttribute(target)}"`
+    return `<button type="${type}" class="action command" data-action="${escapeAttribute(action)}"${
+      target === undefined ? "" : ` data-target="${escapeAttribute(target)}"`
     }>${label}</button>`;
   }
 
@@ -268,7 +268,7 @@ function renderActionLink(link: ActionLinkNode): string {
   const rel = link.kind === "external" ? ' rel="noopener noreferrer"' : "";
   const target = link.kind === "external" ? ' target="_blank"' : "";
 
-  return `<a class="mds-action mds-action-${link.kind}" href="${escapeAttribute(href)}"${rel}${target}>${label}</a>`;
+  return `<a class="action ${link.kind}" href="${escapeAttribute(href)}"${rel}${target}>${label}</a>`;
 }
 
 function renderMediaDirective(mediaType: string, target: string): string {
@@ -276,21 +276,21 @@ function renderMediaDirective(mediaType: string, target: string): string {
 
   switch (mediaType) {
     case "video":
-      return `<video class="mds-media mds-video" src="${escapedTarget}" controls></video>`;
+      return `<video class="media video" src="${escapedTarget}" controls></video>`;
     case "audio":
-      return `<audio class="mds-media mds-audio" src="${escapedTarget}" controls></audio>`;
+      return `<audio class="media audio" src="${escapedTarget}" controls></audio>`;
     case "embed":
-      return `<iframe class="mds-media mds-embed" src="${escapedTarget}" loading="lazy"></iframe>`;
+      return `<iframe class="media embed" src="${escapedTarget}" loading="lazy"></iframe>`;
     case "model":
-      return `<a class="mds-media mds-model" href="${escapedTarget}">${escapeHtml(target)}</a>`;
+      return `<a class="media model" href="${escapedTarget}">${escapeHtml(target)}</a>`;
     case "chart":
-      return `<figure class="mds-media mds-chart" data-mds-chart="${escapedTarget}"></figure>`;
+      return `<figure class="media chart" data-chart="${escapedTarget}"></figure>`;
     case "map":
-      return `<figure class="mds-media mds-map" data-mds-map="${escapedTarget}">${escapeHtml(target)}</figure>`;
+      return `<figure class="media map" data-map="${escapedTarget}">${escapeHtml(target)}</figure>`;
     case "file":
-      return `<a class="mds-media mds-file" href="${escapedTarget}">${escapeHtml(target)}</a>`;
+      return `<a class="media file" href="${escapedTarget}">${escapeHtml(target)}</a>`;
     case "download":
-      return `<a class="mds-media mds-download" href="${escapedTarget}" download>${escapeHtml(target)}</a>`;
+      return `<a class="media download" href="${escapedTarget}" download>${escapeHtml(target)}</a>`;
     default:
       return "";
   }
@@ -305,19 +305,19 @@ function renderFormField(field: FormFieldNode): string {
     const options = (field.options ?? [])
       .map((option) => `<option value="${escapeAttribute(option)}">${escapeHtml(option)}</option>`)
       .join("");
-    return `<div class="mds-form-field">${label}<select id="${escapeAttribute(id)}" name="${name}">${options}</select></div>`;
+    return `<div class="form-field">${label}<select id="${escapeAttribute(id)}" name="${name}">${options}</select></div>`;
   }
 
   if (field.fieldType === "长文本") {
-    return `<div class="mds-form-field">${label}<textarea id="${escapeAttribute(id)}" name="${name}"></textarea></div>`;
+    return `<div class="form-field">${label}<textarea id="${escapeAttribute(id)}" name="${name}"></textarea></div>`;
   }
 
   if (field.fieldType === "开关") {
-    return `<div class="mds-form-field mds-form-field-toggle"><input id="${escapeAttribute(id)}" name="${name}" type="checkbox">${label}</div>`;
+    return `<div class="form-field toggle"><input id="${escapeAttribute(id)}" name="${name}" type="checkbox">${label}</div>`;
   }
 
   const type = mapInputType(field.fieldType);
-  return `<div class="mds-form-field">${label}<input id="${escapeAttribute(id)}" name="${name}" type="${type}"></div>`;
+  return `<div class="form-field">${label}<input id="${escapeAttribute(id)}" name="${name}" type="${type}"></div>`;
 }
 
 function renderMarkdown(value: string): string {
