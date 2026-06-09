@@ -52,6 +52,19 @@ importers:
         specifier: ^3.2.0
         version: 3.2.6(@types/debug@4.1.13)(@types/node@24.13.1)(tsx@4.22.4)
 
+  packages/html-types:
+    dependencies:
+      '@mds/ast':
+        specifier: workspace:*
+        version: link:../ast
+    devDependencies:
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.0
+        version: 3.2.6(@types/debug@4.1.13)(@types/node@24.13.1)(tsx@4.22.4)
+
   packages/parser:
     dependencies:
       '@mds/ast':
@@ -88,6 +101,9 @@ importers:
       '@mds/ast':
         specifier: workspace:*
         version: link:../ast
+      '@mds/html-types':
+        specifier: workspace:*
+        version: link:../html-types
       '@mds/parser':
         specifier: workspace:*
         version: link:../parser
@@ -125,9 +141,9 @@ importers:
 
   packages/theme-default:
     dependencies:
-      '@mds/ast':
+      '@mds/html-types':
         specifier: workspace:*
-        version: link:../ast
+        version: link:../html-types
     devDependencies:
       typescript:
         specifier: ^5.8.0

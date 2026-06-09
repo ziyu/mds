@@ -99,6 +99,49 @@ Body
     expect(html).not.toContain('data-block="x-feature"');
   });
 
+  it("supports custom themes with css and block renderers", () => {
+    const document = parseMds(`::: hero
+# Themed
+:::
+`);
+    const html = renderHtml(document, {
+      theme: {
+        name: "custom",
+        css: ".hero-custom{color:red}",
+        blockRenderers: {
+          hero: (block, context) =>
+            `<section class="hero-custom">${context.renderChildren(block.children)}</section>`
+        }
+      }
+    });
+
+    expect(html).toContain("<style>.hero-custom{color:red}</style>");
+    expect(html).toContain('<section class="hero-custom"><h1>Themed</h1>');
+    expect(html).not.toContain('<section class="hero">');
+  });
+
+  it("lets explicit block renderers override theme renderers", () => {
+    const document = parseMds(`::: hero
+# Override
+:::
+`);
+    const html = renderHtml(document, {
+      theme: {
+        name: "custom",
+        blockRenderers: {
+          hero: () => '<section class="from-theme"></section>'
+        }
+      },
+      blockRenderers: {
+        hero: (block, context) =>
+          `<section class="from-options">${context.renderChildren(block.children)}</section>`
+      }
+    });
+
+    expect(html).toContain('<section class="from-options"><h1>Override</h1>');
+    expect(html).not.toContain("from-theme");
+  });
+
   it("allows default block renderers to be disabled", () => {
     const document = parseMds(`::: hero
 # Hero

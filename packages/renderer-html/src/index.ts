@@ -6,7 +6,8 @@ import type {
   MdsNode,
   SlotNode
 } from "@mds/ast";
-import { defaultThemeCss } from "@mds/theme-default";
+import type { HtmlBlockRenderer, HtmlBlockRenderers, HtmlRenderContext, HtmlTheme } from "@mds/html-types";
+import { defaultTheme } from "@mds/theme-default";
 import { toHtml } from "hast-util-to-html";
 import { toHast } from "mdast-util-to-hast";
 import remarkGfm from "remark-gfm";
@@ -16,27 +17,12 @@ import { unified } from "unified";
 export interface RenderHtmlOptions {
   title?: string;
   includeCss?: boolean;
+  theme?: HtmlTheme;
   blockRenderers?: HtmlBlockRenderers;
   includeDefaultBlockRenderers?: boolean;
 }
 
-export type HtmlBlockRenderer = (block: MdsBlockNode, context: HtmlRenderContext) => string;
-
-export type HtmlBlockRenderers = Partial<Record<string, HtmlBlockRenderer>>;
-
-export interface HtmlRenderContext {
-  states: ReadonlyMap<string, string>;
-  lists: ReadonlyMap<string, string[]>;
-  locals: ReadonlyMap<string, string>;
-  renderNode: (node: MdsNode) => string;
-  renderChildren: (children: MdsNode[]) => string;
-  renderChildrenWithLocals: (children: MdsNode[], locals: ReadonlyMap<string, string>) => string;
-  renderSlottedContainer: (block: MdsBlockNode, slots: SlotNode[], className: string) => string;
-  getSlots: (block: MdsBlockNode) => SlotNode[];
-  resolveValue: (path: string) => string;
-  escapeHtml: (value: string) => string;
-  escapeAttribute: (value: string) => string;
-}
+export type { HtmlBlockRenderer, HtmlBlockRenderers, HtmlRenderContext, HtmlTheme } from "@mds/html-types";
 
 interface RenderContext extends HtmlRenderContext {
   states: Map<string, string>;
@@ -57,7 +43,8 @@ export function renderHtml(document: DocumentNode, options: RenderHtmlOptions = 
     blockRenderers: createBlockRenderers(options)
   });
   const body = renderDocumentBody(document.children, context);
-  const css = options.includeCss === false ? "" : `\n  <style>${defaultThemeCss}</style>`;
+  const theme = options.theme ?? defaultTheme;
+  const css = options.includeCss === false || theme.css === undefined ? "" : `\n  <style>${theme.css}</style>`;
 
   return [
     "<!doctype html>",
@@ -109,6 +96,7 @@ function createRenderContext(input: {
     renderSlottedContainer: (block: MdsBlockNode, slots: SlotNode[], className: string) =>
       renderSlottedContainer(block, slots, className, context),
     getSlots,
+    getContentChildren,
     resolveValue: (path: string) => resolveValue(path, context),
     escapeHtml,
     escapeAttribute
@@ -190,73 +178,13 @@ function renderDataNode(block: { name: string; value: string }, context: HtmlRen
   return `<script type="application/json" data-data="${context.escapeAttribute(block.name)}">${context.escapeHtml(block.value)}</script>`;
 }
 
-const defaultBlockRenderers: HtmlBlockRenderers = {
-  page: (block, context) =>
-    `<main${renderId(block)} class="page">${context.renderChildren(getContentChildren(block))}</main>`,
-  section: renderSectionLikeBlock,
-  hero: renderSectionLikeBlock,
-  scene: renderSectionLikeBlock,
-  reveal: renderSectionLikeBlock,
-  float: renderSectionLikeBlock,
-  sticky: renderSectionLikeBlock,
-  motion: renderSectionLikeBlock,
-  aside: (block, context) =>
-    `<aside${renderId(block)} class="aside">${context.renderChildren(getContentChildren(block))}</aside>`,
-  footer: (block, context) =>
-    `<footer${renderId(block)} class="footer">${context.renderChildren(getContentChildren(block))}</footer>`,
-  note: renderCalloutBlock,
-  info: renderCalloutBlock,
-  warning: renderCalloutBlock,
-  danger: renderCalloutBlock,
-  success: renderCalloutBlock,
-  quote: (block, context) =>
-    `<blockquote${renderId(block)} class="quote">${context.renderChildren(getContentChildren(block))}</blockquote>`,
-  card: (block, context) =>
-    `<article${renderId(block)} class="card">${context.renderChildren(getContentChildren(block))}</article>`,
-  cards: (block, context) =>
-    `<div${renderId(block)} class="cards">${context.renderChildren(getContentChildren(block))}</div>`,
-  details: (block, context) =>
-    `<details${renderId(block)} class="details"><summary>${context.escapeHtml(block.name ?? "Details")}</summary>${context.renderChildren(getContentChildren(block))}</details>`,
-  tabs: renderTabs,
-  accordion: renderAccordion,
-  carousel: (block, context) => context.renderSlottedContainer(block, context.getSlots(block), "carousel"),
-  dialog: (block, context) =>
-    `<section${renderId(block)} class="dialog" role="dialog" aria-modal="true">${context.renderChildren(getContentChildren(block))}</section>`,
-  drawer: (block, context) =>
-    `<aside${renderId(block)} class="drawer">${context.renderChildren(getContentChildren(block))}</aside>`,
-  split: renderSlottedLayoutBlock,
-  grid: renderSlottedLayoutBlock,
-  "grid-2": renderSlottedLayoutBlock,
-  "grid-3": renderSlottedLayoutBlock,
-  "grid-auto": renderSlottedLayoutBlock,
-  form: (block, context) =>
-    `<form${renderId(block)} class="form" method="post">${context.renderChildren(getContentChildren(block))}</form>`,
-  if: (block, context) =>
-    isTruthy(context.resolveValue(block.name ?? "")) ? context.renderChildren(getContentChildren(block)) : "",
-  unless: (block, context) =>
-    isTruthy(context.resolveValue(block.name ?? "")) ? "" : context.renderChildren(getContentChildren(block)),
-  each: renderEach,
-  data: renderDataBlock
-};
-
 export function createBlockRenderers(options: RenderHtmlOptions = {}): HtmlBlockRenderers {
-  const defaults = options.includeDefaultBlockRenderers === false ? {} : defaultBlockRenderers;
+  const theme = options.theme ?? defaultTheme;
+  const themeRenderers = options.includeDefaultBlockRenderers === false ? {} : theme.blockRenderers ?? {};
   return {
-    ...defaults,
+    ...themeRenderers,
     ...(options.blockRenderers ?? {})
   };
-}
-
-function renderSectionLikeBlock(block: MdsBlockNode, context: HtmlRenderContext): string {
-  return `<section${renderId(block)} class="${context.escapeAttribute(block.blockType)}">${context.renderChildren(getContentChildren(block))}</section>`;
-}
-
-function renderCalloutBlock(block: MdsBlockNode, context: HtmlRenderContext): string {
-  return `<aside${renderId(block)} class="callout ${context.escapeAttribute(block.blockType)}" role="note">${context.renderChildren(getContentChildren(block))}</aside>`;
-}
-
-function renderSlottedLayoutBlock(block: MdsBlockNode, context: HtmlRenderContext): string {
-  return context.renderSlottedContainer(block, context.getSlots(block), context.escapeAttribute(block.blockType));
 }
 
 function renderFallbackBlock(block: MdsBlockNode, context: HtmlRenderContext): string {
@@ -269,47 +197,6 @@ function renderId(block: MdsBlockNode): string {
 
 function getContentChildren(block: MdsBlockNode): MdsNode[] {
   return block.children.filter((child) => child.type !== "slot");
-}
-
-function renderTabs(block: MdsBlockNode, context: HtmlRenderContext): string {
-  const slots = context.getSlots(block);
-
-  if (slots.length === 0) {
-    return context.renderSlottedContainer(block, slots, "tabs");
-  }
-
-  const baseId = block.name ?? "tabs";
-  const nav = slots
-    .map((slot, index) => {
-      const id = `${baseId}-${index + 1}`;
-      return `<a href="#${escapeAttribute(id)}">${escapeHtml(slot.name)}</a>`;
-    })
-    .join("");
-  const panels = slots
-    .map((slot, index) => {
-      const id = `${baseId}-${index + 1}`;
-      return `<section id="${escapeAttribute(id)}" class="tab-panel"><h2>${escapeHtml(slot.name)}</h2>${context.renderChildren(slot.children)}</section>`;
-    })
-    .join("\n");
-
-  return `<section class="tabs"><nav class="tab-list">${nav}</nav>${panels}</section>`;
-}
-
-function renderAccordion(block: MdsBlockNode, context: HtmlRenderContext): string {
-  const slots = context.getSlots(block);
-
-  if (slots.length === 0) {
-    return context.renderSlottedContainer(block, slots, "accordion");
-  }
-
-  const items = slots
-    .map(
-      (slot) =>
-        `<details class="accordion-item"><summary>${escapeHtml(slot.name)}</summary>${context.renderChildren(slot.children)}</details>`
-    )
-    .join("\n");
-
-  return `<section class="accordion">${items}</section>`;
 }
 
 function renderSlottedContainer(
@@ -333,31 +220,6 @@ function renderSlottedContainer(
     .join("\n");
 
   return `<section${id} class="${className}">${renderedSlots}</section>`;
-}
-
-function renderEach(block: MdsBlockNode, context: HtmlRenderContext): string {
-  const listName = block.name ?? "";
-  const items = context.lists.get(listName) ?? [];
-  const children = getContentChildren(block);
-
-  return items
-    .map((item) => {
-      const locals = new Map<string, string>();
-      locals.set("item", item);
-      return context.renderChildrenWithLocals(children, locals);
-    })
-    .join("\n");
-}
-
-function renderDataBlock(block: MdsBlockNode, context: HtmlRenderContext): string {
-  const children = getContentChildren(block);
-  const raw = children
-    .filter((child): child is Extract<MdsNode, { type: "markdown" }> => child.type === "markdown")
-    .map((child) => child.value)
-    .join("\n");
-  const name = block.name ?? "data";
-
-  return `<script type="application/json" data-data="${escapeAttribute(name)}">${escapeHtml(raw)}</script>`;
 }
 
 function renderSlot(slot: SlotNode, context: RenderContext): string {

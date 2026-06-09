@@ -1,5 +1,5 @@
 {
-  "name": "@mds/theme-default",
+  "name": "@mds/html-types",
   "version": "0.0.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -16,7 +16,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@mds/html-types": "workspace:*"
+    "@mds/ast": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.0",

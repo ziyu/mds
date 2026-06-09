@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@mds/ast": "workspace:*",
+    "@mds/html-types": "workspace:*",
     "@mds/parser": "workspace:*",
     "@mds/theme-default": "workspace:*",
     "hast-util-sanitize": "^5.0.2",

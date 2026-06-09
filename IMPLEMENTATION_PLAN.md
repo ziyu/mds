@@ -63,6 +63,10 @@ mds/
       src/
       package.json
 
+    html-types/
+      src/
+      package.json
+
     cli/
       src/
       package.json
@@ -147,13 +151,27 @@ Turns MDS AST into HTML.
 Responsibilities:
 
 - Render standard Markdown to HTML.
-- Render semantic blocks into HTML structures.
-- Delegate block rendering to theme/component handlers.
+- Coordinate HTML document generation.
+- Render non-themed primitive nodes such as Markdown, actions, media, forms, and fallback blocks.
+- Delegate semantic block rendering to theme/component handlers.
 - Provide safe fallback HTML for unknown blocks.
 - Generate document-level HTML from frontmatter.
 - Escape and sanitize output where required.
 
-This package should compile everything to HTML strings or HTML AST. It should not require a browser runtime.
+This package should compile everything to HTML strings or HTML AST. It should not require a browser runtime and should not own the default visual mapping for semantic blocks.
+
+### `@mds/html-types`
+
+Defines shared HTML renderer/theme contracts.
+
+Responsibilities:
+
+- Export `HtmlTheme`.
+- Export `HtmlBlockRenderer`.
+- Export `HtmlBlockRenderers`.
+- Export `HtmlRenderContext`.
+
+This package exists to avoid a dependency cycle between `@mds/renderer-html` and theme packages.
 
 ### `@mds/theme-default`
 
@@ -161,6 +179,8 @@ Provides the first built-in theme renderer.
 
 Responsibilities:
 
+- Export a `defaultTheme` object.
+- Provide default block renderers.
 - Map common semantic blocks to practical HTML:
   - `hero`
   - `section`
@@ -188,6 +208,18 @@ Examples:
 - `accordion` can compile to grouped `<details>` sections.
 - `dialog` can compile to a `<section role="dialog">` fallback for MVP, then optionally support native `<dialog>` in a theme-specific enhancement.
 - `tabs` can initially compile to accessible static sections with anchors, then later to a CSS-only pattern if needed.
+
+Suggested theme shape:
+
+```ts
+interface HtmlTheme {
+  name: string;
+  css?: string;
+  blockRenderers?: HtmlBlockRenderers;
+}
+```
+
+The default theme is an implementation detail of the default build path, not part of MDS syntax. Users should be able to supply a different theme without changing parser behavior.
 
 ### `@mds/cli`
 
@@ -341,6 +373,16 @@ renderHtml(document, {
 ```
 
 The registry keeps MDS extensible without requiring an MDS browser runtime.
+
+The renderer should merge block renderers in this order:
+
+```txt
+fallback renderer
+theme blockRenderers
+explicit renderHtml({ blockRenderers })
+```
+
+This lets themes provide broad defaults and lets callers override individual blocks.
 
 ## Action Link Strategy Without Runtime
 
