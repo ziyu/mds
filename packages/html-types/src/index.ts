@@ -4,6 +4,7 @@ export interface HtmlTheme {
   name: string;
   css?: string;
   js?: string;
+  head?: string;
   shell?: HtmlShellRenderer;
   blockRenderers?: HtmlBlockRenderers;
 }

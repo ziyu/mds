@@ -36,7 +36,7 @@ describe("loadThemeDirectory", () => {
 
     expect(theme.name).toBe("default");
     expect(theme.css).toContain(".page");
-    expect(theme.js).toContain("Default MDS theme");
+    expect(theme.js).toContain("querySelectorAll");
     expect(theme.shell?.({
       title: "File <Theme>",
       lang: "en",
@@ -44,6 +44,48 @@ describe("loadThemeDirectory", () => {
       body: "<main></main>",
       scripts: ""
     })).toContain("<title>File &lt;Theme&gt;</title>");
-    expect(html?.trim()).toBe('<section class="hero"><h1>Hello</h1></section>');
+    expect(html).toContain('class="hero"');
+    expect(html).toContain('<div class="hero-flow"><h1>Hello</h1></div>');
+  });
+
+  it("renders named slots in block templates", async () => {
+    const theme = await loadThemeDirectory(resolve("../..", "themes/default"));
+    const hero = theme.blockRenderers?.hero;
+    const html = hero?.(
+      {
+        type: "block",
+        blockType: "hero",
+        children: [],
+        slots: [
+          {
+            type: "slot",
+            name: "title",
+            children: [
+              {
+                type: "markdown",
+                value: "# Slot Title",
+                inlines: []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        states: new Map(),
+        lists: new Map(),
+        locals: new Map(),
+        renderNode: () => "",
+        renderChildren: () => "<h1>Slot Title</h1>",
+        renderChildrenWithLocals: () => "",
+        renderSlottedContainer: () => "",
+        getSlots: (block) => block.slots ?? [],
+        getContentChildren: (block) => block.children,
+        resolveValue: () => "",
+        escapeHtml: (value) => value,
+        escapeAttribute: (value) => value
+      }
+    );
+
+    expect(html).toContain('<div class="hero-title"><h1>Slot Title</h1></div>');
   });
 });

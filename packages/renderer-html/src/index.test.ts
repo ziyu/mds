@@ -53,7 +53,7 @@ Markdown 内容。
     expect(html).toContain('<section class="hero">');
     expect(html).toContain('<a class="action primary" href="/docs">开始</a>');
     expect(html).toContain('target="_blank"');
-    expect(html).toContain('<section class="tabs">');
+    expect(html).toContain('<section id="docs" class="tabs">');
     expect(html).toContain("谢谢喜欢。");
     expect(html).toContain("<li>简洁</li>");
     expect(html).toContain("<li>丰富</li>");
@@ -118,6 +118,32 @@ Body
     expect(html).toContain("<style>.hero-custom{color:red}</style>");
     expect(html).toContain('<section class="hero-custom"><h1>Themed</h1>');
     expect(html).not.toContain('<section class="hero">');
+  });
+
+  it("supports theme head, scripts, and custom shells", () => {
+    const document = parseMds(`---
+title: Shell
+---
+
+::: hero
+# Themed
+:::
+`);
+    const html = renderHtml(document, {
+      theme: {
+        name: "full-theme",
+        head: '<meta name="theme-color" content="#111111">',
+        css: ".hero{color:red}",
+        js: "window.__theme = true;",
+        shell: (input) =>
+          `<!doctype html><html lang="${input.lang}"><head><title>${input.title}</title>${input.head}</head><body data-theme="full-theme">${input.body}${input.scripts}</body></html>`
+      }
+    });
+
+    expect(html).toContain('<meta name="theme-color" content="#111111">');
+    expect(html).toContain("<style>.hero{color:red}</style>");
+    expect(html).toContain("<script>window.__theme = true;</script>");
+    expect(html).toContain('body data-theme="full-theme"');
   });
 
   it("lets explicit block renderers override theme renderers", () => {
