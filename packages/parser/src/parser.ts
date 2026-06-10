@@ -1,4 +1,3 @@
-import matter from "gray-matter";
 import type {
   ConditionBlockNode,
   DataBlockNode,
@@ -13,6 +12,7 @@ import type {
   SlotNode,
   StateDeclarationNode
 } from "@mds/ast";
+import { parseFrontmatter } from "./frontmatter.js";
 import { parseActionLink, parseMarkdownInlines, validateAction } from "./inline.js";
 import {
   blockClosePattern,
@@ -27,7 +27,6 @@ import {
   stateDeclarationPattern
 } from "./patterns.js";
 import {
-  getContentStartLine,
   lineRange,
   unescapeSpecialSyntax,
   unquoteValue,
@@ -61,13 +60,12 @@ interface ParseLineOptions {
 
 export function parseMds(source: string, _options: ParseOptions = {}): DocumentNode {
   const normalizedSource = source.replace(/\r\n?/g, "\n");
-  const parsed = matter(normalizedSource);
+  const parsed = parseFrontmatter(normalizedSource);
   const context: ParseContext = {
     diagnostics: []
   };
-  const contentStartLine = getContentStartLine(normalizedSource);
   const lines = parsed.content.split("\n");
-  const result = parseLines(lines, 0, contentStartLine, context);
+  const result = parseLines(lines, 0, parsed.contentStartLine, context);
 
   return {
     type: "document",

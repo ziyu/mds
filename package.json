@@ -8,7 +8,9 @@
     "build": "pnpm -r --if-present build",
     "check": "pnpm -r --if-present check",
     "test": "pnpm -r --if-present test",
-    "format": "pnpm -r --if-present format"
+    "format": "pnpm -r --if-present format",
+    "dev:editor": "pnpm --filter @mds/editor dev",
+    "build:editor": "pnpm --filter @mds/editor build"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

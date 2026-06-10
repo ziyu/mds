@@ -71,7 +71,7 @@ mds/
       src/
       package.json
 
-    theme-default/
+    theme-loader/
       src/
       package.json
 
@@ -173,13 +173,13 @@ Responsibilities:
 
 This package exists to avoid a dependency cycle between `@mds/renderer-html` and theme packages.
 
-### `@mds/theme-default`
+### `@mds/theme-loader`
 
 Provides the first built-in theme renderer and default file-based theme assets.
 
 Responsibilities:
 
-- Export a `defaultTheme` object.
+- Export file and memory theme registries.
 - Provide default block renderers.
 - Map common semantic blocks to practical HTML:
   - `hero`

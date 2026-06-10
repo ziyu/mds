@@ -22,7 +22,7 @@ themes/
 
 ## Enable A Theme
 
-Use the built-in default theme folder:
+Use a theme by directory name:
 
 ```mds
 ---
@@ -31,22 +31,50 @@ theme: default
 ---
 ```
 
-Use a project theme folder:
+MDS looks for named themes under `themes/`, so `theme: default` resolves to `themes/default`.
+
+Use another project theme the same way:
 
 ```mds
 ---
 title: Demo
-theme: ./themes/my-theme
+theme: my-theme
 ---
 ```
 
-Or pass a theme path from the CLI:
+You can also pass an explicit theme path from the CLI:
 
 ```sh
 mds build ./content/index.mds --theme ./themes/my-theme
 ```
 
-Relative theme paths are resolved from the input MDS file directory. `theme: default` resolves to `themes/default` in the current project.
+Named themes are resolved from project theme roots such as `themes/`. Relative path refs such as `./themes/my-theme` are resolved from the input MDS file directory.
+
+## Managing Multiple Themes
+
+The runtime uses a `ThemeRegistry` abstraction:
+
+```ts
+interface ThemeRegistry {
+  listThemes(): Promise<ThemeSummary[]>;
+  loadTheme(ref: string): Promise<HtmlTheme>;
+}
+```
+
+Node tools use a file registry that scans theme roots:
+
+```ts
+import { createFileThemeRegistry } from "@mds/theme-loader";
+
+const themes = createFileThemeRegistry({
+  roots: ["themes"]
+});
+
+const available = await themes.listThemes();
+const theme = await themes.loadTheme("my-theme");
+```
+
+Browser tools cannot read arbitrary local directories directly, so they use the same registry shape with bundled or uploaded theme sources. The editor app consumes a registry instead of importing individual theme files.
 
 ## `theme.json`
 
@@ -127,4 +155,4 @@ Generated HTML should use normal class names such as `page`, `hero`, `card`, and
 
 ## Developer Extension Point
 
-Developers can still pass a programmatic `HtmlTheme` object to `@mds/renderer-html`. The directory-based theme format is the default author-facing customization path; the programmatic API exists for integrations, plugins, and advanced renderers.
+Developers can still pass a programmatic `HtmlTheme` object to `@mds/renderer-html`. The directory-based theme format is the default author-facing customization path; the registry API exists for CLIs, editor integrations, plugins, and advanced renderers that need to list or switch themes.

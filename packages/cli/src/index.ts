@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { parseMds } from "@mds/parser";
 import { renderHtml, type HtmlTheme } from "@mds/renderer-html";
-import { loadThemeDirectory } from "@mds/theme-default";
+import { createFileThemeRegistry } from "@mds/theme-loader";
 import { cac } from "cac";
 
 const cli = cac("mds");
@@ -95,10 +95,10 @@ async function resolveTheme(
   }
 
   const inputDirectory = dirname(resolve(input));
-  if (themeRef === "default") {
-    return loadThemeDirectory(resolve("themes/default"));
-  }
+  const themes = createFileThemeRegistry({
+    roots: [resolve("themes")],
+    baseDirectory: inputDirectory
+  });
 
-  const themeDirectory = isAbsolute(themeRef) ? themeRef : join(inputDirectory, themeRef);
-  return loadThemeDirectory(themeDirectory);
+  return themes.loadTheme(themeRef);
 }

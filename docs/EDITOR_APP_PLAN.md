@@ -56,7 +56,7 @@ Use mature, fast libraries:
 - CodeMirror 6 for the MDS editor.
 - `@mds/parser` for AST and diagnostics.
 - `@mds/renderer-html` for preview HTML.
-- `@mds/theme-default` for shared template/theme helpers.
+- `@mds/theme-loader` for shared template/theme loading helpers.
 
 CodeMirror is the right first editor dependency because it is fast, browser-native, extensible, and works well for Markdown-like languages. We can start with Markdown highlighting and later add an MDS language extension.
 
@@ -104,7 +104,7 @@ This keeps the app UI clean and keeps theme source handling inside theme package
 
 ### Source-Based Factory
 
-`@mds/theme-default` can still expose a source-based factory internally:
+`@mds/theme-loader` exposes source-based factories internally:
 
 ```ts
 createThemeFromSources({
@@ -117,13 +117,14 @@ But the editor should not assemble `files` itself. That factory is for loaders a
 
 ### Bundled Default Theme
 
-For the default theme, add a browser-safe export:
+For the editor dev app, load theme sources through a server-side theme API:
 
 ```ts
-import { defaultTheme } from "@mds/theme-default";
+GET /__mds/themes
+GET /__mds/themes/:name
 ```
 
-`defaultTheme` should be built from the same file-based theme sources used by CLI. The package can achieve this with a small build script that generates a TypeScript module from `themes/default`, or with an internal bundler entry. Either way, the editor imports one stable theme object, not individual files.
+The browser receives a parsed `ThemeSource` and calls `createThemeFromSources`. This keeps browser code from reading scattered theme files directly while avoiding generated theme modules.
 
 The renderer stays independent:
 
@@ -191,7 +192,7 @@ The editor app owns only a tiny adapter:
 
 ```ts
 import type { HtmlTheme } from "@mds/renderer-html";
-import { defaultTheme } from "@mds/theme-default";
+import { createThemeFromSources } from "@mds/theme-loader";
 
 export const themeProvider = {
   async listThemes() {
@@ -199,7 +200,7 @@ export const themeProvider = {
   },
   async loadTheme(ref: string): Promise<HtmlTheme> {
     if (ref === "default") {
-      return defaultTheme;
+      return createThemeFromSources(await fetchThemeSource(ref));
     }
     throw new Error(`Unknown theme: ${ref}`);
   }
@@ -220,10 +221,10 @@ This adapter can later switch to a server-backed registry or a browser directory
 - Theme provider calls.
 - No direct imports of individual theme asset files.
 
-### `@mds/theme-default`
+### `@mds/theme-loader`
 
 - Template rendering.
-- Bundled `defaultTheme` export.
+- File-based `ThemeRegistry` for Node tools.
 - Internal `createThemeFromSources`.
 - `loadThemeDirectory` for CLI/Node.
 - Optional `loadThemeFromFileMap` for future browser custom themes.
@@ -243,7 +244,7 @@ This adapter can later switch to a server-backed registry or a browser directory
 - Add `apps/editor` with Vite + React + TypeScript.
 - Add CodeMirror editor pane.
 - Add preview iframe using `parseMds` and `renderHtml`.
-- Add a bundled `defaultTheme` export in `@mds/theme-default`.
+- Add a dev-server theme API that reads `themes/` through `@mds/theme-loader`.
 - Add an editor `themeProvider` that calls `loadTheme("default")`.
 
 Acceptance:

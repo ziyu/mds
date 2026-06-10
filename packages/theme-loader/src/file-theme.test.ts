@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { loadThemeDirectory } from "./index.js";
+import { createFileThemeRegistry, loadThemeDirectory } from "./index.js";
 
 describe("loadThemeDirectory", () => {
   it("loads a file-based theme and renders block templates", async () => {
@@ -87,5 +87,34 @@ describe("loadThemeDirectory", () => {
     );
 
     expect(html).toContain('<div class="hero-title"><h1>Slot Title</h1></div>');
+  });
+
+  it("lists and loads themes from a theme root", async () => {
+    const registry = createFileThemeRegistry({
+      roots: [resolve("../..", "themes")]
+    });
+
+    const themes = await registry.listThemes();
+    expect(themes).toContainEqual(
+      expect.objectContaining({
+        name: "default",
+        label: "default"
+      })
+    );
+    expect(themes).toContainEqual(
+      expect.objectContaining({
+        name: "folio",
+        label: "folio"
+      })
+    );
+
+    const theme = await registry.loadTheme("default");
+    expect(theme.name).toBe("default");
+    expect(theme.blockRenderers?.hero).toBeDefined();
+
+    const folioTheme = await registry.loadTheme("folio");
+    expect(folioTheme.name).toBe("folio");
+    expect(folioTheme.css).toContain(".folio-frame");
+    expect(folioTheme.blockRenderers?.hero).toBeDefined();
   });
 });

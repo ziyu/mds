@@ -21,7 +21,7 @@
   "dependencies": {
     "@mds/parser": "workspace:*",
     "@mds/renderer-html": "workspace:*",
-    "@mds/theme-default": "workspace:*",
+    "@mds/theme-loader": "workspace:*",
     "cac": "^6.7.14"
   },
   "devDependencies": {

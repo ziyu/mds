@@ -16,13 +16,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@mds/ast": "workspace:*",
-    "gray-matter": "^4.0.3",
-    "remark-frontmatter": "^5.0.0",
-    "remark-gfm": "^4.0.1",
-    "remark-parse": "^11.0.0",
-    "unified": "^11.0.5",
-    "unist-util-visit": "^5.0.0"
+    "@mds/ast": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.0",
