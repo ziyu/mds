@@ -1,5 +1,5 @@
 import { readdir, readFile } from "node:fs/promises";
-import { basename, isAbsolute, join, resolve } from "node:path";
+import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
 import type { HtmlTheme } from "@mds/html-types";
 import {
   createThemeFromSources,
@@ -52,9 +52,33 @@ async function readThemeManifest(root: string): Promise<ThemeManifest> {
 }
 
 async function readThemeFiles(root: string, manifest: ThemeManifest): Promise<Record<string, string>> {
-  const paths = [...new Set(getThemeFilePaths(manifest))];
+  const paths = [...new Set([...(await listThemeFiles(root)), ...getThemeFilePaths(manifest)])];
   const entries = await Promise.all(paths.map(async (path) => [path, await readFile(join(root, path), "utf8")] as const));
   return Object.fromEntries(entries);
+}
+
+async function listThemeFiles(root: string): Promise<string[]> {
+  const paths: string[] = [];
+
+  async function walk(directory: string): Promise<void> {
+    const entries = await readdir(directory, { withFileTypes: true });
+    await Promise.all(
+      entries.map(async (entry) => {
+        const absolutePath = join(directory, entry.name);
+        if (entry.isDirectory()) {
+          await walk(absolutePath);
+          return;
+        }
+
+        if (entry.isFile()) {
+          paths.push(relative(root, absolutePath).split(sep).join("/"));
+        }
+      })
+    );
+  }
+
+  await walk(root);
+  return paths;
 }
 
 async function listThemeRoot(root: string): Promise<ThemeSummary[]> {

@@ -262,16 +262,50 @@ theme: ./themes/my-theme
 
 ### `theme.json`
 
+Theme Blocks Contract v2 removes most explicit mapping boilerplate by allowing directory and single-file block sources.
+
 ```json
 {
   "name": "default",
   "css": "style.css",
   "js": "script.js",
   "shell": "shell.html",
+  "blocks": "blocks"
+}
+```
+
+If `blocks` is omitted and `blocks/` exists, the loader treats it as `blocks: "blocks"`.
+
+The v2 shape supports:
+
+```ts
+type ThemeBlocks =
+  | string
+  | string[]
+  | Record<string, string>;
+```
+
+Examples:
+
+```json
+{ "blocks": "blocks" }
+```
+
+```json
+{ "blocks": "blocks.html" }
+```
+
+```json
+{ "blocks": ["blocks", "overrides.html"] }
+```
+
+The existing explicit form remains compatible:
+
+```json
+{
   "blocks": {
     "hero": "blocks/hero.html",
-    "card": "blocks/card.html",
-    "warning": "blocks/warning.html"
+    "warning": "blocks/callout.html"
   }
 }
 ```
@@ -300,6 +334,25 @@ theme: ./themes/my-theme
 <section id="{{ id }}" class="hero">
   {{ children }}
 </section>
+```
+
+V2 block source files may also contain one or more native HTML templates:
+
+```html
+<template data-block="note info warning danger success">
+  <aside{{ attrs }} class="callout {{ type }}" role="note">
+    {{ children }}
+  </aside>
+</template>
+```
+
+`data-block` is a whitespace-separated list, so one template can cover related block types without repeating aliases in `theme.json`.
+
+If a block source file has no `<template data-block>`, the entire file is used as the template for the block named by the filename:
+
+```txt
+blocks/card.html -> card
+blocks/grid-3.html -> grid-3
 ```
 
 Supported template variables should stay intentionally small:

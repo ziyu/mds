@@ -78,6 +78,23 @@ Browser tools cannot read arbitrary local directories directly, so they use the 
 
 ## `theme.json`
 
+Theme Blocks Contract v2 keeps `theme.json` small and lets the loader discover block templates from a directory:
+
+```json
+{
+  "name": "my-theme",
+  "css": "style.css",
+  "js": "script.js",
+  "shell": "shell.html",
+  "actions": ["toggle", "open", "close"],
+  "blocks": "blocks"
+}
+```
+
+If `blocks` is omitted and a `blocks/` directory exists, the loader treats it as `blocks: "blocks"`.
+
+The current explicit mapping form remains supported for compatibility and for unusual aliases:
+
 ```json
 {
   "name": "my-theme",
@@ -97,6 +114,77 @@ Browser tools cannot read arbitrary local directories directly, so they use the 
 All paths are relative to the theme directory.
 
 `actions` lists command actions that the theme JavaScript knows how to handle. It is only a declaration for warnings and editor diagnostics; MDS does not prescribe the handler implementation.
+
+### Block Sources
+
+`blocks` accepts three forms:
+
+```ts
+type ThemeBlocks =
+  | string
+  | string[]
+  | Record<string, string>;
+```
+
+Directory source:
+
+```json
+{
+  "blocks": "blocks"
+}
+```
+
+This scans the directory and registers every `.html` file. A file without `<template data-block>` uses its filename as the block type:
+
+```txt
+blocks/
+  hero.html    -> hero
+  nav.html     -> nav
+  card.html    -> card
+```
+
+Single-file source:
+
+```json
+{
+  "blocks": "blocks.html"
+}
+```
+
+This reads all `<template data-block="...">` declarations from one file:
+
+```html
+<template data-block="hero">
+  <section{{ attrs }} class="hero">{{ children }}{{ slots }}</section>
+</template>
+
+<template data-block="nav">
+  <nav{{ attrs }} class="nav" aria-label="{{ name }}">{{ children }}</nav>
+</template>
+```
+
+Multi-source form:
+
+```json
+{
+  "blocks": ["blocks", "overrides.html"]
+}
+```
+
+Sources are applied in order. Later sources override earlier block templates. This gives themes a simple base/override model without requiring a build step.
+
+Explicit mapping form:
+
+```json
+{
+  "blocks": {
+    "hero": "blocks/hero.html",
+    "warning": "blocks/callout.html"
+  }
+}
+```
+
+This is still useful when a theme needs a small number of aliases or wants to point one block to a specific file. It should not be required for ordinary themes.
 
 ## Shell Template
 
@@ -152,6 +240,25 @@ Available block variables:
 ```
 
 Theme authors should prefer `{{ attrs }}` for block identifiers, because it omits the attribute entirely when the block has no name.
+
+When a block source file contains one or more `<template data-block>` elements, each template declares the block types it handles:
+
+```html
+<template data-block="note info warning danger success">
+  <aside{{ attrs }} class="callout {{ type }}" role="note">
+    {{ children }}
+  </aside>
+</template>
+```
+
+The value of `data-block` is a whitespace-separated list. This lets one template cover related blocks without repeating entries in `theme.json`.
+
+If a source file does not contain `<template data-block>`, the whole file is treated as the template for the block named by the file:
+
+```txt
+blocks/card.html -> card
+blocks/grid-3.html -> grid-3
+```
 
 `nav` blocks can be rendered with the same simple template:
 
