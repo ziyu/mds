@@ -3,7 +3,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { parseMds } from "@mds/parser";
-import { renderHtml, type HtmlTheme } from "@mds/renderer-html";
+import { renderHtmlResult, type HtmlTheme } from "@mds/renderer-html";
 import { createFileThemeRegistry } from "@mds/theme-loader";
 import { cac } from "cac";
 
@@ -20,17 +20,18 @@ cli
       filePath: input
     });
     const theme = await resolveTheme(input, options.theme, document.frontmatter.theme);
-    const html = renderHtml(
+    const result = renderHtmlResult(
       document,
       {
         ...(theme === undefined ? {} : { theme }),
         ...(options.css === undefined ? {} : { includeCss: options.css })
       }
     );
+    const html = result.html;
 
-    printDiagnostics(document.diagnostics);
+    printDiagnostics(result.diagnostics);
 
-    if (hasErrors(document)) {
+    if (hasErrors(result)) {
       process.exitCode = 1;
       return;
     }

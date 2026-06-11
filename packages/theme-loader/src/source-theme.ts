@@ -8,6 +8,7 @@ export interface ThemeManifest {
   head?: ThemeAssetReference;
   shell?: string;
   blocks?: Record<string, string>;
+  actions?: string[];
 }
 
 export interface ThemeSourceInput {
@@ -36,6 +37,7 @@ export function createThemeFromSources(input: ThemeSourceInput): HtmlTheme {
     ...(css === undefined ? {} : { css }),
     ...(js === undefined ? {} : { js }),
     ...(head === undefined ? {} : { head }),
+    ...(input.manifest.actions === undefined ? {} : { actions: input.manifest.actions }),
     ...(shellTemplate === undefined
       ? {}
       : {

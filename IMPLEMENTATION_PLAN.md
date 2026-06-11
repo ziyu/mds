@@ -505,14 +505,16 @@ For command-style actions:
 [Open !toggle faq]
 [Close !close menu]
 [Next !next docs]
+[Submit !lead.submit contact primary]
 ```
 
 MVP behavior:
 
 - Preserve them as semantic HTML metadata.
-- Render as inert buttons or links with `data-action`.
-- Emit diagnostics when the action cannot be represented without runtime.
-- Let future themes decide whether to add optional theme-specific JavaScript.
+- Render native form actions as working HTML.
+- Render custom actions as buttons with `data-action`, `data-target`, and `data-args`.
+- Emit warnings when an action is not native and not declared by a theme or renderer option.
+- Let themes or apps decide whether to add optional JavaScript handlers.
 
 Example:
 

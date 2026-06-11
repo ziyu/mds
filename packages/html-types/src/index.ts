@@ -7,6 +7,7 @@ export interface HtmlTheme {
   head?: string;
   shell?: HtmlShellRenderer;
   blockRenderers?: HtmlBlockRenderers;
+  actions?: string[];
 }
 
 export type HtmlBlockRenderer = (block: MdsBlockNode, context: HtmlRenderContext) => string;

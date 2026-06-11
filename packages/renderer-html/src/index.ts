@@ -1,4 +1,4 @@
-import type { DocumentNode, MdsBlockNode, MdsNode, SlotNode } from "@mds/ast";
+import type { ActionLinkNode, Diagnostic, DocumentNode, MdsBlockNode, MdsNode, SlotNode } from "@mds/ast";
 import type { HtmlBlockRenderer, HtmlBlockRenderers, HtmlRenderContext, HtmlTheme } from "@mds/html-types";
 import {
   baseBlockRenderers,
@@ -22,6 +22,12 @@ export interface RenderHtmlOptions {
   theme?: HtmlTheme;
   blockRenderers?: HtmlBlockRenderers;
   includeDefaultBlockRenderers?: boolean;
+  knownActions?: Iterable<string>;
+}
+
+export interface RenderHtmlResult {
+  html: string;
+  diagnostics: Diagnostic[];
 }
 
 export type { HtmlBlockRenderer, HtmlBlockRenderers, HtmlRenderContext, HtmlTheme } from "@mds/html-types";
@@ -35,25 +41,40 @@ interface RenderContext extends HtmlRenderContext {
   lists: Map<string, string[]>;
   locals: Map<string, string>;
   blockRenderers: HtmlBlockRenderers;
+  knownActions: ReadonlySet<string>;
+  diagnostics: Diagnostic[];
+  navigationContext: boolean;
 }
 
 export function renderHtml(document: DocumentNode, options: RenderHtmlOptions = {}): string {
+  return renderHtmlResult(document, options).html;
+}
+
+export function renderHtmlResult(document: DocumentNode, options: RenderHtmlOptions = {}): RenderHtmlResult {
   const theme = options.theme ?? baseTheme;
   const metadata = getDocumentMetadata(document.frontmatter, options.title);
+  const diagnostics = [...document.diagnostics];
   const context = createRenderContext({
     states: collectStates(document.children),
     lists: collectLists(document.children),
     locals: new Map(),
-    blockRenderers: createBlockRenderers(options)
+    blockRenderers: createBlockRenderers(options),
+    knownActions: createKnownActions(options),
+    diagnostics,
+    navigationContext: false
   });
   const body = renderDocumentBody(document.children, context);
-
-  return renderDocumentShell({
+  const html = renderDocumentShell({
     metadata,
     theme,
     body,
     includeCss: options.includeCss !== false
   });
+
+  return {
+    html,
+    diagnostics
+  };
 }
 
 function createRenderContext(input: {
@@ -61,6 +82,9 @@ function createRenderContext(input: {
   lists: Map<string, string[]>;
   locals: Map<string, string>;
   blockRenderers: HtmlBlockRenderers;
+  knownActions: ReadonlySet<string>;
+  diagnostics: Diagnostic[];
+  navigationContext: boolean;
 }): RenderContext {
   const context = {} as RenderContext;
   Object.assign(context, {
@@ -78,7 +102,10 @@ function createRenderContext(input: {
           states: context.states,
           lists: context.lists,
           locals: nextLocals,
-          blockRenderers: context.blockRenderers
+          blockRenderers: context.blockRenderers,
+          knownActions: context.knownActions,
+          diagnostics: context.diagnostics,
+          navigationContext: context.navigationContext
         })
       );
     },
@@ -124,7 +151,7 @@ function renderNode(node: MdsNode, context: RenderContext): string {
     case "slot":
       return renderSlot(node, context);
     case "actionLink":
-      return renderActionLink(node);
+      return renderCommandActionLink(node, context);
     case "mediaDirective":
       return renderMediaDirective(node.mediaType, node.target);
     case "formField":
@@ -137,9 +164,47 @@ function renderNode(node: MdsNode, context: RenderContext): string {
   }
 }
 
+function renderCommandActionLink(node: ActionLinkNode, context: RenderContext): string {
+  if (node.kind !== "command") {
+    return renderActionLink(node, {
+      navigationContext: context.navigationContext
+    });
+  }
+
+  const action = node.action ?? "";
+  const missingHandler = !isNativeAction(action) && !context.knownActions.has(action);
+  if (missingHandler) {
+    context.diagnostics.push({
+      code: "missing-action-handler",
+      message: `No handler registered for action "${action}".`,
+      severity: "warning",
+      ...(node.position === undefined ? {} : { position: node.position })
+    });
+  }
+
+  return renderActionLink(node, {
+    missingHandler
+  });
+}
+
 function renderBlock(block: MdsBlockNode, context: RenderContext): string {
   const renderer = context.blockRenderers[block.blockType] ?? renderFallbackBlock;
-  return renderer(block, context);
+  if (block.blockType !== "nav") {
+    return renderer(block, context);
+  }
+
+  return renderer(
+    block,
+    createRenderContext({
+      states: context.states,
+      lists: context.lists,
+      locals: context.locals,
+      blockRenderers: context.blockRenderers,
+      knownActions: context.knownActions,
+      diagnostics: context.diagnostics,
+      navigationContext: true
+    })
+  );
 }
 
 function renderConditionBlock(
@@ -171,6 +236,14 @@ export function createBlockRenderers(options: RenderHtmlOptions = {}): HtmlBlock
     ...themeRenderers,
     ...(options.blockRenderers ?? {})
   };
+}
+
+function createKnownActions(options: RenderHtmlOptions): ReadonlySet<string> {
+  return new Set([...(options.theme?.actions ?? []), ...(options.knownActions ?? [])]);
+}
+
+function isNativeAction(action: string): boolean {
+  return action === "submit" || action === "reset";
 }
 
 function collectStates(children: MdsNode[], states = new Map<string, string>()): Map<string, string> {

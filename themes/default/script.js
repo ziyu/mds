@@ -56,14 +56,14 @@
       }
     }
 
-    if (action === "show" && target) {
+    if ((action === "show" || action === "open") && target) {
       target.classList.add("is-open");
       if (target instanceof HTMLDetailsElement) {
         target.open = true;
       }
     }
 
-    if (action === "hide" && target) {
+    if ((action === "hide" || action === "close") && target) {
       target.classList.remove("is-open");
       if (target instanceof HTMLDetailsElement) {
         target.open = false;

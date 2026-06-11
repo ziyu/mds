@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { Diagnostic } from "@mds/ast";
 import { parseMds } from "@mds/parser";
-import { renderHtml, type HtmlTheme } from "@mds/renderer-html";
+import { renderHtmlResult, type HtmlTheme } from "@mds/renderer-html";
 import type { ThemeSummary } from "@mds/theme-loader/browser";
 import { DiagnosticsPane } from "./diagnostics-pane.js";
 import { EditorPane } from "./editor-pane.js";
@@ -12,6 +13,7 @@ const initialExample = examples[0]!;
 
 interface RenderState {
   html: string;
+  diagnostics: Diagnostic[];
   error?: string;
 }
 
@@ -23,6 +25,7 @@ export function App() {
   const [previewThemeRef, setPreviewThemeRef] = useState("default");
   const [theme, setTheme] = useState<HtmlTheme | undefined>();
   const [themeError, setThemeError] = useState<string | undefined>();
+  const [previewNotice, setPreviewNotice] = useState<string | undefined>();
 
   const frontmatterThemeRef = useMemo(() => readThemeRef(source), [source]);
   const effectiveThemeRef = frontmatterThemeRef ?? previewThemeRef;
@@ -49,6 +52,31 @@ export function App() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    const handlePreviewMessage = (event: MessageEvent) => {
+      if (isPreviewNavigationMessage(event.data)) {
+        setPreviewNotice(`Preview only: ${event.data.href}`);
+        return;
+      }
+
+      if (isPreviewMissingActionMessage(event.data)) {
+        setPreviewNotice(`No handler: ${event.data.action}`);
+      }
+    };
+
+    window.addEventListener("message", handlePreviewMessage);
+    return () => window.removeEventListener("message", handlePreviewMessage);
+  }, []);
+
+  useEffect(() => {
+    if (previewNotice === undefined) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setPreviewNotice(undefined), 2400);
+    return () => window.clearTimeout(timeout);
+  }, [previewNotice]);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,18 +113,20 @@ export function App() {
   const renderState = useMemo<RenderState>(() => {
     try {
       if (theme === undefined) {
-        return { html: renderLoadingDocument() };
+        return {
+          html: renderLoadingDocument(),
+          diagnostics: document.diagnostics
+        };
       }
 
-      return {
-        html: renderHtml(document, {
-          theme
-        })
-      };
+      return renderHtmlResult(document, {
+        theme
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       return {
         html: renderErrorDocument(message),
+        diagnostics: document.diagnostics,
         error: message
       };
     }
@@ -195,11 +225,16 @@ export function App() {
             <span>Preview</span>
             <code>{previewSize} / {effectiveThemeRef}</code>
           </div>
+          {previewNotice === undefined ? null : (
+            <div className="preview-toast" role="status">
+              {previewNotice}
+            </div>
+          )}
           <PreviewPane html={renderState.html} size={previewSize} />
         </div>
       </section>
 
-      <DiagnosticsPane diagnostics={document.diagnostics} />
+      <DiagnosticsPane diagnostics={renderState.diagnostics} />
     </main>
   );
 }
@@ -216,6 +251,28 @@ function themeOptions(themes: ThemeSummary[], themeRef: string): ThemeSummary[] 
     },
     ...themes
   ];
+}
+
+function isPreviewNavigationMessage(value: unknown): value is { type: "mds-preview-navigation"; href: string } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "type" in value &&
+    value.type === "mds-preview-navigation" &&
+    "href" in value &&
+    typeof value.href === "string"
+  );
+}
+
+function isPreviewMissingActionMessage(value: unknown): value is { type: "mds-preview-missing-action"; action: string } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "type" in value &&
+    value.type === "mds-preview-missing-action" &&
+    "action" in value &&
+    typeof value.action === "string"
+  );
 }
 
 function readThemeRef(source: string): string | undefined {

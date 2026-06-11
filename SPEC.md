@@ -564,24 +564,12 @@ MDS 不使用 `@click=xxx`。
 
 ---
 
-# 10. 内置动作
+# 10. 动作 Action
 
-MDS 内置一组简单动作。
+MDS action 是声明式意图，不是业务逻辑。MDS 不运行 JavaScript，也不要求复杂的 handler manifest。
 
 ```txt
-!toggle name
-!open name
-!close name
-!next name
-!prev name
-!play name
-!pause name
-!copy text
-!submit name
-!reset name
-!route path
-!back
-!top
+!action arg1 arg2 arg3
 ```
 
 示例：
@@ -589,12 +577,33 @@ MDS 内置一组简单动作。
 ```mds
 [打开菜单 !open menu]
 [关闭菜单 !close menu]
-[复制链接 !copy current-url]
-[返回顶部 !top]
 [提交表单 !submit contact]
+[发送 !lead.submit contact primary]
 ```
 
-动作仍然是声明式的，不允许直接写 JavaScript。
+`!` 后第一个 token 是 action 名，后面的所有 token 都是参数列表。
+
+```txt
+[发送 !lead.submit contact primary]
+
+action: lead.submit
+args: ["contact", "primary"]
+```
+
+用户自定义 action 可以带任意数量的字符串参数。MDS 不解释这些参数。
+
+MDS 只内置少量 native action：
+
+```txt
+!submit formId
+!reset formId
+```
+
+它们会渲染成原生 HTML 表单按钮，并通过 `form` 属性关联表单。
+
+主题或上层 app 可以定义更多 action。未定义 action 不阻塞渲染，但应该产生 warning，并在 HTML 上保留 `data-action`、`data-target`、`data-args` 等元数据。
+
+动作仍然不允许直接写 JavaScript。
 
 不允许：
 
@@ -611,6 +620,30 @@ MDS 内置一组简单动作。
 ---
 
 # 11. 可展开内容 Details
+
+也可以用 block 级导航表达一组链接：
+
+```mds
+::: nav main
+[Overview -> #overview]
+[Details => #details]
+[Contact => #contact]
+:::
+
+::: section overview
+# Overview
+:::
+
+::: details details
+# Details
+:::
+
+::: form contact
+? email 邮箱 邮箱地址
+:::
+```
+
+`nav` 是语义块，主题决定它显示成顶部导航、按钮组、侧边栏或其他样式。`nav` 内部指向 `#blockId` 的链接会被视为 block navigation，渲染时保留原生 `href="#blockId"`，并附加 `data-nav-target="blockId"`，方便主题显示目标 block。
 
 ```mds
 ::: details faq

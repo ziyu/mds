@@ -98,6 +98,10 @@ a:hover {
   outline-offset: 3px;
 }
 
+[id] {
+  scroll-margin-top: 2rem;
+}
+
 .page {
   display: grid;
   gap: clamp(2.5rem, 6vw, 6rem);
@@ -561,6 +565,16 @@ td {
   scroll-snap-align: start;
 }
 
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 0.85rem 0;
+}
+
 .action {
   display: inline-flex;
   align-items: center;
@@ -596,6 +610,34 @@ td {
   background: var(--accent-soft);
   border-color: color-mix(in srgb, var(--accent), transparent 45%);
   color: var(--accent-strong);
+}
+
+.action.block-link {
+  gap: 0.6rem;
+  max-width: 100%;
+  padding-right: 0.72rem;
+}
+
+.action-label {
+  min-width: 0;
+}
+
+.nav-target {
+  border: 1px solid color-mix(in srgb, currentColor, transparent 72%);
+  border-radius: 999px;
+  padding: 0.22rem 0.42rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.action.primary .nav-target,
+.action.command .nav-target {
+  background: rgb(255 255 255 / 16%);
+  color: rgb(255 255 255 / 82%);
 }
 
 .media {

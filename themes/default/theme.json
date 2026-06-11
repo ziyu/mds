@@ -3,6 +3,7 @@
     "css": "style.css",
     "js": "script.js",
     "shell": "shell.html",
+    "actions": ["toggle", "open", "close", "show", "hide"],
     "blocks": {
       "page": "blocks/page.html",
       "section": "blocks/section.html",
@@ -14,6 +15,7 @@
       "motion": "blocks/section.html",
       "aside": "blocks/aside.html",
       "footer": "blocks/footer.html",
+      "nav": "blocks/nav.html",
       "note": "blocks/callout.html",
     "info": "blocks/callout.html",
     "warning": "blocks/callout.html",

@@ -259,9 +259,27 @@ select {
 }
 
 .preview-panel {
+  position: relative;
   background:
     linear-gradient(90deg, rgb(23 21 18 / 5%) 1px, transparent 1px) 0 0 / 28px 28px,
     #ded8cc;
+}
+
+.preview-toast {
+  position: absolute;
+  top: 3rem;
+  right: 1rem;
+  z-index: 4;
+  max-width: min(28rem, calc(100% - 2rem));
+  border: 1px solid color-mix(in srgb, var(--accent), transparent 35%);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel-strong), var(--accent) 8%);
+  color: var(--accent-strong);
+  padding: 0.42rem 0.7rem;
+  box-shadow: 0 14px 35px rgb(42 32 18 / 16%);
+  font-size: 0.82rem;
+  line-height: 1.25;
+  pointer-events: none;
 }
 
 .preview-frame {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseMds } from "@mds/parser";
-import { renderHtml } from "./index.js";
+import { renderHtml, renderHtmlResult } from "./index.js";
 
 describe("renderHtml", () => {
   it("renders a complete MDS document to semantic HTML", () => {
@@ -20,6 +20,11 @@ lang: zh-CN
 
 [开始 -> /docs]
 [官网 >> https://example.com]
+:::
+
+::: nav main
+[Docs -> #docs]
+[Contact => #contact]
 :::
 
 ::: tabs docs
@@ -53,6 +58,9 @@ Markdown 内容。
     expect(html).toContain('<section class="hero">');
     expect(html).toContain('<a class="action primary" href="/docs">开始</a>');
     expect(html).toContain('target="_blank"');
+    expect(html).toContain('<nav id="main" class="nav" aria-label="main">');
+    expect(html).toContain('href="#docs" data-nav-target="docs"');
+    expect(html).toContain('<span class="nav-target">#contact</span>');
     expect(html).toContain('<section id="docs" class="tabs">');
     expect(html).toContain("谢谢喜欢。");
     expect(html).toContain("<li>简洁</li>");
@@ -61,8 +69,26 @@ Markdown 内容。
     expect(html).toContain('<input id="field-email" name="email" type="email">');
     expect(html).toContain('<textarea id="field-message" name="message"></textarea>');
     expect(html).toContain('data-action="submit"');
+    expect(html).toContain('form="contact"');
     expect(html).not.toContain("mds-");
     expect(html).not.toContain("data-mds");
+  });
+
+  it("marks page-local links inside nav blocks as block navigation targets", () => {
+    const document = parseMds(`::: nav pageNav
+[Overview -> #overview]
+[Docs => /docs]
+:::
+
+::: section overview
+# Overview
+:::
+`);
+    const html = renderHtml(document);
+
+    expect(html).toContain('class="action primary block-link" href="#overview" data-nav-target="overview"');
+    expect(html).toContain('<span class="nav-target">#overview</span>');
+    expect(html).toContain('<a class="action secondary" href="/docs">Docs</a>');
   });
 
   it("preserves command actions as HTML metadata without a runtime script", () => {
@@ -79,6 +105,37 @@ FAQ
     expect(html).not.toContain("mds-");
     expect(html).not.toContain("data-mds");
     expect(html).not.toContain("<script");
+  });
+
+  it("reports command actions without a known handler as warnings", () => {
+    const document = parseMds(`[发送 !lead.submit contact primary]`);
+    const result = renderHtmlResult(document);
+
+    expect(result.html).toContain('data-action="lead.submit"');
+    expect(result.html).toContain('data-args="[&quot;contact&quot;,&quot;primary&quot;]"');
+    expect(result.html).toContain('data-action-missing="true"');
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "missing-action-handler",
+        severity: "warning"
+      })
+    );
+  });
+
+  it("does not warn for actions provided by the theme or render options", () => {
+    const document = parseMds(`[展开 !toggle faq]\n[发送 !lead.submit contact]`);
+    const result = renderHtmlResult(document, {
+      theme: {
+        name: "actions",
+        actions: ["toggle"]
+      },
+      knownActions: ["lead.submit"]
+    });
+
+    expect(result.html).toContain('data-action="toggle"');
+    expect(result.html).toContain('data-action="lead.submit"');
+    expect(result.html).not.toContain('data-action-missing="true"');
+    expect(result.diagnostics).toEqual([]);
   });
 
   it("supports custom block renderers for theme and plugin extensions", () => {

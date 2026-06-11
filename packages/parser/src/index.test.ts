@@ -302,8 +302,8 @@ Fallback
 
 Bad {{ user.name.toUpperCase() }}.
 
-[Nope !eval alert]
-[Back !back home]
+[Nope !bad/action alert]
+[Submit !submit]
 
 ::: if
 missing
@@ -312,10 +312,23 @@ missing
 
     expect(document.diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
       "unmatched-block-close",
-      "unknown-action",
+      "invalid-action-name",
       "invalid-interpolation",
       "invalid-action-args",
       "missing-block-name"
+    ]);
+  });
+
+  it("allows custom action names with arbitrary string arguments", () => {
+    const document = parseMds(`[发送 !lead.submit contact primary 42]`);
+
+    expect(document.diagnostics).toEqual([]);
+    expect(document.children).toMatchObject([
+      {
+        type: "actionLink",
+        action: "lead.submit",
+        args: ["contact", "primary", "42"]
+      }
     ]);
   });
 

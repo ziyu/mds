@@ -31,6 +31,7 @@ html {
   font-family: var(--font-body);
   font-size: 18px;
   line-height: 1.62;
+  scroll-behavior: smooth;
   text-rendering: optimizeLegibility;
 }
 
@@ -65,6 +66,10 @@ a {
 
 a:hover {
   color: var(--red);
+}
+
+[id] {
+  scroll-margin-top: 2.5rem;
 }
 
 img,
@@ -477,6 +482,26 @@ td {
   gap: 0.35rem;
 }
 
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  border-block: 1px solid var(--ink);
+  padding-block: 0.75rem;
+}
+
+.nav::before {
+  content: "Navigation";
+  margin-right: auto;
+  color: var(--red);
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
 .tab-button,
 .action,
 button {
@@ -503,6 +528,35 @@ button {
 .action.secondary {
   border-color: var(--green);
   color: var(--green);
+}
+
+.action.block-link {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+  max-width: 100%;
+  padding-right: 0.72rem;
+}
+
+.action-label {
+  min-width: 0;
+}
+
+.nav-target {
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0.18rem 0.38rem;
+  color: var(--red);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 800;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.action.primary .nav-target,
+.action.command .nav-target {
+  color: color-mix(in srgb, var(--paper), white 12%);
 }
 
 .tabs.is-enhanced .tabs-item {

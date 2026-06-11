@@ -1,5 +1,5 @@
 import type { ActionLinkNode, Diagnostic, MarkdownInlineNode, Position } from "@mds/ast";
-import { knownActions, pathPattern } from "./patterns.js";
+import { actionNamePattern, nativeActions, pathPattern } from "./patterns.js";
 import { lineRange, splitArgs } from "./utils.js";
 
 export interface InlineParseResult {
@@ -105,10 +105,10 @@ export function validateAction(link: ActionLinkNode): Diagnostic[] {
   const action = link.action ?? "";
   const diagnostics: Diagnostic[] = [];
 
-  if (!knownActions.has(action)) {
+  if (!actionNamePattern.test(action)) {
     diagnostics.push({
-      code: "unknown-action",
-      message: `Unknown MDS action: ${action}.`,
+      code: "invalid-action-name",
+      message: `Invalid MDS action name: ${action}.`,
       severity: "error",
       ...(link.position === undefined ? {} : { position: link.position })
     });
@@ -116,14 +116,8 @@ export function validateAction(link: ActionLinkNode): Diagnostic[] {
   }
 
   const argCount = link.args.length;
-  if (["back", "top"].includes(action) && argCount > 0) {
-    diagnostics.push(invalidActionArgs(link, "This action does not accept arguments."));
-  } else if (["toggle", "open", "close", "next", "prev", "play", "pause", "submit", "reset", "route", "inc", "dec", "clear"].includes(action) && argCount !== 1) {
-    diagnostics.push(invalidActionArgs(link, "This action expects exactly one argument."));
-  } else if (action === "copy" && argCount < 1) {
-    diagnostics.push(invalidActionArgs(link, "The copy action expects text to copy."));
-  } else if (action === "set" && argCount < 2) {
-    diagnostics.push(invalidActionArgs(link, "The set action expects a state name and a value."));
+  if (nativeActions.has(action) && argCount !== 1) {
+    diagnostics.push(invalidActionArgs(link, "Native form actions expect exactly one form id argument."));
   }
 
   return diagnostics;

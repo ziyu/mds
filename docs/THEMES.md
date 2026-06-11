@@ -84,8 +84,10 @@ Browser tools cannot read arbitrary local directories directly, so they use the 
   "css": "style.css",
   "js": "script.js",
   "shell": "shell.html",
+  "actions": ["toggle", "open", "close"],
   "blocks": {
     "page": "blocks/page.html",
+    "nav": "blocks/nav.html",
     "hero": "blocks/hero.html",
     "card": "blocks/card.html"
   }
@@ -93,6 +95,8 @@ Browser tools cannot read arbitrary local directories directly, so they use the 
 ```
 
 All paths are relative to the theme directory.
+
+`actions` lists command actions that the theme JavaScript knows how to handle. It is only a declaration for warnings and editor diagnostics; MDS does not prescribe the handler implementation.
 
 ## Shell Template
 
@@ -148,6 +152,14 @@ Available block variables:
 ```
 
 Theme authors should prefer `{{ attrs }}` for block identifiers, because it omits the attribute entirely when the block has no name.
+
+`nav` blocks can be rendered with the same simple template:
+
+```html
+<nav{{ attrs }} class="nav" aria-label="{{ name }}">{{ children }}</nav>
+```
+
+When a standalone action link inside `nav` points to a local block id, for example `[Contact -> #contact]`, the renderer outputs a normal anchor plus `data-nav-target="contact"` and a visible `.nav-target` span. Themes can style those selectors without parsing MDS syntax.
 
 ## HTML Class Names
 

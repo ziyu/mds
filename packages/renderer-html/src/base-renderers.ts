@@ -16,6 +16,8 @@ export const baseBlockRenderers: HtmlBlockRenderers = {
     `<aside${renderId(block)} class="aside">${context.renderChildren(context.getContentChildren(block))}</aside>`,
   footer: (block, context) =>
     `<footer${renderId(block)} class="footer">${context.renderChildren(context.getContentChildren(block))}</footer>`,
+  nav: (block, context) =>
+    `<nav${renderId(block)} class="nav" aria-label="${escapeAttribute(block.name ?? "Navigation")}">${context.renderChildren(context.getContentChildren(block))}</nav>`,
   note: renderCalloutBlock,
   info: renderCalloutBlock,
   warning: renderCalloutBlock,
@@ -57,22 +59,39 @@ export function renderSlot(slot: SlotNode, context: HtmlRenderContext): string {
   return `<section class="slot" data-slot="${escapeAttribute(slot.name)}">${context.renderChildren(slot.children)}</section>`;
 }
 
-export function renderActionLink(link: ActionLinkNode): string {
+export interface RenderActionLinkOptions {
+  missingHandler?: boolean;
+  navigationContext?: boolean;
+}
+
+export function renderActionLink(link: ActionLinkNode, options: RenderActionLinkOptions = {}): string {
   const label = escapeHtml(link.label);
 
   if (link.kind === "command") {
     const action = link.action ?? "";
     const type = action === "submit" ? "submit" : action === "reset" ? "reset" : "button";
     const target = link.args[0];
+    const form = (action === "submit" || action === "reset") && target !== undefined ? ` form="${escapeAttribute(target)}"` : "";
+    const args = link.args.length === 0 ? "" : ` data-args="${escapeAttribute(JSON.stringify(link.args))}"`;
+    const missing = options.missingHandler === true ? ' data-action-missing="true"' : "";
 
-    return `<button type="${type}" class="action command" data-action="${escapeAttribute(action)}"${
+    return `<button type="${type}" class="action command" data-action="${escapeAttribute(action)}"${args}${missing}${
       target === undefined ? "" : ` data-target="${escapeAttribute(target)}"`
-    }>${label}</button>`;
+    }${form}>${label}</button>`;
   }
 
   const href = link.target ?? "#";
   const rel = link.kind === "external" ? ' rel="noopener noreferrer"' : "";
   const target = link.kind === "external" ? ' target="_blank"' : "";
+  const blockTarget = options.navigationContext === true ? getBlockNavigationTarget(href) : undefined;
+
+  if (blockTarget !== undefined) {
+    return `<a class="action ${link.kind} block-link" href="${escapeAttribute(href)}" data-nav-target="${escapeAttribute(
+      blockTarget
+    )}"><span class="action-label">${label}</span><span class="nav-target">#${escapeHtml(
+      blockTarget
+    )}</span></a>`;
+  }
 
   return `<a class="action ${link.kind}" href="${escapeAttribute(href)}"${rel}${target}>${label}</a>`;
 }
@@ -170,6 +189,14 @@ function renderSlottedLayoutBlock(block: MdsBlockNode, context: HtmlRenderContex
 
 function renderId(block: MdsBlockNode): string {
   return block.name === undefined ? "" : ` id="${escapeAttribute(block.name)}"`;
+}
+
+function getBlockNavigationTarget(href: string): string | undefined {
+  if (!href.startsWith("#") || href.length <= 1) {
+    return undefined;
+  }
+
+  return href.slice(1);
 }
 
 function mapInputType(fieldType: string): string {
