@@ -1,0 +1,41 @@
+{
+  "name": "@mds/theme-builder",
+  "version": "0.0.0",
+  "type": "module",
+  "bin": {
+    "mds-theme": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./cli": {
+      "import": "./dist/cli.js"
+    },
+    "./cli-runner": {
+      "types": "./dist/cli-runner.d.ts",
+      "import": "./dist/cli-runner.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@mds/theme-loader": "workspace:*",
+    "esbuild": "^0.27.0",
+    "postcss": "^8.5.0",
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}

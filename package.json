@@ -10,7 +10,11 @@
     "test": "pnpm -r --if-present test",
     "format": "pnpm -r --if-present format",
     "dev:editor": "pnpm --filter @mds/editor dev",
-    "build:editor": "pnpm --filter @mds/editor build"
+    "build:editor": "pnpm --filter @mds/editor build",
+    "build:theme": "tsx packages/theme-builder/src/cli.ts build",
+    "build:theme:atelier": "pnpm build:theme themes/atelier",
+    "build:theme:clarity": "pnpm build:theme themes/clarity",
+    "build:theme:studio": "pnpm build:theme themes/studio"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

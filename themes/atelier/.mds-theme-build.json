@@ -1,0 +1,179 @@
+{
+  "version": 1,
+  "source": "theme.tsx",
+  "output": ".",
+  "inputFiles": [
+    "package.json",
+    "preview.svg",
+    "script.js",
+    "shell.html",
+    "style.css",
+    "theme.tsx"
+  ],
+  "artifactFiles": [
+    "theme.json",
+    "blocks/accordion.html",
+    "blocks/aside.html",
+    "blocks/card.html",
+    "blocks/cards.html",
+    "blocks/carousel.html",
+    "blocks/details.html",
+    "blocks/dialog.html",
+    "blocks/drawer.html",
+    "blocks/footer.html",
+    "blocks/form.html",
+    "blocks/grid.html",
+    "blocks/hero.html",
+    "blocks/nav.html",
+    "blocks/note.html",
+    "blocks/page.html",
+    "blocks/quote.html",
+    "blocks/scene.html",
+    "blocks/section.html",
+    "blocks/split.html",
+    "blocks/sticky.html",
+    "blocks/tabs.html",
+    "preview.svg",
+    "script.js",
+    "shell.html",
+    "style.css"
+  ],
+  "templates": [
+    {
+      "file": "blocks/accordion.html",
+      "blocks": [
+        "accordion"
+      ]
+    },
+    {
+      "file": "blocks/aside.html",
+      "blocks": [
+        "aside"
+      ]
+    },
+    {
+      "file": "blocks/card.html",
+      "blocks": [
+        "card"
+      ]
+    },
+    {
+      "file": "blocks/cards.html",
+      "blocks": [
+        "cards"
+      ]
+    },
+    {
+      "file": "blocks/carousel.html",
+      "blocks": [
+        "carousel"
+      ]
+    },
+    {
+      "file": "blocks/details.html",
+      "blocks": [
+        "details"
+      ]
+    },
+    {
+      "file": "blocks/dialog.html",
+      "blocks": [
+        "dialog"
+      ]
+    },
+    {
+      "file": "blocks/drawer.html",
+      "blocks": [
+        "drawer"
+      ]
+    },
+    {
+      "file": "blocks/footer.html",
+      "blocks": [
+        "footer"
+      ]
+    },
+    {
+      "file": "blocks/form.html",
+      "blocks": [
+        "form"
+      ]
+    },
+    {
+      "file": "blocks/grid.html",
+      "blocks": [
+        "grid",
+        "grid-2",
+        "grid-3",
+        "grid-auto"
+      ]
+    },
+    {
+      "file": "blocks/hero.html",
+      "blocks": [
+        "hero"
+      ]
+    },
+    {
+      "file": "blocks/nav.html",
+      "blocks": [
+        "nav"
+      ]
+    },
+    {
+      "file": "blocks/note.html",
+      "blocks": [
+        "danger",
+        "info",
+        "note",
+        "success",
+        "warning"
+      ]
+    },
+    {
+      "file": "blocks/page.html",
+      "blocks": [
+        "page"
+      ]
+    },
+    {
+      "file": "blocks/quote.html",
+      "blocks": [
+        "quote"
+      ]
+    },
+    {
+      "file": "blocks/scene.html",
+      "blocks": [
+        "scene"
+      ]
+    },
+    {
+      "file": "blocks/section.html",
+      "blocks": [
+        "float",
+        "motion",
+        "reveal",
+        "section"
+      ]
+    },
+    {
+      "file": "blocks/split.html",
+      "blocks": [
+        "split"
+      ]
+    },
+    {
+      "file": "blocks/sticky.html",
+      "blocks": [
+        "sticky"
+      ]
+    },
+    {
+      "file": "blocks/tabs.html",
+      "blocks": [
+        "tabs"
+      ]
+    }
+  ]
+}

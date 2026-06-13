@@ -1,0 +1,19 @@
+{
+  "name": "@mds/theme-atelier",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "mdsTheme": {
+    "source": "./theme.tsx",
+    "dist": ".",
+    "assets": {
+      "css": "./style.css",
+      "js": "./script.js",
+      "shell": "./shell.html",
+      "preview": "./preview.svg"
+    }
+  },
+  "scripts": {
+    "build": "pnpm --dir ../.. build:theme themes/atelier"
+  }
+}

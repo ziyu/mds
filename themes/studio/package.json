@@ -1,0 +1,31 @@
+{
+  "name": "@mds/theme-studio",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "mdsTheme": {
+    "source": "./src/theme.tsx",
+    "dist": "./dist/theme",
+    "pipeline": {
+      "css": "tailwind"
+    },
+    "assets": {
+      "css": "./src/style.css",
+      "js": "./src/script.ts",
+      "shell": "./src/shell.html",
+      "preview": "./src/preview.svg"
+    }
+  },
+  "scripts": {
+    "build": "pnpm --dir ../.. build:theme themes/studio",
+    "check": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@mds/theme-sdk-react": "workspace:*",
+    "react": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.0",
+    "typescript": "^5.8.0"
+  }
+}

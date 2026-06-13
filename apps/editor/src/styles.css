@@ -161,6 +161,30 @@ select {
   padding: 0.5rem 0.75rem;
 }
 
+.theme-build-status {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--success), transparent 55%);
+  background: color-mix(in srgb, var(--success), transparent 90%);
+  color: var(--text);
+  padding: 0.45rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+.theme-build-status strong {
+  color: var(--success);
+  text-transform: uppercase;
+  font-size: 0.72rem;
+}
+
+.theme-build-status code {
+  margin-left: auto;
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.76rem;
+}
+
 .app-error-shell {
   display: grid;
   place-items: center;
@@ -350,7 +374,7 @@ select {
 
 .diagnostic {
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  grid-template-columns: auto auto auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.55rem;
   border: 1px solid var(--line);
@@ -358,14 +382,19 @@ select {
   padding: 0.45rem 0.55rem;
 }
 
-.diagnostic span {
+.diagnostic-source,
+.diagnostic-severity {
   color: var(--warning);
   text-transform: uppercase;
   font-size: 0.72rem;
   font-weight: 800;
 }
 
-.diagnostic-error span {
+.diagnostic-source {
+  color: var(--muted);
+}
+
+.diagnostic-error .diagnostic-severity {
   color: var(--danger);
 }
 

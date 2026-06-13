@@ -1,7 +1,7 @@
-import type { Diagnostic } from "@mds/ast";
+import type { EditorDiagnostic } from "./editor-diagnostics.js";
 
 export interface DiagnosticsPaneProps {
-  diagnostics: Diagnostic[];
+  diagnostics: EditorDiagnostic[];
 }
 
 export function DiagnosticsPane({ diagnostics }: DiagnosticsPaneProps) {
@@ -12,12 +12,13 @@ export function DiagnosticsPane({ diagnostics }: DiagnosticsPaneProps) {
         <strong>{diagnostics.length}</strong>
       </div>
       {diagnostics.length === 0 ? (
-        <p className="diagnostics-empty">No parser diagnostics.</p>
+        <p className="diagnostics-empty">No diagnostics.</p>
       ) : (
         <ul>
           {diagnostics.map((diagnostic, index) => (
             <li key={`${diagnostic.code}-${index}`} className={`diagnostic diagnostic-${diagnostic.severity}`}>
-              <span>{diagnostic.severity}</span>
+              <span className="diagnostic-source">{diagnostic.source}</span>
+              <span className="diagnostic-severity">{diagnostic.severity}</span>
               <code>{diagnostic.code}</code>
               <p>{diagnostic.message}</p>
               {diagnostic.position === undefined ? null : (

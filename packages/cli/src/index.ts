@@ -1,83 +1,104 @@
 #!/usr/bin/env node
 
+import { spawn } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseMds } from "@mds/parser";
-import { renderHtmlResult, type HtmlTheme } from "@mds/renderer-html";
-import { createFileThemeRegistry } from "@mds/theme-loader";
+import { renderHtmlResult } from "@mds/renderer-html";
+import {
+  createFileThemeRegistry,
+  formatThemeDiagnostic,
+  isThemeDiagnostic,
+  ThemeValidationError,
+  type ThemeCreationResult,
+} from "@mds/theme-loader";
 import { cac } from "cac";
 
-const cli = cac("mds");
+if (process.argv[2] === "theme") {
+  process.exitCode = await runThemeCommand(process.argv.slice(3));
+} else {
+  const cli = cac("mds");
 
-cli
-  .command("build <input>", "Compile an MDS file to HTML")
-  .option("-o, --output <path>", "Output HTML path")
-  .option("--theme <path>", "Theme directory path")
-  .option("--no-css", "Do not embed default CSS")
-  .action(async (input: string, options: { output?: string; theme?: string; css?: boolean }) => {
+  cli
+    .command("build <input>", "Compile an MDS file to HTML")
+    .option("-o, --output <path>", "Output HTML path")
+    .option("--theme <path>", "Theme directory path")
+    .option("--no-css", "Do not embed default CSS")
+    .action(async (input: string, options: { output?: string; theme?: string; css?: boolean }) => {
+      const source = await readFile(input, "utf8");
+      const document = parseMds(source, {
+        filePath: input
+      });
+      const themeResult = await resolveTheme(input, options.theme, document.frontmatter.theme).catch((error: unknown) => {
+        printDiagnostics(diagnosticsFromThemeError(error));
+        process.exitCode = 1;
+        return undefined;
+      });
+      if (process.exitCode === 1) {
+        return;
+      }
+
+      const result = renderHtmlResult(
+        document,
+        {
+          ...(themeResult === undefined ? {} : { theme: themeResult.theme }),
+          ...(options.css === undefined ? {} : { includeCss: options.css })
+        }
+      );
+      const html = result.html;
+      const diagnostics = [...(themeResult?.diagnostics ?? []), ...result.diagnostics];
+
+      printDiagnostics(diagnostics);
+
+      if (hasErrors({ diagnostics })) {
+        process.exitCode = 1;
+        return;
+      }
+
+      if (options.output === undefined) {
+        console.log(html);
+        return;
+      }
+
+      await mkdir(dirname(options.output), {
+        recursive: true
+      });
+      await writeFile(options.output, html, "utf8");
+    });
+
+  cli.command("ast <input>", "Print the MDS AST").action(async (input: string) => {
     const source = await readFile(input, "utf8");
     const document = parseMds(source, {
       filePath: input
     });
-    const theme = await resolveTheme(input, options.theme, document.frontmatter.theme);
-    const result = renderHtmlResult(
-      document,
-      {
-        ...(theme === undefined ? {} : { theme }),
-        ...(options.css === undefined ? {} : { includeCss: options.css })
-      }
-    );
-    const html = result.html;
 
-    printDiagnostics(result.diagnostics);
+    console.log(JSON.stringify(document, null, 2));
+  });
 
-    if (hasErrors(result)) {
+  cli.command("check <input>", "Check an MDS file").action(async (input: string) => {
+    const source = await readFile(input, "utf8");
+    const document = parseMds(source, {
+      filePath: input
+    });
+
+    printDiagnostics(document.diagnostics);
+
+    if (hasErrors(document)) {
       process.exitCode = 1;
       return;
     }
 
-    if (options.output === undefined) {
-      console.log(html);
-      return;
-    }
-
-    await mkdir(dirname(options.output), {
-      recursive: true
-    });
-    await writeFile(options.output, html, "utf8");
+    console.log("No MDS errors found.");
   });
 
-cli.command("ast <input>", "Print the MDS AST").action(async (input: string) => {
-  const source = await readFile(input, "utf8");
-  const document = parseMds(source, {
-    filePath: input
-  });
-
-  console.log(JSON.stringify(document, null, 2));
-});
-
-cli.command("check <input>", "Check an MDS file").action(async (input: string) => {
-  const source = await readFile(input, "utf8");
-  const document = parseMds(source, {
-    filePath: input
-  });
-
-  printDiagnostics(document.diagnostics);
-
-  if (hasErrors(document)) {
-    process.exitCode = 1;
-    return;
-  }
-
-  console.log("No MDS errors found.");
-});
-
-cli.help();
-cli.parse();
+  cli.help();
+  cli.parse();
+}
 
 function printDiagnostics(diagnostics: Array<{ code: string; message: string; severity: string }>): void {
   for (const diagnostic of diagnostics) {
-    console.error(`${diagnostic.severity.toUpperCase()} ${diagnostic.code}: ${diagnostic.message}`);
+    console.error(isThemeDiagnostic(diagnostic) ? formatThemeDiagnostic(diagnostic) : formatGenericDiagnostic(diagnostic));
   }
 }
 
@@ -89,7 +110,7 @@ async function resolveTheme(
   input: string,
   optionTheme: string | undefined,
   frontmatterTheme: unknown
-): Promise<HtmlTheme | undefined> {
+): Promise<ThemeCreationResult | undefined> {
   const themeRef = optionTheme ?? (typeof frontmatterTheme === "string" ? frontmatterTheme : undefined);
   if (themeRef === undefined || themeRef.length === 0) {
     return undefined;
@@ -101,5 +122,56 @@ async function resolveTheme(
     baseDirectory: inputDirectory
   });
 
-  return themes.loadTheme(themeRef);
+  return themes.loadThemeWithDiagnostics(themeRef);
+}
+
+function diagnosticsFromThemeError(error: unknown): Array<{ code: string; message: string; severity: string }> {
+  if (error instanceof ThemeValidationError) {
+    return error.diagnostics;
+  }
+
+  return [
+    {
+      severity: "error",
+      code: "theme-load-error",
+      message: error instanceof Error ? error.message : String(error)
+    }
+  ];
+}
+
+function formatGenericDiagnostic(diagnostic: { code: string; message: string; severity: string }): string {
+  return `${diagnostic.severity.toUpperCase()} ${diagnostic.code}: ${diagnostic.message}`;
+}
+
+async function runThemeCommand(args: string[]): Promise<number> {
+  const themeCliCommand = await resolveThemeCliCommand();
+
+  return new Promise((resolveExitCode, reject) => {
+    const child = spawn(themeCliCommand.command, [...themeCliCommand.args, ...args], {
+      env: {
+        ...process.env,
+        MDS_THEME_COMMAND_NAME: "mds theme"
+      },
+      stdio: "inherit"
+    });
+    child.once("error", reject);
+    child.once("exit", (code) => {
+      resolveExitCode(code ?? 1);
+    });
+  });
+}
+
+async function resolveThemeCliCommand(): Promise<{ command: string; args: string[] }> {
+  const currentFile = fileURLToPath(import.meta.url);
+  if (currentFile.endsWith("/src/index.ts")) {
+    return {
+      command: process.execPath,
+      args: [fileURLToPath(await import.meta.resolve("tsx/cli")), resolve(dirname(currentFile), "../../theme-builder/src/cli.ts")]
+    };
+  }
+
+  return {
+    command: process.execPath,
+    args: [fileURLToPath(await import.meta.resolve("@mds/theme-builder/cli"))]
+  };
 }

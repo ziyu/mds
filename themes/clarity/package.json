@@ -1,0 +1,19 @@
+{
+  "name": "@mds/theme-clarity",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "mdsTheme": {
+    "source": "./src/theme.tsx",
+    "dist": "./dist/theme",
+    "assets": {
+      "css": "./src/style.css",
+      "js": "./src/script.ts",
+      "shell": "./src/shell.html",
+      "preview": "./src/preview.svg"
+    }
+  },
+  "scripts": {
+    "build": "pnpm --dir ../.. build:theme themes/clarity"
+  }
+}

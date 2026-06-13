@@ -1,8 +1,23 @@
 import type { HtmlBlockRenderers, HtmlTheme } from "@mds/html-types";
+import { getThemeRuntimeSourceInput, normalizeThemeManifestReferences, normalizeThemeSourceInput } from "./artifact.js";
+import { blockTypeFromPath, collectTemplateEntries } from "./block-template.js";
+import { isRecord, isStringRecord } from "./shape.js";
 import { createTemplateBlockRenderer, renderShellTemplate } from "./template.js";
+import { resolveThemeName, uniqueThemeStrings } from "./theme-metadata.js";
+import { ThemeValidationError, validateThemeSource, type ThemeDiagnostic } from "./validation.js";
+
+export { resolveThemeLabel, resolveThemeName, uniqueThemeStrings } from "./theme-metadata.js";
 
 export interface ThemeManifest {
+  version?: 1;
   name?: string;
+  label?: string;
+  description?: string;
+  author?: string;
+  homepage?: string;
+  preview?: string;
+  tags?: string[];
+  supportedBlocks?: string[];
   css?: ThemeAssetReference;
   js?: ThemeAssetReference;
   head?: ThemeAssetReference;
@@ -26,19 +41,54 @@ export interface ThemeSource {
 export type ThemeAssetReference = string | string[];
 export type ThemeBlockReference = string | string[] | Record<string, string>;
 
+export interface ThemeCreationResult {
+  theme: HtmlTheme;
+  diagnostics: ThemeDiagnostic[];
+}
+
 export function createThemeFromSources(input: ThemeSourceInput): HtmlTheme {
+  return createThemeResultFromSources(input).theme;
+}
+
+export function isThemeSourceInput(value: unknown): value is ThemeSourceInput {
+  return (
+    isRecord(value) &&
+    isRecord(value.manifest) &&
+    isStringRecord(value.files) &&
+    (!("rootName" in value) || typeof value.rootName === "string")
+  );
+}
+
+export function createThemeResultFromSources(input: ThemeSourceInput): ThemeCreationResult {
+  const runtimeInput = getThemeRuntimeSourceInput(input);
+  const diagnostics = validateThemeSource(runtimeInput);
+  const errors = diagnostics.filter((diagnostic) => diagnostic.severity === "error");
+
+  if (errors.length > 0) {
+    throw new ThemeValidationError(errors, resolveThemeName(runtimeInput.manifest, runtimeInput.rootName));
+  }
+
+  const normalizedInput = normalizeThemeSourceInput(runtimeInput);
+  return {
+    theme: createThemeFromValidatedSources(normalizedInput),
+    diagnostics
+  };
+}
+
+function createThemeFromValidatedSources(input: ThemeSourceInput): HtmlTheme {
   const css = readAssets(input.files, input.manifest.css);
   const js = readAssets(input.files, input.manifest.js);
   const head = readAssets(input.files, input.manifest.head);
   const shellTemplate = readOptional(input.files, input.manifest.shell);
   const blockRenderers = createBlockRenderers(input.files, input.manifest.blocks);
+  const actions = uniqueThemeStrings(input.manifest.actions);
 
   return {
-    name: input.manifest.name ?? input.rootName ?? "theme",
+    name: resolveThemeName(input.manifest, input.rootName),
     ...(css === undefined ? {} : { css }),
     ...(js === undefined ? {} : { js }),
     ...(head === undefined ? {} : { head }),
-    ...(input.manifest.actions === undefined ? {} : { actions: input.manifest.actions }),
+    ...(actions === undefined ? {} : { actions }),
     ...(shellTemplate === undefined
       ? {}
       : {
@@ -49,13 +99,15 @@ export function createThemeFromSources(input: ThemeSourceInput): HtmlTheme {
 }
 
 export function getThemeFilePaths(manifest: ThemeManifest): string[] {
-  return [
-    ...assetReferencesToPaths(manifest.css),
-    ...assetReferencesToPaths(manifest.js),
-    ...assetReferencesToPaths(manifest.head),
-    ...(manifest.shell === undefined || manifest.shell.length === 0 ? [] : [manifest.shell]),
-    ...blockReferencesToPaths(manifest.blocks)
-  ];
+  const normalizedManifest = normalizeThemeManifestReferences(manifest);
+  return uniqueStrings([
+    ...assetReferencesToPaths(normalizedManifest.css),
+    ...assetReferencesToPaths(normalizedManifest.js),
+    ...assetReferencesToPaths(normalizedManifest.head),
+    ...(normalizedManifest.shell === undefined || normalizedManifest.shell.length === 0 ? [] : [normalizedManifest.shell]),
+    ...(normalizedManifest.preview === undefined || normalizedManifest.preview.length === 0 ? [] : [normalizedManifest.preview]),
+    ...blockReferencesToPaths(normalizedManifest.blocks)
+  ]);
 }
 
 function createBlockRenderers(files: Record<string, string>, blocks: ThemeBlockReference | undefined): HtmlBlockRenderers {
@@ -109,28 +161,9 @@ function collectBlockSource(files: Record<string, string>, source: string): Reco
 }
 
 function collectTemplatesFromFile(template: string, fallbackBlockType: string): Record<string, string> {
-  const templates = [...template.matchAll(/<template\b([^>]*)>([\s\S]*?)<\/template>/gi)]
-    .flatMap((match) => {
-      const blockTypes = parseTemplateBlockTypes(match[1] ?? "");
-      const body = match[2] ?? "";
-      return blockTypes.map((blockType) => [blockType, body] as const);
-    });
-
-  return templates.length === 0 ? { [fallbackBlockType]: template } : Object.fromEntries(templates);
-}
-
-function parseTemplateBlockTypes(attributes: string): string[] {
-  const match = attributes.match(/\sdata-block=(["'])(.*?)\1/i);
-  if (match === null) {
-    return [];
-  }
-
-  return (match[2] ?? "").split(/\s+/).filter(Boolean);
-}
-
-function blockTypeFromPath(path: string): string {
-  const fileName = path.split("/").at(-1) ?? path;
-  return fileName.endsWith(".html") ? fileName.slice(0, -".html".length) : fileName;
+  return Object.fromEntries(
+    collectTemplateEntries(template, fallbackBlockType).map((entry) => [entry.blockType, entry.template])
+  );
 }
 
 function hasBlockDirectory(files: Record<string, string>, directory: string): boolean {
@@ -178,4 +211,8 @@ function blockReferencesToPaths(reference: ThemeBlockReference | undefined): str
   }
 
   return Array.isArray(reference) ? reference.filter((path) => path.endsWith(".html")) : Object.values(reference);
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values)];
 }

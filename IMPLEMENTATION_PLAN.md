@@ -75,6 +75,18 @@ mds/
       src/
       package.json
 
+    theme-builder/
+      src/
+      package.json
+
+    theme-sdk-html/
+      src/
+      package.json
+
+    theme-sdk-react/
+      src/
+      package.json
+
   examples/
     basic/
       index.mds
@@ -221,7 +233,46 @@ interface HtmlTheme {
 
 The default theme is an implementation detail of the default build path, not part of MDS syntax. Users should be able to supply a different theme without changing parser behavior.
 
+### `@mds/theme-builder`
+
+Development-time builder for package-style themes.
+
+Responsibilities:
+
+- Read `package.json#mdsTheme`.
+- Execute trusted theme source during development builds.
+- Convert source-authored themes to plain artifact directories.
+- Bundle CSS imports and TypeScript script assets with esbuild.
+- Run Tailwind v4 through PostCSS when a package opts into `mdsTheme.pipeline.css = "tailwind"`.
+- Write and inspect `.mds-theme-build.json` metadata.
+- Pack clean distributable artifacts without development metadata.
+
+### `@mds/theme-sdk-html`
+
+Lightweight HTML authoring adapter for package themes.
+
+Responsibilities:
+
+- Provide a tagged `html` helper for block templates.
+- Escape primitive interpolations by default.
+- Preserve explicit raw MDS placeholders.
+- Produce the same `ThemeSourceInput` artifact contract as JSX-authored themes.
+
+### `@mds/theme-sdk-react`
+
+React authoring adapter for package themes.
+
+Responsibilities:
+
+- Let theme authors compose block templates with React components.
+- Support shadcn-style local component source and Tailwind class names.
+- Render React components to MDS template HTML during build.
+- Preserve `attrs`, `children`, and slot placeholders.
+- Produce `ThemeSourceInput` so the builder stays adapter-agnostic.
+
 ## File-Based Themes
+
+Detailed theme-system architecture and roadmap live in [docs/THEME_DESIGN.md](./docs/THEME_DESIGN.md). This section keeps the implementation-plan summary.
 
 The primary theme customization path should be folder-based, because many MDS users are expected to be content authors rather than TypeScript package authors.
 
@@ -371,6 +422,98 @@ Supported template variables should stay intentionally small:
 ```
 
 Programmatic `HtmlTheme` remains available for developers, but file-based themes are the default author-facing extension model.
+
+### JSX Theme Authoring
+
+JSX support is a developer authoring layer over the same file/source theme contract. It should not become a required runtime and should not change the ordinary author workflow.
+
+The intended model:
+
+```tsx
+/** @jsxImportSource @mds/theme-loader */
+import { Content, defineJsxTheme, Root } from "@mds/theme-loader/jsx";
+
+export default defineJsxTheme({
+  name: "jsx-demo",
+  css: ".hero { color: red; }",
+  blocks: {
+    hero: (block) => (
+      <Root block={block} className="hero">
+        <Content block={block} />
+      </Root>
+    ),
+    "note warning": (block) => (
+      <Root block={block} as="aside" className={`callout ${block.type}`} role="note">
+        <Content block={block} />
+      </Root>
+    )
+  }
+});
+```
+
+This compiles or converts to the same source shape used by directory themes:
+
+```txt
+theme.json
+style.css
+blocks/
+  hero.html
+  note.html
+```
+
+The loader still consumes `ThemeSource` or a theme directory. JSX is only a convenient way to author those files with components and TypeScript.
+
+For checked-in themes, generated block templates should be committed so runtime tools do not need to execute TSX. The authoring loop can be:
+
+```sh
+pnpm build:theme:atelier
+```
+
+### Package Theme Development
+
+Package themes are development containers that compile to standard theme artifacts. MDS should not execute package source code during normal rendering.
+
+Package shape:
+
+```txt
+my-theme/
+  package.json
+  src/theme.tsx
+  src/style.css
+  src/script.ts
+  dist/theme/
+    theme.json
+    style.css
+    script.js
+    blocks/*.html
+```
+
+`package.json` declares the source and artifact paths:
+
+```json
+{
+  "mdsTheme": {
+    "source": "./src/theme.tsx",
+    "dist": "./dist/theme",
+    "assets": {
+      "css": "./src/style.css",
+      "js": "./src/script.ts",
+      "shell": "./src/shell.html",
+      "preview": "./src/preview.svg"
+    }
+  }
+}
+```
+
+The first builder package is `@mds/theme-builder`. Its MVP command reads `package.json#mdsTheme`, imports the source theme under `tsx`, accepts SDK-produced `ThemeSourceInput` or legacy JSX theme definitions, copies declared assets including preview files, bundles CSS imports and TypeScript script assets to plain artifact CSS/JavaScript, optionally runs Tailwind v4 through PostCSS, writes `.mds-theme-build.json` with input/debug metadata, and writes the artifact directory.
+
+`mds theme inspect` and `mds-theme inspect` read the built artifact through the same resolution path used by editor and CLI rendering. They print metadata, files, blocks, assets, actions, build metadata, and validation diagnostics without importing package source.
+
+`mds theme pack` and `mds-theme pack` read the same built artifact, validate it, and write a clean shareable theme directory without package source files or `.mds-theme-build.json`.
+
+`themes/clarity` is the separated package-style example: source files live under `src/`, a local component module is imported by `src/theme.tsx`, local CSS imports are bundled, `src/script.ts` is bundled to artifact JavaScript, and the committed runtime artifact lives under `dist/theme`.
+
+Future builder phases can add Vite dev integration, Preact/Vue adapters, richer CSS transforms, and package distribution polish. Those are development-time features only; the renderer and editor continue to load `theme.json` artifacts.
 
 The renderer/CLI should support both:
 

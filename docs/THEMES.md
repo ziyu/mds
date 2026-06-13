@@ -1,39 +1,31 @@
 # MDS Themes
 
-MDS themes are directory-based by default. They are not npm packages.
+MDS themes are plain directories that render MDS documents into standalone HTML. A theme can be hand-written as files, or generated from a developer package, but MDS always loads the built artifact:
 
-This keeps the author workflow simple: place a theme folder in the project, change `theme` in frontmatter or pass `--theme`, then build the MDS file again.
+```txt
+theme.json
+style.css
+script.js
+shell.html
+blocks/
+  page.html
+  hero.html
+  card.html
+```
 
-## Directory Layout
+For the full architecture, artifact contract, diagnostics model, and roadmap, see [THEME_DESIGN.md](./THEME_DESIGN.md).
+
+## Use A Theme
+
+Place theme folders under `themes/`:
 
 ```txt
 themes/
   default/
-    theme.json
-    style.css
-    script.js
-    shell.html
-    blocks/
-      page.html
-      section.html
-      card.html
-      details.html
+  my-theme/
 ```
 
-## Enable A Theme
-
-Use a theme by directory name:
-
-```mds
----
-title: Demo
-theme: default
----
-```
-
-MDS looks for named themes under `themes/`, so `theme: default` resolves to `themes/default`.
-
-Use another project theme the same way:
+Use a named theme in frontmatter:
 
 ```mds
 ---
@@ -42,138 +34,115 @@ theme: my-theme
 ---
 ```
 
-You can also pass an explicit theme path from the CLI:
+Or pass a theme from the CLI:
 
 ```sh
 mds build ./content/index.mds --theme ./themes/my-theme
 ```
 
-Named themes are resolved from project theme roots such as `themes/`. Relative path refs such as `./themes/my-theme` are resolved from the input MDS file directory.
+Named themes are resolved from theme roots such as `themes/`. Path refs such as `./themes/my-theme` load that directory, or the built artifact declared by `package.json#mdsTheme.dist` when the path points to a package-style theme.
 
-## Managing Multiple Themes
+## Simple Theme
 
-The runtime uses a `ThemeRegistry` abstraction:
+A minimal theme only needs `theme.json` and block templates:
 
-```ts
-interface ThemeRegistry {
-  listThemes(): Promise<ThemeSummary[]>;
-  loadTheme(ref: string): Promise<HtmlTheme>;
-}
+```txt
+themes/my-theme/
+  theme.json
+  blocks/
+    hero.html
+    card.html
 ```
-
-Node tools use a file registry that scans theme roots:
-
-```ts
-import { createFileThemeRegistry } from "@mds/theme-loader";
-
-const themes = createFileThemeRegistry({
-  roots: ["themes"]
-});
-
-const available = await themes.listThemes();
-const theme = await themes.loadTheme("my-theme");
-```
-
-Browser tools cannot read arbitrary local directories directly, so they use the same registry shape with bundled or uploaded theme sources. The editor app consumes a registry instead of importing individual theme files.
-
-## `theme.json`
-
-Theme Blocks Contract v2 keeps `theme.json` small and lets the loader discover block templates from a directory:
 
 ```json
 {
   "name": "my-theme",
-  "css": "style.css",
-  "js": "script.js",
-  "shell": "shell.html",
-  "actions": ["toggle", "open", "close"],
   "blocks": "blocks"
 }
 ```
 
 If `blocks` is omitted and a `blocks/` directory exists, the loader treats it as `blocks: "blocks"`.
 
-The current explicit mapping form remains supported for compatibility and for unusual aliases:
+## `theme.json`
+
+Common fields:
 
 ```json
 {
+  "version": 1,
   "name": "my-theme",
+  "label": "My Theme",
+  "description": "Readable standalone pages.",
+  "preview": "preview.svg",
+  "tags": ["docs"],
+  "supportedBlocks": ["page", "hero", "card"],
   "css": "style.css",
   "js": "script.js",
   "shell": "shell.html",
-  "actions": ["toggle", "open", "close"],
-  "blocks": {
-    "page": "blocks/page.html",
-    "nav": "blocks/nav.html",
-    "hero": "blocks/hero.html",
-    "card": "blocks/card.html"
-  }
-}
-```
-
-All paths are relative to the theme directory.
-
-`actions` lists command actions that the theme JavaScript knows how to handle. It is only a declaration for warnings and editor diagnostics; MDS does not prescribe the handler implementation.
-
-### Block Sources
-
-`blocks` accepts three forms:
-
-```ts
-type ThemeBlocks =
-  | string
-  | string[]
-  | Record<string, string>;
-```
-
-Directory source:
-
-```json
-{
+  "actions": ["toggle", "lead.submit"],
   "blocks": "blocks"
 }
 ```
 
-This scans the directory and registers every `.html` file. A file without `<template data-block>` uses its filename as the block type:
+Rules:
 
-```txt
-blocks/
-  hero.html    -> hero
-  nav.html     -> nav
-  card.html    -> card
-```
+- Paths are relative POSIX paths inside the theme directory. Leading `./`, internal `.` segments, and repeated `/` separators are normalized away.
+- `version` is optional. When present, use `1`.
+- `theme.json` is reserved for the manifest and must not appear in `files`.
+- `actions` declares commands handled by theme JavaScript. It does not define application logic.
+- `actions` and `supportedBlocks` should be unique. Duplicates produce warnings and the first entry wins.
+- Generated HTML should use normal class names such as `page`, `hero`, and `card`. Themes should not add an `mds-` prefix unless they intentionally want one.
 
-Single-file source:
+## Block Templates
 
-```json
-{
-  "blocks": "blocks.html"
-}
-```
-
-This reads all `<template data-block="...">` declarations from one file:
+A block template maps a semantic MDS block to HTML:
 
 ```html
-<template data-block="hero">
-  <section{{ attrs }} class="hero">{{ children }}{{ slots }}</section>
-</template>
+<section{{ attrs }} class="{{ type }}">
+  {{ children }}
+</section>
+```
 
-<template data-block="nav">
-  <nav{{ attrs }} class="nav" aria-label="{{ name }}">{{ children }}</nav>
+Common variables:
+
+```txt
+{{ type }}      escaped block type
+{{ name }}      escaped block name
+{{ id }}        escaped block id value
+{{ attrs }}     generated attributes, currently an escaped id attribute
+{{ children }}  rendered child HTML
+{{ slots }}     rendered slot HTML
+{{ summary }}   escaped summary text for details-like blocks
+```
+
+Prefer `{{ attrs }}` for ids because it disappears when the block has no name.
+
+A file without `<template data-block>` uses its filename as the block type:
+
+```txt
+blocks/hero.html -> hero
+blocks/card.html -> card
+```
+
+A file can also define multiple aliases:
+
+```html
+<template data-block="note info warning">
+  <aside{{ attrs }} class="callout {{ type }}" role="note">
+    {{ children }}
+  </aside>
 </template>
 ```
 
-Multi-source form:
+`blocks` also accepts a single template file, multiple sources, or an explicit map:
 
 ```json
-{
-  "blocks": ["blocks", "overrides.html"]
-}
+{ "blocks": "blocks.html" }
 ```
 
-Sources are applied in order. Later sources override earlier block templates. This gives themes a simple base/override model without requiring a build step.
-
-Explicit mapping form:
+```json
+{ "blocks": ["blocks", "overrides.html"] }
+```
 
 ```json
 {
@@ -184,11 +153,11 @@ Explicit mapping form:
 }
 ```
 
-This is still useful when a theme needs a small number of aliases or wants to point one block to a specific file. It should not be required for ordinary themes.
+Later sources override earlier templates.
 
 ## Shell Template
 
-`shell.html` controls the full HTML document. CSS and JavaScript are embedded into the generated HTML, so the build output can be opened or published as a standalone file.
+`shell.html` controls the complete standalone HTML document:
 
 ```html
 <!doctype html>
@@ -206,7 +175,7 @@ This is still useful when a theme needs a small number of aliases or wants to po
 </html>
 ```
 
-Available shell variables:
+Shell variables:
 
 ```txt
 {{ title }}        escaped document title
@@ -217,61 +186,223 @@ Available shell variables:
 {{ scripts }}      generated script tags
 ```
 
-## Block Templates
+CSS and JavaScript are embedded into the generated HTML, so the final output can be opened or published as a standalone file.
 
-Block templates map MDS semantic blocks to HTML.
+## Package Themes
 
-```html
-<section{{ attrs }} class="{{ type }}">
-  {{ children }}
-</section>
-```
-
-Available block variables:
+Package-style themes are for developers who want TypeScript, JSX, local components, npm dependencies, CSS imports, or script bundling. The package is a development container; MDS still consumes the built artifact.
 
 ```txt
-{{ type }}      escaped block type
-{{ name }}      escaped block name
-{{ id }}        escaped block id value
-{{ attrs }}     generated attributes, currently an escaped id attribute
-{{ children }}  rendered child HTML
-{{ slots }}     rendered slot HTML
-{{ summary }}   escaped summary text for details-like blocks
+my-theme/
+  package.json
+  src/
+    theme.tsx
+    style.css
+    script.ts
+  dist/
+    theme/
+      theme.json
+      style.css
+      script.js
+      blocks/
+        hero.html
 ```
 
-Theme authors should prefer `{{ attrs }}` for block identifiers, because it omits the attribute entirely when the block has no name.
+Declare the package theme in `package.json`:
 
-When a block source file contains one or more `<template data-block>` elements, each template declares the block types it handles:
-
-```html
-<template data-block="note info warning danger success">
-  <aside{{ attrs }} class="callout {{ type }}" role="note">
-    {{ children }}
-  </aside>
-</template>
+```json
+{
+  "type": "module",
+  "mdsTheme": {
+    "source": "./src/theme.tsx",
+    "dist": "./dist/theme",
+    "pipeline": {
+      "css": "tailwind"
+    },
+    "assets": {
+      "css": "./src/style.css",
+      "js": "./src/script.ts",
+      "shell": "./src/shell.html",
+      "preview": "./src/preview.svg"
+    }
+  }
+}
 ```
 
-The value of `data-block` is a whitespace-separated list. This lets one template cover related blocks without repeating entries in `theme.json`.
+Build, watch, inspect, and pack:
 
-If a source file does not contain `<template data-block>`, the whole file is treated as the template for the block named by the file:
+```sh
+mds theme build ./themes/clarity
+mds theme watch ./themes/clarity
+mds theme inspect ./themes/clarity
+mds theme pack ./themes/clarity ./dist/clarity-theme
+```
+
+The dedicated builder binary exposes the same commands:
+
+```sh
+mds-theme build ./themes/clarity
+mds-theme inspect ./themes/clarity
+```
+
+Package naming conventions for shareable themes:
+
+- Public npm themes should use `mds-theme-*`, for example `mds-theme-clean`.
+- Scoped npm themes should use `@scope/mds-theme-*`, for example `@acme/mds-theme-clean`.
+- Local folders under `themes/` can use any readable directory name.
+
+`inspect` reads the built artifact without executing package source. It prints metadata, runtime files, development files, block coverage, assets, actions, and validation diagnostics.
+Use `--json` when another tool needs the same build, inspection, or packing contract:
+
+```sh
+mds theme build ./themes/clarity --json
+mds-theme build ./themes/clarity --json
+mds theme inspect ./themes/clarity --json
+mds-theme inspect ./themes/clarity --json
+mds theme pack ./themes/clarity ./dist/clarity-theme --json
+mds-theme pack ./themes/clarity ./dist/clarity-theme --json
+```
+
+Successful JSON builds print the `PackageThemeBuildResult` object. If building fails, JSON builds print `{ "diagnostics": [...] }` and exits with code `1`.
+
+Successful JSON inspection prints the `ThemeArtifactInspection` object. If the artifact cannot be resolved or read, JSON inspection prints `{ "diagnostics": [...] }` and exits with code `1`.
+
+`pack` writes a clean artifact directory for sharing. It strips package source files and development metadata such as `.mds-theme-build.json`.
+Successful JSON packing prints the `ThemeArtifactPackResult` object. If packing fails, JSON packing prints `{ "diagnostics": [...] }` and exits with code `1`.
+
+### CSS Pipeline
+
+Package themes use esbuild for CSS by default. Set `mdsTheme.pipeline.css` to `tailwind` when the CSS entry should run through Tailwind v4's PostCSS plugin.
+
+```json
+{
+  "mdsTheme": {
+    "source": "./src/theme.tsx",
+    "pipeline": {
+      "css": "tailwind"
+    },
+    "assets": {
+      "css": "./src/style.css"
+    }
+  }
+}
+```
+
+```css
+@import "tailwindcss";
+@source "./theme.tsx";
+@source "./components/**/*.tsx";
+```
+
+Tailwind runs only during theme build. The artifact still contains plain CSS referenced by `theme.json`.
+
+## JSX Authoring
+
+JSX is optional. It is a source-authoring layer that generates the same file-based theme artifact.
+
+```tsx
+/** @jsxImportSource @mds/theme-loader */
+import { Content, Root, Slot, defineJsxTheme } from "@mds/theme-loader/jsx";
+
+export default defineJsxTheme({
+  name: "jsx-demo",
+  css: ".hero { color: red; }",
+  actions: ["toggle"],
+  blocks: {
+    hero: (block) => (
+      <Root block={block} className="hero">
+        <Slot block={block} name="title" />
+        <Content block={block} />
+      </Root>
+    )
+  }
+});
+```
+
+Use `Root` for the block root element. Use `Content`, `Slots`, and `Slot` for body and slot placeholders.
+
+Repository examples:
+
+- `themes/atelier`: in-place JSX-authored artifact. Run `pnpm build:theme:atelier`.
+- `themes/clarity`: package-style theme with source under `src/` and artifact under `dist/theme`. Run `pnpm build:theme:clarity`.
+- `themes/studio`: React SDK package theme with Tailwind v4 pipeline and shadcn-style local components. Run `pnpm build:theme:studio`.
+
+## HTML SDK Authoring
+
+`@mds/theme-sdk-html` is a lightweight adapter for package themes that prefer tagged HTML templates over JSX. It still produces the same `theme.json` and `blocks/*.html` artifact.
+
+```ts
+import { defineHtmlTheme, html } from "@mds/theme-sdk-html";
+
+export default defineHtmlTheme({
+  name: "html-demo",
+  css: ".hero { color: red; }",
+  blocks: {
+    hero: (block) => html`<section${block.attrs} class="hero">${block.children}</section>`
+  }
+});
+```
+
+Primitive interpolations are escaped by default. Use `unsafeHtml(value)` only for author-controlled HTML fragments or MDS placeholders that are already represented as raw values.
+
+## React SDK Authoring
+
+`@mds/theme-sdk-react` is for theme developers who want normal React component composition or shadcn-style local components. React renders at build time to MDS block templates; the final artifact does not ship React unless your own theme JavaScript imports it.
+
+```tsx
+import React from "react";
+import { Content, Root, defineReactTheme } from "@mds/theme-sdk-react";
+import { Button } from "./components/Button";
+
+export default defineReactTheme({
+  name: "react-demo",
+  blocks: {
+    hero: (block) => (
+      <Root block={block} className="rounded-xl border bg-card text-card-foreground">
+        <Button className="bg-primary px-4 py-2 text-primary-foreground">
+          <Content block={block} />
+        </Button>
+      </Root>
+    )
+  }
+});
+```
+
+For the current builder path, TSX source should import `React` explicitly. Component files can be copied from shadcn/ui or written locally, and Tailwind classes should be included through the Tailwind CSS pipeline above.
+
+## Diagnostics
+
+Theme loaders and builder tools report structured diagnostics with severity, code, message, field, path, and block when available.
+`inspect --json` keeps those diagnostics machine-readable: successful inspections include them on the inspection object's `diagnostics` field, while resolution or read failures return a top-level `diagnostics` array.
+
+Common examples:
+
+- `missing-theme-manifest`: package artifact has not been built yet.
+- `invalid-theme-manifest`: `theme.json` is malformed or has invalid fields.
+- `missing-theme-file`: a referenced CSS, JS, shell, preview, or block file is missing.
+- `invalid-theme-path`: an artifact path is absolute, non-POSIX, empty, or escapes the theme directory.
+- `reserved-theme-file-reference`: a CSS, JS, head, shell, preview, or block source points at `theme.json`.
+- `duplicate-theme-asset-reference`: the same normalized CSS, JS, or head file is referenced more than once.
+- `duplicate-theme-block-template`: more than one template handles the same block.
+
+CLI output includes location details when available:
 
 ```txt
-blocks/card.html -> card
-blocks/grid-3.html -> grid-3
+ERROR missing-theme-file: Theme css file is missing: missing.css. (field=css, path=missing.css)
 ```
 
-`nav` blocks can be rendered with the same simple template:
+Valid themes can still produce warnings. Warnings do not block rendering, but they help keep artifacts portable and predictable.
 
-```html
-<nav{{ attrs }} class="nav" aria-label="{{ name }}">{{ children }}</nav>
+## Runtime Contract
+
+MDS rendering never imports package source. Editor, CLI, and renderer load the same built artifact shape:
+
+```txt
+theme.json
+style.css
+script.js
+shell.html
+blocks/*.html
 ```
 
-When a standalone action link inside `nav` points to a local block id, for example `[Contact -> #contact]`, the renderer outputs a normal anchor plus `data-nav-target="contact"` and a visible `.nav-target` span. Themes can style those selectors without parsing MDS syntax.
-
-## HTML Class Names
-
-Generated HTML should use normal class names such as `page`, `hero`, `card`, and `details`. Do not add an `mds-` prefix unless a specific theme intentionally wants one.
-
-## Developer Extension Point
-
-Developers can still pass a programmatic `HtmlTheme` object to `@mds/renderer-html`. The directory-based theme format is the default author-facing customization path; the registry API exists for CLIs, editor integrations, plugins, and advanced renderers that need to list or switch themes.
+Development metadata such as `.mds-theme-build.json` may exist for inspection and rebuild tooling, but runtime rendering ignores it and packed themes omit it.

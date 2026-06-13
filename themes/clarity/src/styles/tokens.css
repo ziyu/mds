@@ -1,0 +1,14 @@
+:root {
+  color-scheme: light;
+  --bg: #f8f7f2;
+  --ink: #1d1d1b;
+  --muted: #696761;
+  --surface: #fffdfa;
+  --line: #ddd8cc;
+  --accent: #236b5e;
+  --accent-soft: #e0eee9;
+  --warn: #8a5538;
+  --radius: 8px;
+  --measure: 64rem;
+  --font: Inter, "Avenir Next", "Segoe UI", system-ui, sans-serif;
+}

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" role="img" aria-label="MDS Studio theme preview">
+  <rect width="720" height="420" fill="#faf7f0"/>
+  <path d="M0 0h720v420H0z" fill="url(#grid)" opacity=".75"/>
+  <rect x="70" y="58" width="580" height="304" rx="26" fill="#fff" stroke="#ded7ca"/>
+  <rect x="104" y="94" width="96" height="25" rx="8" fill="#e9f3ee" stroke="#cbded4"/>
+  <rect x="104" y="148" width="282" height="25" rx="8" fill="#1f2823"/>
+  <rect x="104" y="185" width="230" height="25" rx="8" fill="#1f2823" opacity=".92"/>
+  <rect x="104" y="236" width="152" height="18" rx="9" fill="#6f756f"/>
+  <rect x="104" y="292" width="118" height="38" rx="11" fill="#407c65"/>
+  <rect x="236" y="292" width="118" height="38" rx="11" fill="#f2eee6" stroke="#ded7ca"/>
+  <rect x="414" y="106" width="168" height="188" rx="18" fill="#f2eee6" stroke="#ded7ca"/>
+  <circle cx="454" cy="148" r="20" fill="#dbeae3"/>
+  <rect x="436" y="188" width="108" height="12" rx="6" fill="#6f756f"/>
+  <rect x="436" y="214" width="84" height="12" rx="6" fill="#9aa097"/>
+  <defs>
+    <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M36 0H0v36" fill="none" stroke="#d8d1c4" stroke-width="1"/>
+    </pattern>
+  </defs>
+</svg>

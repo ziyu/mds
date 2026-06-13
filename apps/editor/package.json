@@ -14,6 +14,7 @@
     "@mds/ast": "workspace:*",
     "@mds/parser": "workspace:*",
     "@mds/renderer-html": "workspace:*",
+    "@mds/theme-builder": "workspace:*",
     "@mds/theme-loader": "workspace:*",
     "codemirror": "^6.0.1",
     "react": "^19.1.0",

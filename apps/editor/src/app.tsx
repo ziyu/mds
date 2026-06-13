@@ -1,19 +1,48 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Diagnostic } from "@mds/ast";
 import { parseMds } from "@mds/parser";
 import { renderHtmlResult, type HtmlTheme } from "@mds/renderer-html";
-import type { ThemeSummary } from "@mds/theme-loader/browser";
+import { ThemeValidationError, type ThemeSummary } from "@mds/theme-loader/browser";
 import { DiagnosticsPane } from "./diagnostics-pane.js";
+import {
+  splitRenderDiagnostics,
+  withDiagnosticsSource,
+  type EditorDiagnostic
+} from "./editor-diagnostics.js";
 import { EditorPane } from "./editor-pane.js";
 import { examples } from "./examples.js";
 import { PreviewPane, type PreviewSize } from "./preview-pane.js";
-import { themeProvider } from "./theme-provider.js";
+import {
+  themeDiagnosticToDiagnostic,
+  themeErrorToDiagnostic,
+  unknownThemeRefMessage,
+  unknownThemeRefToDiagnostic
+} from "./theme-diagnostics.js";
+import {
+  createThemeBuildSummary,
+  createThemeInspectionSummary,
+  formatThemeBuildOutput,
+  formatThemeBuildSummary,
+  formatThemeInspectionOutput,
+  formatThemeInspectionSummary,
+  type ThemeBuildSummary,
+  type ThemeInspectionSummary
+} from "./theme-build-status.js";
+import {
+  buildThemePackageWithDiagnostics,
+  inspectThemeWithDiagnostics,
+  themeProvider
+} from "./theme-provider.js";
+import { isThemeBuildHmrPayload, type ThemeBuildHmrPayload } from "./theme-build-contract.js";
+import {
+  themeBuildErrorToEditorDiagnostics,
+  themeBuildProviderDiagnosticsToEditorDiagnostics
+} from "./theme-build-diagnostics.js";
 
 const initialExample = examples[0]!;
 
 interface RenderState {
   html: string;
-  diagnostics: Diagnostic[];
+  diagnostics: EditorDiagnostic[];
   error?: string;
 }
 
@@ -25,6 +54,12 @@ export function App() {
   const [previewThemeRef, setPreviewThemeRef] = useState("default");
   const [theme, setTheme] = useState<HtmlTheme | undefined>();
   const [themeError, setThemeError] = useState<string | undefined>();
+  const [themeDiagnostics, setThemeDiagnostics] = useState<EditorDiagnostic[]>([]);
+  const [themeReloadToken, setThemeReloadToken] = useState(0);
+  const [themeBuildState, setThemeBuildState] = useState<"idle" | "building">("idle");
+  const [themeBuildSummary, setThemeBuildSummary] = useState<ThemeBuildSummary | undefined>();
+  const [themeInspectionState, setThemeInspectionState] = useState<"idle" | "inspecting">("idle");
+  const [themeInspectionSummary, setThemeInspectionSummary] = useState<ThemeInspectionSummary | undefined>();
   const [previewNotice, setPreviewNotice] = useState<string | undefined>();
 
   const frontmatterThemeRef = useMemo(() => readThemeRef(source), [source]);
@@ -79,58 +114,109 @@ export function App() {
   }, [previewNotice]);
 
   useEffect(() => {
+    if (import.meta.hot === undefined) {
+      return;
+    }
+
+    const handleThemeBuild = (payload: unknown) => {
+      if (!isThemeBuildHmrPayload(payload)) {
+        setThemeBuildSummary(undefined);
+        setPreviewNotice("Invalid theme build update");
+        return;
+      }
+
+      if (payload.ref !== effectiveThemeRef) {
+        return;
+      }
+
+      if (payload.status === "success") {
+        setThemeDiagnostics(payload.result.diagnostics.map(themeDiagnosticToDiagnostic));
+        setThemeBuildSummary(createThemeBuildSummary(payload.ref, payload.result));
+        setThemeInspectionSummary(undefined);
+        setThemeError(undefined);
+        setThemeReloadToken((token) => token + 1);
+        setPreviewNotice(`Theme rebuilt: ${payload.ref}`);
+        return;
+      }
+
+      setThemeBuildSummary(undefined);
+      setThemeDiagnostics(themeBuildProviderDiagnosticsToEditorDiagnostics(payload.diagnostics));
+      setPreviewNotice(`Theme rebuild failed: ${payload.ref}`);
+    };
+
+    import.meta.hot.on("mds-theme-build", handleThemeBuild);
+    return () => {
+      import.meta.hot?.off("mds-theme-build", handleThemeBuild);
+    };
+  }, [effectiveThemeRef]);
+
+  useEffect(() => {
     let cancelled = false;
     const shouldValidateThemeRef = hasThemeList;
 
-    if (shouldValidateThemeRef && !knownThemeRefs.has(effectiveThemeRef)) {
-      setThemeError(`Unknown theme: ${effectiveThemeRef}`);
+    if (shouldValidateThemeRef && !knownThemeRefs.has(effectiveThemeRef) && !canTryUnlistedThemeRef(effectiveThemeRef)) {
+      const message = unknownThemeRefMessage(effectiveThemeRef);
+      setTheme(undefined);
+      setThemeError(message);
+      setThemeDiagnostics([unknownThemeRefToDiagnostic(effectiveThemeRef)]);
       return () => {
         cancelled = true;
       };
     }
 
     setThemeError(undefined);
+    setTheme(undefined);
+    setThemeDiagnostics([]);
 
     themeProvider
-      .loadTheme(effectiveThemeRef)
-      .then((loadedTheme) => {
+      .loadThemeWithDiagnostics(effectiveThemeRef)
+      .then((result) => {
         if (!cancelled) {
-          setTheme(loadedTheme);
+          setTheme(result.theme);
+          setThemeDiagnostics(result.diagnostics.map(themeDiagnosticToDiagnostic));
         }
       })
       .catch((error: unknown) => {
         if (!cancelled) {
-          setThemeError(error instanceof Error ? error.message : String(error));
+          const message = error instanceof Error ? error.message : String(error);
+          setTheme(undefined);
+          setThemeError(message);
+          setThemeDiagnostics(themeDiagnosticsFromError(error, message));
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [effectiveThemeRef, hasThemeList, knownThemeRefs]);
+  }, [effectiveThemeRef, hasThemeList, knownThemeRefs, themeReloadToken]);
 
   const document = useMemo(() => parseMds(source), [source]);
   const renderState = useMemo<RenderState>(() => {
     try {
       if (theme === undefined) {
         return {
-          html: renderLoadingDocument(),
-          diagnostics: document.diagnostics
+          html: themeError === undefined ? renderLoadingDocument() : renderErrorDocument(themeError),
+          diagnostics: [...themeDiagnostics, ...withDiagnosticsSource(document.diagnostics, "parser")]
         };
       }
 
-      return renderHtmlResult(document, {
+      const result = renderHtmlResult(document, {
         theme
       });
+
+      return {
+        ...result,
+        diagnostics: [...themeDiagnostics, ...splitRenderDiagnostics(result.diagnostics, document.diagnostics)]
+      };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       return {
         html: renderErrorDocument(message),
-        diagnostics: document.diagnostics,
+        diagnostics: [...themeDiagnostics, ...withDiagnosticsSource(document.diagnostics, "parser")],
         error: message
       };
     }
-  }, [document, theme]);
+  }, [document, theme, themeDiagnostics, themeError]);
 
   const selectedExample = examples.find((example) => example.id === exampleId) ?? initialExample;
 
@@ -146,7 +232,51 @@ export function App() {
 
   const handleThemeChange = useCallback((nextThemeRef: string) => {
     setPreviewThemeRef(nextThemeRef);
+    setThemeBuildSummary(undefined);
+    setThemeInspectionSummary(undefined);
   }, []);
+
+  const handleBuildTheme = useCallback(async () => {
+    setThemeBuildState("building");
+    setPreviewNotice(`Building theme: ${effectiveThemeRef}`);
+
+    try {
+      const result = await buildThemePackageWithDiagnostics(effectiveThemeRef);
+      setThemeDiagnostics(result.diagnostics.map(themeDiagnosticToDiagnostic));
+      setThemeBuildSummary(createThemeBuildSummary(effectiveThemeRef, result));
+      setThemeInspectionSummary(undefined);
+      setThemeError(undefined);
+      setThemeReloadToken((token) => token + 1);
+      setPreviewNotice(`Theme built: ${effectiveThemeRef}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setPreviewNotice(`Theme build failed: ${effectiveThemeRef}`);
+      setThemeBuildSummary(undefined);
+      setThemeDiagnostics(themeBuildErrorToEditorDiagnostics(error, message));
+    } finally {
+      setThemeBuildState("idle");
+    }
+  }, [effectiveThemeRef]);
+
+  const handleInspectTheme = useCallback(async () => {
+    setThemeInspectionState("inspecting");
+    setPreviewNotice(`Inspecting theme: ${effectiveThemeRef}`);
+
+    try {
+      const result = await inspectThemeWithDiagnostics(effectiveThemeRef);
+      setThemeDiagnostics(result.diagnostics.map(themeDiagnosticToDiagnostic));
+      setThemeInspectionSummary(createThemeInspectionSummary(effectiveThemeRef, result));
+      setThemeError(undefined);
+      setPreviewNotice(`Theme inspected: ${effectiveThemeRef}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setPreviewNotice(`Theme inspection failed: ${effectiveThemeRef}`);
+      setThemeInspectionSummary(undefined);
+      setThemeDiagnostics(themeBuildErrorToEditorDiagnostics(error, message));
+    } finally {
+      setThemeInspectionState("idle");
+    }
+  }, [effectiveThemeRef]);
 
   const handleCopyHtml = useCallback(async () => {
     await navigator.clipboard.writeText(renderState.html);
@@ -200,6 +330,12 @@ export function App() {
           ))}
         </div>
         <div className="toolbar-actions">
+          <button type="button" onClick={handleBuildTheme} disabled={themeBuildState === "building"}>
+            {themeBuildState === "building" ? "Building..." : "Build Theme"}
+          </button>
+          <button type="button" onClick={handleInspectTheme} disabled={themeInspectionState === "inspecting"}>
+            {themeInspectionState === "inspecting" ? "Inspecting..." : "Inspect Theme"}
+          </button>
           <button type="button" onClick={handleCopyHtml}>
             Copy HTML
           </button>
@@ -208,6 +344,22 @@ export function App() {
           </button>
         </div>
       </header>
+
+      {themeBuildSummary?.ref === effectiveThemeRef ? (
+        <div className="theme-build-status" role="status">
+          <strong>Last build</strong>
+          <span>{formatThemeBuildSummary(themeBuildSummary)}</span>
+          <code>{formatThemeBuildOutput(themeBuildSummary)}</code>
+        </div>
+      ) : null}
+
+      {themeInspectionSummary?.ref === effectiveThemeRef ? (
+        <div className="theme-build-status" role="status">
+          <strong>Last inspect</strong>
+          <span>{formatThemeInspectionSummary(themeInspectionSummary)}</span>
+          <code>{formatThemeInspectionOutput(themeInspectionSummary)}</code>
+        </div>
+      ) : null}
 
       {themeError === undefined ? null : <div className="theme-error">{themeError}</div>}
       {renderState.error === undefined ? null : <div className="theme-error">{renderState.error}</div>}
@@ -273,6 +425,18 @@ function isPreviewMissingActionMessage(value: unknown): value is { type: "mds-pr
     "action" in value &&
     typeof value.action === "string"
   );
+}
+
+function themeDiagnosticsFromError(error: unknown, message: string): EditorDiagnostic[] {
+  if (error instanceof ThemeValidationError) {
+    return error.diagnostics.map(themeDiagnosticToDiagnostic);
+  }
+
+  return [themeErrorToDiagnostic(message)];
+}
+
+function canTryUnlistedThemeRef(ref: string): boolean {
+  return ref.startsWith("@");
 }
 
 function readThemeRef(source: string): string | undefined {

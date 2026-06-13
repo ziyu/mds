@@ -1,5 +1,9 @@
 node_modules/
+packages/*/node_modules/
 packages/*/dist/
+apps/*/dist/
+themes/*/dist/
+.tmp/
 coverage/
 .vitest/
 .DS_Store
