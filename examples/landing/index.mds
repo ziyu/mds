@@ -1,11 +1,10 @@
 ---
 title: MDS Landing
 description: A polished standalone page generated from semantic Markdown.
-theme: default
 layout: landing
 ---
 
-::: hero
+::: hero motion="fade-up" delay=80 duration=760
 --- title
 # MDS turns Markdown into pages
 
@@ -22,7 +21,7 @@ Write content. Choose a theme. Ship standalone HTML.
 :::
 :::
 
-::: cards
+::: cards motion="fade-up" delay=180 stagger=90
 
 ::: card
 ## Simple authoring
@@ -49,7 +48,7 @@ The final artifact is plain HTML with embedded CSS and JavaScript.
 Markdown is simple. HTML is rich. MDS keeps authoring simple while compiling to HTML.
 
 ::: warning
-Authors should not write `key=value` attributes in content. Themes decide presentation.
+Authors usually write semantic blocks first. Advanced theme options can use block attrs.
 :::
 
 --- right

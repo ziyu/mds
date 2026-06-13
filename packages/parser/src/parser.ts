@@ -39,6 +39,13 @@ export interface ParseOptions {
 
 interface ParseContext {
   diagnostics: Diagnostic[];
+  usedBlockIds: Map<string, number>;
+}
+
+interface ParsedBlockHeader {
+  blockType: string;
+  name?: string;
+  attrs: Record<string, string | number | boolean>;
 }
 
 interface ParseResult {
@@ -62,10 +69,12 @@ export function parseMds(source: string, _options: ParseOptions = {}): DocumentN
   const normalizedSource = source.replace(/\r\n?/g, "\n");
   const parsed = parseFrontmatter(normalizedSource);
   const context: ParseContext = {
-    diagnostics: []
+    diagnostics: [],
+    usedBlockIds: new Map()
   };
   const lines = parsed.content.split("\n");
   const result = parseLines(lines, 0, parsed.contentStartLine, context);
+  resolveBlockIds(result.children, context);
 
   return {
     type: "document",
@@ -203,11 +212,10 @@ function parseBlock(
   context: ParseContext
 ): { node: MdsNode; nextIndex: number } {
   const header = (lines[startIndex] ?? "").match(blockOpenPattern)?.[1]?.trim() ?? "";
-  const parts = header.split(/\s+/).filter(Boolean);
-  const blockType = parts[0] ?? "";
-  const name = parts[1];
+  const parsedHeader = parseBlockHeader(header, startIndex, baseLine, context);
+  const { blockType, name, attrs } = parsedHeader;
 
-  validateBlockHeader(header, parts, startIndex, baseLine, context);
+  validateBlockHeader(parsedHeader, startIndex, baseLine, context);
 
   if (blockType === "data") {
     return parseDataBlock(lines, startIndex, baseLine, name ?? "", context);
@@ -257,6 +265,7 @@ function parseBlock(
     children: inner.children,
     position,
     ...(name === undefined ? {} : { name }),
+    ...(Object.keys(attrs).length === 0 ? {} : { attrs }),
     ...(slots.length === 0 ? {} : { slots })
   };
 
@@ -503,16 +512,65 @@ function parseFormField(
   };
 }
 
-function validateBlockHeader(
+function parseBlockHeader(
   header: string,
-  parts: string[],
+  startIndex: number,
+  baseLine: number,
+  context: ParseContext
+): ParsedBlockHeader {
+  const tokens = tokenizeBlockHeader(header, startIndex, baseLine, context);
+  const blockType = tokens[0] ?? "";
+  const attrs: Record<string, string | number | boolean> = {};
+  let name: string | undefined;
+  let attrStart = 1;
+
+  if (/[{}]/.test(header)) {
+    context.diagnostics.push({
+      code: "curly-block-attributes",
+      message: "MDS block attributes use key=value tokens, not curly braces.",
+      severity: "error",
+      position: lineRange(baseLine + startIndex, baseLine + startIndex + 1)
+    });
+  }
+
+  const firstTailToken = tokens[1];
+  if (firstTailToken !== undefined && !firstTailToken.includes("=")) {
+    name = firstTailToken;
+    attrStart = 2;
+  }
+
+  for (const token of tokens.slice(attrStart)) {
+    const attr = parseBlockAttributeToken(token, startIndex, baseLine, context);
+    if (attr === undefined) {
+      continue;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(attrs, attr.name)) {
+      context.diagnostics.push({
+        code: "duplicate-block-attribute",
+        message: `Duplicate block attribute "${attr.name}". The last value wins.`,
+        severity: "warning",
+        position: lineRange(baseLine + startIndex, baseLine + startIndex + 1)
+      });
+    }
+
+    attrs[attr.name] = attr.value;
+  }
+
+  return {
+    blockType,
+    ...(name === undefined ? {} : { name }),
+    attrs
+  };
+}
+
+function validateBlockHeader(
+  header: ParsedBlockHeader,
   startIndex: number,
   baseLine: number,
   context: ParseContext
 ): void {
-  const blockType = parts[0] ?? "";
-  const name = parts[1];
-  const hasForbiddenAttributes = /[={}]/.test(header) || parts.length > 2;
+  const { blockType, name } = header;
 
   if (!identifierPattern.test(blockType)) {
     context.diagnostics.push({
@@ -526,16 +584,7 @@ function validateBlockHeader(
   if (name !== undefined && !identifierPattern.test(name)) {
     context.diagnostics.push({
       code: "invalid-block-name",
-      message: "MDS block name must be a single word.",
-      severity: "error",
-      position: lineRange(baseLine + startIndex, baseLine + startIndex + 1)
-    });
-  }
-
-  if (hasForbiddenAttributes) {
-    context.diagnostics.push({
-      code: "forbidden-block-attributes",
-      message: "MDS blocks do not support attributes, key=value pairs, or extra header tokens.",
+      message: "MDS block name must be a simple id token without spaces.",
       severity: "error",
       position: lineRange(baseLine + startIndex, baseLine + startIndex + 1)
     });
@@ -549,4 +598,207 @@ function validateBlockHeader(
       position: lineRange(baseLine + startIndex, baseLine + startIndex + 1)
     });
   }
+}
+
+function tokenizeBlockHeader(
+  header: string,
+  startIndex: number,
+  baseLine: number,
+  context: ParseContext
+): string[] {
+  const tokens: string[] = [];
+  let current = "";
+  let quote: '"' | "'" | undefined;
+
+  for (let index = 0; index < header.length; index += 1) {
+    const char = header[index] ?? "";
+
+    if (quote !== undefined) {
+      current += char;
+      if (char === quote) {
+        quote = undefined;
+      }
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      current += char;
+      quote = char;
+      continue;
+    }
+
+    if (/\s/.test(char)) {
+      if (current.length > 0) {
+        tokens.push(current);
+        current = "";
+      }
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (current.length > 0) {
+    tokens.push(current);
+  }
+
+  if (quote !== undefined) {
+    context.diagnostics.push({
+      code: "unterminated-block-attribute",
+      message: "Block attribute value is missing a closing quote.",
+      severity: "error",
+      position: lineRange(baseLine + startIndex, baseLine + startIndex + 1)
+    });
+  }
+
+  return tokens;
+}
+
+function parseBlockAttributeToken(
+  token: string,
+  startIndex: number,
+  baseLine: number,
+  context: ParseContext
+): { name: string; value: string | number | boolean } | undefined {
+  const equalsIndex = token.indexOf("=");
+  const name = equalsIndex === -1 ? token : token.slice(0, equalsIndex);
+  const rawValue = equalsIndex === -1 ? undefined : token.slice(equalsIndex + 1);
+
+  if (!/^[A-Za-z][A-Za-z0-9_:-]*$/.test(name)) {
+    context.diagnostics.push({
+      code: "invalid-block-attribute",
+      message: `Invalid block attribute "${name}".`,
+      severity: "error",
+      position: lineRange(baseLine + startIndex, baseLine + startIndex + 1)
+    });
+    return undefined;
+  }
+
+  const value = rawValue === undefined ? true : normalizeBlockAttributeValue(rawValue);
+  if (isUnsafeBlockAttribute(name, value)) {
+    context.diagnostics.push({
+      code: "unsafe-block-attribute",
+      message: `Unsafe block attribute "${name}" will not be rendered as executable behavior.`,
+      severity: "warning",
+      position: lineRange(baseLine + startIndex, baseLine + startIndex + 1)
+    });
+  }
+
+  return {
+    name,
+    value
+  };
+}
+
+function normalizeBlockAttributeValue(value: string): string | number | boolean {
+  const unquoted = unquoteValue(value);
+
+  if (unquoted === "true") {
+    return true;
+  }
+
+  if (unquoted === "false") {
+    return false;
+  }
+
+  if (/^-?(?:0|[1-9]\d*)(?:\.\d+)?$/.test(unquoted)) {
+    return Number(unquoted);
+  }
+
+  return unquoted;
+}
+
+function isUnsafeBlockAttribute(name: string, value: string | number | boolean): boolean {
+  if (/^on/i.test(name)) {
+    return true;
+  }
+
+  return typeof value === "string" && value.trim().toLowerCase().startsWith("javascript:");
+}
+
+function resolveBlockIds(children: MdsNode[], context: ParseContext): void {
+  for (const child of children) {
+    if (child.type === "block") {
+      resolveBlockId(child, context);
+      resolveBlockIds(child.children, context);
+    } else if (child.type === "slot" || child.type === "conditionBlock" || child.type === "eachBlock" || child.type === "dataBlock") {
+      resolveBlockIds(child.children, context);
+    }
+  }
+}
+
+function resolveBlockId(block: MdsBlockNode, context: ParseContext): void {
+  if (block.name !== undefined) {
+    block.id = block.name;
+    if ((context.usedBlockIds.get(block.id) ?? 0) > 0) {
+      context.diagnostics.push({
+        code: "duplicate-block-id",
+        message: `Duplicate block id "${block.id}".`,
+        severity: "warning",
+        ...(block.position === undefined ? {} : { position: block.position })
+      });
+    }
+    context.usedBlockIds.set(block.id, (context.usedBlockIds.get(block.id) ?? 0) + 1);
+    return;
+  }
+
+  const title = findBlockTitle(block);
+  if (title === undefined) {
+    return;
+  }
+
+  const slug = slugify(title);
+  if (slug.length === 0) {
+    return;
+  }
+
+  block.id = dedupeGeneratedBlockId(slug, context.usedBlockIds);
+}
+
+function dedupeGeneratedBlockId(slug: string, usedIds: Map<string, number>): string {
+  const previousCount = usedIds.get(slug) ?? 0;
+  if (previousCount === 0) {
+    usedIds.set(slug, 1);
+    return slug;
+  }
+
+  const nextCount = previousCount + 1;
+  usedIds.set(slug, nextCount);
+  return `${slug}-${nextCount}`;
+}
+
+function findBlockTitle(block: MdsBlockNode): string | undefined {
+  const titleSlot = (block.slots ?? []).find((slot) => slot.name === "title");
+  const titleFromSlot = titleSlot === undefined ? undefined : findFirstMarkdownHeading(titleSlot.children);
+  return titleFromSlot ?? findFirstMarkdownHeading(block.children.filter((child) => child.type !== "slot"));
+}
+
+function findFirstMarkdownHeading(children: MdsNode[]): string | undefined {
+  for (const child of children) {
+    if (child.type !== "markdown") {
+      continue;
+    }
+
+    const heading = child.value.match(/^\s{0,3}#{1,6}\s+(.+?)\s*#*\s*$/m);
+    if (heading !== null) {
+      return heading[1];
+    }
+  }
+
+  return undefined;
+}
+
+function slugify(value: string): string {
+  return value
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/<[^>]+>/g, "")
+    .replace(/[`*_~]/g, "")
+    .normalize("NFKC")
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}\s_-]+/gu, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 }

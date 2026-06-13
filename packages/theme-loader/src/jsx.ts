@@ -11,9 +11,11 @@ export interface ThemeTemplateProps {
   name: string;
   id: string;
   attrs: RawHtml;
+  blockAttrs: Record<string, string | number | boolean>;
   children: RawHtml;
   slots: RawHtml;
   summary: string;
+  attr: (name: string, fallback?: string) => string;
   slot: (name: string) => RawHtml;
 }
 
@@ -201,9 +203,11 @@ function createTemplateProps(): ThemeTemplateProps {
     name: "{{ name }}",
     id: "{{ id }}",
     attrs: raw("{{ attrs }}"),
+    blockAttrs: {},
     children: raw("{{ children }}"),
     slots: raw("{{ slots }}"),
     summary: "{{ summary }}",
+    attr: (name: string, fallback = "") => (fallback === "" ? `{{ attr:${name} }}` : `{{ attr:${name}:${fallback} }}`),
     slot: (name: string) => raw(`{{ slot:${name} }}`)
   };
 }

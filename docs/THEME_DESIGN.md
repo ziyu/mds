@@ -112,6 +112,10 @@ Authoring helpers such as JSX utilities, future React/Preact adapters, and typed
 
    Links, anchors, forms, details, dialogs, and buttons should use native HTML semantics first. Theme JavaScript is progressive enhancement.
 
+8. **Block is the extension boundary**
+
+   MDS should not grow separate extension systems for components, animation, layout variants, and visual effects. Custom components are blocks. Motion primitives are blocks. Advanced configuration is carried by optional block attributes and interpreted by the selected theme.
+
 ## File Responsibilities
 
 | File | Required | Runtime Role |
@@ -172,6 +176,122 @@ const source = await readThemeRef("@acme/mds-theme-clean");
 
 Relative `roots` are resolved from `baseDirectory`; when omitted, the default root is `themes` under `baseDirectory`.
 Development integrations that need to rebuild a package from an already resolved artifact should use `findThemePackageDirectoryForArtifact()` from the same Node loader boundary instead of reading `package.json#mdsTheme.dist` themselves.
+
+## Block Extension Model
+
+The long-term AST contract treats every semantic component as a block:
+
+```ts
+interface MdsBlock {
+  type: string;
+  name?: string;
+  id?: string;
+  attrs: Record<string, string | number | boolean>;
+  slots: SlotNode[];
+  children: Node[];
+}
+```
+
+The same shape covers built-in semantic blocks, theme-defined components, and motion wrappers:
+
+```mds
+::: hero landing motion="fade-up" tone="dark"
+# Launch faster
+:::
+
+::: pricing-plan pro highlighted price="$29"
+## Pro
+:::
+
+::: motion preset="fade-up" trigger="view" stagger=80
+::: card
+## One
+:::
+:::
+```
+
+MDS core responsibilities:
+
+- Parse block type, optional name, slots, children, and optional attrs.
+- Resolve a stable block id from the explicit name, or from the first heading/title slot when no name is provided.
+- Preserve unknown block types in the AST.
+- Diagnose malformed or unsafe attributes.
+- Render safe fallback HTML when the theme lacks a template.
+
+Theme responsibilities:
+
+- Decide which blocks exist.
+- Decide which attrs are meaningful.
+- Implement component structure, CSS, animation, and optional progressive-enhancement JavaScript.
+- Keep final output standalone HTML/CSS/JS.
+
+Attributes are deliberately not a general HTML escape hatch. They are a compact way to call theme-defined component capabilities. Ordinary content should still prefer semantic block names and slots.
+
+Unsafe attribute examples such as `onclick`, `onmouseover`, and `href="javascript:..."` should never become executable behavior. Parser and renderer diagnostics should flag them, and theme helpers should expose safe root attributes separately from raw author input.
+
+### Block IDs And Markdown-Like Anchors
+
+The optional block name is a machine-friendly id, not a display title:
+
+```mds
+::: section product-intro
+# Product Intro!
+:::
+```
+
+```txt
+type: section
+name: product-intro
+id: product-intro
+display title: Product Intro!
+```
+
+If no explicit name exists, renderer tooling should derive the id from the first heading or `title` slot, using a Markdown-like slug algorithm:
+
+```txt
+Product Intro! -> product-intro
+产品介绍 -> 产品介绍
+产品介绍 -> 产品介绍-2
+```
+
+Slugging should be deterministic and shared by parser, renderer, editor, and future formatter tooling. The recommended behavior is to strip Markdown formatting, trim whitespace, lowercase ASCII, replace whitespace with `-`, preserve Unicode letters and numbers, remove unsafe punctuation, collapse repeated separators, and de-duplicate collisions with numeric suffixes.
+
+This avoids quoted block names such as `::: section "Product Intro!"`, which would make opener parsing and attrs ambiguous. Human-readable text belongs in headings or slots; ids belong in the optional name position or are generated from content.
+
+### Motion As Theme Blocks
+
+MDS does not need a first-class animation runtime.
+
+Motion is represented with normal blocks:
+
+```mds
+::: motion preset="fade-up" trigger="view"
+Content
+:::
+```
+
+Or with theme-defined attrs on another block:
+
+```mds
+::: card motion="scale-in" delay=120
+Content
+:::
+```
+
+The selected theme decides whether to implement this through CSS keyframes, transitions, `IntersectionObserver`, Web Animations API, Motion One, GSAP, or no animation at all.
+
+Recommended interoperable attr names for themes:
+
+```txt
+motion   preset name
+trigger  load | view | hover | state
+delay    milliseconds
+duration milliseconds
+stagger  milliseconds between children
+once     boolean
+```
+
+These names are conventions, not core semantics.
 
 ## Runtime Artifact Format
 
@@ -324,18 +444,21 @@ Available block variables:
 
 ```txt
 {{ type }}      escaped block type
-{{ name }}      escaped block name
-{{ id }}        escaped block id value
-{{ attrs }}     generated attributes, currently id when present
+{{ name }}      escaped explicit block name, when provided
+{{ id }}        escaped resolved block id value
+{{ attrs }}     generated safe root attributes
 {{ children }}  rendered child HTML
 {{ slots }}     rendered slot HTML
 {{ summary }}   escaped summary text for details-like blocks
 {{ slot:name }} rendered named slot HTML
+{{ attr:name }} escaped value for one block attribute
 ```
 
 Template rules:
 
-- Use `{{ attrs }}` on the root element for block ids.
+- Use `{{ attrs }}` on the root element for block ids and safe theme-facing attributes.
+- Use `{{ attr:name }}` when a template needs a specific theme-defined option.
+- Do not blindly serialize raw author attributes into executable browser attributes.
 - Do not use an `mds-` prefix in generated classes by default.
 - Prefer semantic native HTML where possible.
 - Theme templates must not parse raw MDS source.
@@ -592,9 +715,11 @@ interface ThemeTemplateProps {
   name: string;
   id: string;
   attrs: RawHtml;
+  blockAttrs: Record<string, string | number | boolean>;
   children: RawHtml;
   slots: RawHtml;
   summary: string;
+  attr(name: string): string;
   slot(name: string): RawHtml;
 }
 ```
@@ -605,6 +730,7 @@ The preferred helper API is:
 - `Content`: render the default block body.
 - `Slots`: render all slots.
 - `Slot`: render one named slot.
+- `attr(name)`: read one escaped block attribute for theme-defined component options.
 
 Low-level placeholders such as `rawAttrs`, `children`, `slots`, and `slot(name)` are still available for advanced templates. They preserve template placeholders and are intentionally not escaped by the JSX renderer.
 
@@ -1028,10 +1154,10 @@ Acceptance:
 
 ## Immediate Next Steps
 
-1. Keep `docs/THEMES.md` as the short user guide and this document as the design reference. Done.
-2. Continue hardening builder/editor diagnostics for package-theme development mode. Done for current MVP diagnostics and watch filtering.
-3. Add ecosystem adapter prototypes only after the artifact contract stays stable. Done for the HTML adapter; React/Preact remain separate follow-up plans.
-4. Add `mds-theme build` to the CLI package story instead of relying on root scripts. Done: `mds theme ...` delegates to `@mds/theme-builder`, while `mds-theme ...` remains available directly.
-5. Add a second package-style example that imports at least one local component module. Done with `themes/clarity`.
-6. Use `mds-theme inspect` to verify package artifacts without executing source files. Done.
-7. Plan React/Preact adapter separately from runtime loading.
+1. Implement block attributes in AST and parser.
+2. Add renderer diagnostics for malformed, curly, or unsafe attributes.
+3. Expose `attr(name)` and safe root attrs in file templates, HTML SDK, JSX runtime, and React SDK.
+4. Implement a `motion` block in `themes/studio`.
+5. Let Studio components consume simple motion attrs such as `motion`, `delay`, and `stagger`.
+6. Add examples for custom components, motion wrappers, and advanced attrs.
+7. Keep `docs/THEMES.md` as the short user guide, [BLOCKS_AND_MOTION.md](./BLOCKS_AND_MOTION.md) as the extension model, and this document as the architecture reference.

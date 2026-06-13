@@ -4,7 +4,7 @@ import { escapeAttribute, escapeHtml } from "./escape.js";
 
 export const baseBlockRenderers: HtmlBlockRenderers = {
   page: (block, context) =>
-    `<main${renderId(block)} class="page">${context.renderChildren(context.getContentChildren(block))}</main>`,
+    `<main${renderBlockAttrs(block)} class="page">${context.renderChildren(context.getContentChildren(block))}</main>`,
   section: renderSectionLikeBlock,
   hero: renderSectionLikeBlock,
   scene: renderSectionLikeBlock,
@@ -13,24 +13,24 @@ export const baseBlockRenderers: HtmlBlockRenderers = {
   sticky: renderSectionLikeBlock,
   motion: renderSectionLikeBlock,
   aside: (block, context) =>
-    `<aside${renderId(block)} class="aside">${context.renderChildren(context.getContentChildren(block))}</aside>`,
+    `<aside${renderBlockAttrs(block)} class="aside">${context.renderChildren(context.getContentChildren(block))}</aside>`,
   footer: (block, context) =>
-    `<footer${renderId(block)} class="footer">${context.renderChildren(context.getContentChildren(block))}</footer>`,
+    `<footer${renderBlockAttrs(block)} class="footer">${context.renderChildren(context.getContentChildren(block))}</footer>`,
   nav: (block, context) =>
-    `<nav${renderId(block)} class="nav" aria-label="${escapeAttribute(block.name ?? "Navigation")}">${context.renderChildren(context.getContentChildren(block))}</nav>`,
+    `<nav${renderBlockAttrs(block)} class="nav" aria-label="${escapeAttribute(block.name ?? "Navigation")}">${context.renderChildren(context.getContentChildren(block))}</nav>`,
   note: renderCalloutBlock,
   info: renderCalloutBlock,
   warning: renderCalloutBlock,
   danger: renderCalloutBlock,
   success: renderCalloutBlock,
   quote: (block, context) =>
-    `<blockquote${renderId(block)} class="quote">${context.renderChildren(context.getContentChildren(block))}</blockquote>`,
+    `<blockquote${renderBlockAttrs(block)} class="quote">${context.renderChildren(context.getContentChildren(block))}</blockquote>`,
   card: (block, context) =>
-    `<article${renderId(block)} class="card">${context.renderChildren(context.getContentChildren(block))}</article>`,
+    `<article${renderBlockAttrs(block)} class="card">${context.renderChildren(context.getContentChildren(block))}</article>`,
   cards: (block, context) =>
-    `<section${renderId(block)} class="cards">${context.renderChildren(context.getContentChildren(block))}</section>`,
+    `<section${renderBlockAttrs(block)} class="cards">${context.renderChildren(context.getContentChildren(block))}</section>`,
   details: (block, context) =>
-    `<details${renderId(block)} class="details"><summary>${context.escapeHtml(block.name ?? "Details")}</summary>${context.renderChildren(context.getContentChildren(block))}</details>`,
+    `<details${renderBlockAttrs(block)} class="details"><summary>${context.escapeHtml(block.name ?? "Details")}</summary>${context.renderChildren(context.getContentChildren(block))}</details>`,
   tabs: (block, context) => renderSlottedContainer(block, context.getSlots(block), "tabs", context),
   accordion: (block, context) => renderSlottedContainer(block, context.getSlots(block), "accordion", context),
   carousel: (block, context) => renderSlottedContainer(block, context.getSlots(block), "carousel", context),
@@ -40,15 +40,15 @@ export const baseBlockRenderers: HtmlBlockRenderers = {
   "grid-3": renderSlottedLayoutBlock,
   "grid-auto": renderSlottedLayoutBlock,
   dialog: (block, context) =>
-    `<section${renderId(block)} class="dialog" role="dialog" aria-modal="true">${context.renderChildren(context.getContentChildren(block))}</section>`,
+    `<section${renderBlockAttrs(block)} class="dialog" role="dialog" aria-modal="true">${context.renderChildren(context.getContentChildren(block))}</section>`,
   drawer: (block, context) =>
-    `<aside${renderId(block)} class="drawer">${context.renderChildren(context.getContentChildren(block))}</aside>`,
+    `<aside${renderBlockAttrs(block)} class="drawer">${context.renderChildren(context.getContentChildren(block))}</aside>`,
   form: (block, context) =>
-    `<form${renderId(block)} class="form" method="post">${context.renderChildren(context.getContentChildren(block))}</form>`
+    `<form${renderBlockAttrs(block)} class="form" method="post">${context.renderChildren(context.getContentChildren(block))}</form>`
 };
 
 export function renderFallbackBlock(block: MdsBlockNode, context: HtmlRenderContext): string {
-  return `<section${renderId(block)} class="block ${context.escapeAttribute(block.blockType)}" data-block="${context.escapeAttribute(block.blockType)}">${context.renderChildren(getContentChildren(block))}</section>`;
+  return `<section${renderBlockAttrs(block)} class="block ${context.escapeAttribute(block.blockType)}" data-block="${context.escapeAttribute(block.blockType)}">${context.renderChildren(getContentChildren(block))}</section>`;
 }
 
 export function renderDataNode(block: { name: string; value: string }, context: HtmlRenderContext): string {
@@ -159,10 +159,10 @@ export function renderSlottedContainer(
   className: string,
   context: HtmlRenderContext
 ): string {
-  const id = renderId(block);
+  const attrs = renderBlockAttrs(block);
 
   if (slots.length === 0) {
-    return `<section${id} class="${className}">${context.renderChildren(getContentChildren(block))}</section>`;
+    return `<section${attrs} class="${className}">${context.renderChildren(getContentChildren(block))}</section>`;
   }
 
   const renderedSlots = slots
@@ -172,23 +172,48 @@ export function renderSlottedContainer(
     )
     .join("\n");
 
-  return `<section${id} class="${className}">${renderedSlots}</section>`;
+  return `<section${attrs} class="${className}">${renderedSlots}</section>`;
 }
 
 function renderSectionLikeBlock(block: MdsBlockNode, context: HtmlRenderContext): string {
-  return `<section${renderId(block)} class="${context.escapeAttribute(block.blockType)}">${context.renderChildren(context.getContentChildren(block))}</section>`;
+  return `<section${renderBlockAttrs(block)} class="${context.escapeAttribute(block.blockType)}">${context.renderChildren(context.getContentChildren(block))}</section>`;
 }
 
 function renderCalloutBlock(block: MdsBlockNode, context: HtmlRenderContext): string {
-  return `<aside${renderId(block)} class="callout ${context.escapeAttribute(block.blockType)}" role="note">${context.renderChildren(context.getContentChildren(block))}</aside>`;
+  return `<aside${renderBlockAttrs(block)} class="callout ${context.escapeAttribute(block.blockType)}" role="note">${context.renderChildren(context.getContentChildren(block))}</aside>`;
 }
 
 function renderSlottedLayoutBlock(block: MdsBlockNode, context: HtmlRenderContext): string {
   return renderSlottedContainer(block, context.getSlots(block), context.escapeAttribute(block.blockType), context);
 }
 
-function renderId(block: MdsBlockNode): string {
-  return block.name === undefined ? "" : ` id="${escapeAttribute(block.name)}"`;
+export function renderBlockAttrs(block: MdsBlockNode): string {
+  const attrs: string[] = [];
+  if (block.id !== undefined) {
+    attrs.push(`id="${escapeAttribute(block.id)}"`);
+  }
+
+  for (const [name, value] of Object.entries(block.attrs ?? {})) {
+    if (!isSafeBlockAttribute(name, value)) {
+      continue;
+    }
+    attrs.push(`data-attr-${escapeAttribute(name)}="${escapeAttribute(String(value))}"`);
+  }
+
+  return attrs.length === 0 ? "" : ` ${attrs.join(" ")}`;
+}
+
+export function getBlockAttr(block: MdsBlockNode, name: string): string {
+  const value = block.attrs?.[name];
+  return value === undefined || !isSafeBlockAttribute(name, value) ? "" : String(value);
+}
+
+function isSafeBlockAttribute(name: string, value: string | number | boolean): boolean {
+  if (/^on/i.test(name)) {
+    return false;
+  }
+
+  return !(typeof value === "string" && value.trim().toLowerCase().startsWith("javascript:"));
 }
 
 function getBlockNavigationTarget(href: string): string | undefined {

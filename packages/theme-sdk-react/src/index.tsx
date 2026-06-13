@@ -15,9 +15,11 @@ export interface ReactThemeBlock {
   name: string;
   id: string;
   attrs: ReactRawAttrs;
+  blockAttrs: Record<string, string | number | boolean>;
   children: ReactNode;
   slots: ReactNode;
   summary: string;
+  attr: (name: string, fallback?: string) => string;
   slot: (name: string) => ReactNode;
 }
 
@@ -211,9 +213,11 @@ function createTemplateBlock(context: RenderContext): ReactThemeBlock {
     name: "{{ name }}",
     id: "{{ id }}",
     attrs: createRawAttrs("{{ attrs }}", context),
+    blockAttrs: {},
     children: createRawHtmlNode("{{ children }}", context),
     slots: createRawHtmlNode("{{ slots }}", context),
     summary: "{{ summary }}",
+    attr: (name: string, fallback = "") => (fallback === "" ? `{{ attr:${name} }}` : `{{ attr:${name}:${fallback} }}`),
     slot: (name: string) => createRawHtmlNode(`{{ slot:${name} }}`, context)
   };
 }

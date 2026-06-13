@@ -70,22 +70,74 @@ Dangerous operations need care.
     ]);
   });
 
-  it("reports forbidden block attributes", () => {
+  it("parses block attributes and generated ids", () => {
+    const document = parseMds(`::: hero landing motion="fade up" delay=120 featured
+# Landing Page!
+:::
+
+::: section
+# 产品介绍
+:::
+
+::: section
+# 产品介绍
+:::
+`);
+
+    expect(document.diagnostics).toEqual([]);
+    expect(document.children).toMatchObject([
+      {
+        type: "block",
+        blockType: "hero",
+        name: "landing",
+        id: "landing",
+        attrs: {
+          motion: "fade up",
+          delay: 120,
+          featured: true
+        }
+      },
+      {
+        type: "block",
+        blockType: "section",
+        id: "产品介绍"
+      },
+      {
+        type: "block",
+        blockType: "section",
+        id: "产品介绍-2"
+      }
+    ]);
+  });
+
+  it("reports malformed, curly, duplicate, and unsafe block attributes", () => {
     const document = parseMds(`::: grid {columns=3}
+content
+:::
+
+::: card onclick="alert(1)" tone=info tone=warning
 content
 :::
 `);
 
-    expect(document.diagnostics).toEqual([
+    expect(document.diagnostics).toEqual(expect.arrayContaining([
       expect.objectContaining({
-        code: "invalid-block-name",
+        code: "curly-block-attributes",
         severity: "error"
       }),
       expect.objectContaining({
-        code: "forbidden-block-attributes",
+        code: "invalid-block-attribute",
         severity: "error"
+      }),
+      expect.objectContaining({
+        code: "unsafe-block-attribute",
+        severity: "warning"
+      }),
+      expect.objectContaining({
+        code: "duplicate-block-attribute",
+        severity: "warning"
       })
-    ]);
+    ]));
   });
 
   it("does not parse escaped block markers or fenced code markers", () => {

@@ -46,6 +46,22 @@ describe("react theme sdk", () => {
     expect(source.files["blocks/hero.html"]).toContain("{{ slot:actions }}");
   });
 
+  it("exposes block attribute placeholders", () => {
+    const source = createThemeSourceFromReactTheme({
+      name: "react-attrs",
+      blocks: {
+        card: (block) => (
+          <Root block={block} className={`card tone-${block.attr("tone")} motion-${block.attr("motion", "fade-up")}`}>
+            <Content block={block} />
+          </Root>
+        )
+      }
+    });
+
+    expect(source.files["blocks/card.html"]).toContain("tone-{{ attr:tone }}");
+    expect(source.files["blocks/card.html"]).toContain("motion-{{ attr:motion:fade-up }}");
+  });
+
   it("supports shadcn-style local React components", () => {
     function Button(props: { className?: string; children?: React.ReactNode }) {
       return <button className={`inline-flex rounded-md ${props.className ?? ""}`}>{props.children}</button>;

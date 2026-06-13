@@ -12,7 +12,7 @@ The language keeps authoring simple:
 
 - Plain Markdown remains valid.
 - Semantic blocks express page intent.
-- Authors do not write HTML attributes, JSX, XML-style tags, event handlers, CSS parameters, or animation parameters.
+- Authors primarily write semantic blocks and content. Advanced authors may pass theme-defined block attributes, but they still do not write JSX, XML-style tags, event handlers, or JavaScript.
 - Themes and renderers decide the final HTML structure and styling.
 
 The implementation keeps the platform simple:
@@ -140,7 +140,10 @@ Responsibilities:
 - Preserve normal Markdown compatibility.
 - Detect MDS block boundaries with `:::` syntax.
 - Parse optional block names.
-- Reject block attributes such as `{columns=3}` or `key=value`.
+- Treat block names as stable machine-friendly ids, not display titles.
+- Derive block ids from the first heading or `title` slot when no explicit name exists, using deterministic Markdown-like slugging.
+- Parse optional block attributes such as `variant="featured"`, `columns=3`, and boolean flags.
+- Reject curly attribute syntax such as `{columns=3}` and diagnose unsafe event/script attributes.
 - Parse slot markers like `--- title`, `--- left`, and `--- item`.
 - Parse action links such as `[Start -> /docs]` and `[Open !toggle faq]`.
 - Parse media directives such as `!video /demo.mp4`.
@@ -169,6 +172,7 @@ Responsibilities:
 - Provide safe fallback HTML for unknown blocks.
 - Generate document-level HTML from frontmatter.
 - Escape and sanitize output where required.
+- Resolve and de-duplicate generated block ids for anchors and block navigation.
 
 This package should compile everything to HTML strings or HTML AST. It should not require a browser runtime and should not own the default visual mapping for semantic blocks.
 
@@ -267,12 +271,12 @@ Responsibilities:
 - Let theme authors compose block templates with React components.
 - Support shadcn-style local component source and Tailwind class names.
 - Render React components to MDS template HTML during build.
-- Preserve `attrs`, `children`, and slot placeholders.
+- Preserve `attrs`, block attributes, `children`, and slot placeholders.
 - Produce `ThemeSourceInput` so the builder stays adapter-agnostic.
 
 ## File-Based Themes
 
-Detailed theme-system architecture and roadmap live in [docs/THEME_DESIGN.md](./docs/THEME_DESIGN.md). This section keeps the implementation-plan summary.
+Detailed theme-system architecture and roadmap live in [docs/THEME_DESIGN.md](./docs/THEME_DESIGN.md). The block extension, attributes, and motion model lives in [docs/BLOCKS_AND_MOTION.md](./docs/BLOCKS_AND_MOTION.md). This section keeps the implementation-plan summary.
 
 The primary theme customization path should be folder-based, because many MDS users are expected to be content authors rather than TypeScript package authors.
 
@@ -594,13 +598,14 @@ The MVP should implement enough syntax to validate the language design without b
 - Normal Markdown
 - Semantic blocks
 - Optional block names
+- Markdown-like generated block ids
 - Nested blocks
 - Slots
 - Action links
 - Media directives
 - Comments
 - Escaping
-- Diagnostics for forbidden attributes
+- Diagnostics for malformed, curly, or unsafe attributes
 
 ### Phase 2 Syntax
 
@@ -640,12 +645,12 @@ Suggested block mappings:
 Unknown blocks should render safely:
 
 ```html
-<section class="block x-name" data-block="x-name">
+<section class="block x-name" data-block="x-name" id="optionalName">
   ...
 </section>
 ```
 
-This keeps output useful while preserving extension metadata.
+This keeps output useful while preserving extension metadata. Safe block attributes should remain available to themes and diagnostics, but renderer fallback must not turn unsafe event/script attributes into executable browser behavior.
 
 ### Renderer Extension Registry
 

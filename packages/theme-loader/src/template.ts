@@ -9,15 +9,19 @@ export function createTemplateBlockRenderer(template: string): HtmlBlockRenderer
     const namedSlots = Object.fromEntries(
       slotNodes.map((slot) => [`slot:${slot.name}`, context.renderChildren(slot.children)])
     );
+    const namedAttrs = Object.fromEntries(
+      Object.keys(block.attrs ?? {}).map((name) => [`__attr:${name}`, getBlockAttr(block, name)])
+    );
 
     return renderTemplate(template, {
       type: context.escapeAttribute(block.blockType),
       name: context.escapeHtml(block.name ?? ""),
-      id: context.escapeAttribute(block.name ?? ""),
+      id: context.escapeAttribute(block.id ?? ""),
       attrs: renderAttrs(block, context),
       children,
       slots: renderedSlots,
       summary: context.escapeHtml(block.name ?? "Details"),
+      ...namedAttrs,
       ...namedSlots
     });
   };
@@ -45,7 +49,19 @@ export function renderShellTemplate(
 }
 
 function renderAttrs(block: MdsBlockNode, context: HtmlRenderContext): string {
-  return block.name === undefined ? "" : ` id="${context.escapeAttribute(block.name)}"`;
+  const attrs: string[] = [];
+  if (block.id !== undefined) {
+    attrs.push(`id="${context.escapeAttribute(block.id)}"`);
+  }
+
+  for (const [name, value] of Object.entries(block.attrs ?? {})) {
+    if (!isSafeBlockAttribute(name, value)) {
+      continue;
+    }
+    attrs.push(`data-attr-${context.escapeAttribute(name)}="${context.escapeAttribute(String(value))}"`);
+  }
+
+  return attrs.length === 0 ? "" : ` ${attrs.join(" ")}`;
 }
 
 function renderSlots(
@@ -63,8 +79,36 @@ function renderSlots(
 
 function renderTemplate(template: string, values: Record<string, string>): string {
   return template.replace(/\{\{\s*([A-Za-z][A-Za-z0-9_:-]*)\s*\}\}/g, (_match, key: string) => {
+    if (key.startsWith("attr:")) {
+      return escapeAttribute(getBlockAttrFromValues(values, key.slice("attr:".length)));
+    }
     return values[key] ?? "";
   });
+}
+
+function getBlockAttrFromValues(values: Record<string, string>, name: string): string {
+  const fallbackSeparator = name.indexOf(":");
+  if (fallbackSeparator === -1) {
+    return values[`__attr:${name}`] ?? "";
+  }
+
+  const attrName = name.slice(0, fallbackSeparator);
+  const fallback = name.slice(fallbackSeparator + 1);
+  const value = values[`__attr:${attrName}`];
+  return value === undefined || value === "" ? fallback : value;
+}
+
+function getBlockAttr(block: MdsBlockNode, name: string): string {
+  const value = block.attrs?.[name];
+  return value === undefined || !isSafeBlockAttribute(name, value) ? "" : String(value);
+}
+
+function isSafeBlockAttribute(name: string, value: string | number | boolean): boolean {
+  if (/^on/i.test(name)) {
+    return false;
+  }
+
+  return !(typeof value === "string" && value.trim().toLowerCase().startsWith("javascript:"));
 }
 
 function escapeHtml(value: string): string {

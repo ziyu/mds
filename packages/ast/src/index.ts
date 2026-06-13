@@ -63,6 +63,8 @@ export interface MdsBlockNode extends BaseNode {
   type: "block";
   blockType: string;
   name?: string;
+  id?: string;
+  attrs?: Record<string, string | number | boolean>;
   children: MdsNode[];
   slots?: SlotNode[];
 }

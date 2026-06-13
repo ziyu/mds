@@ -188,7 +188,17 @@ function renderCommandActionLink(node: ActionLinkNode, context: RenderContext): 
 }
 
 function renderBlock(block: MdsBlockNode, context: RenderContext): string {
-  const renderer = context.blockRenderers[block.blockType] ?? renderFallbackBlock;
+  const renderer = context.blockRenderers[block.blockType];
+  if (renderer === undefined) {
+    context.diagnostics.push({
+      code: "missing-block-renderer",
+      message: `No block renderer registered for "${block.blockType}".`,
+      severity: "warning",
+      ...(block.position === undefined ? {} : { position: block.position })
+    });
+    return renderFallbackBlock(block, context);
+  }
+
   if (block.blockType !== "nav") {
     return renderer(block, context);
   }

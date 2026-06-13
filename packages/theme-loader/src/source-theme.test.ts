@@ -1,3 +1,4 @@
+import type { HtmlRenderContext } from "@mds/html-types";
 import { describe, expect, it } from "vitest";
 import {
   createThemeFromSources,
@@ -146,5 +147,67 @@ describe("theme source normalization", () => {
         }
       })
     ).toThrow(ThemeValidationError);
+  });
+
+  it("renders resolved ids and block attributes in templates", () => {
+    const theme = createThemeFromSources({
+      manifest: {
+        name: "attrs",
+        blocks: "blocks"
+      },
+      files: {
+        "blocks/hero.html":
+          '<section{{ attrs }} class="hero hero-{{ attr:tone }}" data-motion="{{ attr:motion:scale-in }}">{{ children }}</section>'
+      }
+    });
+
+    const context: HtmlRenderContext = {
+      states: new Map(),
+      lists: new Map(),
+      locals: new Map(),
+      renderNode: () => "",
+      renderChildren: () => "<h1>Intro</h1>",
+      renderChildrenWithLocals: () => "",
+      renderSlottedContainer: () => "",
+      getSlots: () => [],
+      getContentChildren: (block) => block.children,
+      resolveValue: () => "",
+      escapeHtml: (value) => value,
+      escapeAttribute: (value) => value
+    };
+
+    const html = theme.blockRenderers?.hero?.(
+      {
+        type: "block",
+        blockType: "hero",
+        id: "intro",
+        attrs: {
+          tone: "dark",
+          motion: "fade-up",
+          onclick: "bad"
+        },
+        children: []
+      },
+      context
+    );
+
+    const fallbackHtml = theme.blockRenderers?.hero?.(
+      {
+        type: "block",
+        blockType: "hero",
+        attrs: {
+          tone: "quiet"
+        },
+        children: []
+      },
+      context
+    );
+
+    expect(html).toContain('id="intro"');
+    expect(html).toContain('data-attr-tone="dark"');
+    expect(html).toContain('class="hero hero-dark"');
+    expect(html).toContain('data-motion="fade-up"');
+    expect(html).not.toContain("onclick");
+    expect(fallbackHtml).toContain('data-motion="scale-in"');
   });
 });

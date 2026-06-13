@@ -14,6 +14,7 @@ blocks/
 ```
 
 For the full architecture, artifact contract, diagnostics model, and roadmap, see [THEME_DESIGN.md](./THEME_DESIGN.md).
+For the block extension model, optional block attributes, and motion-as-block design, see [BLOCKS_AND_MOTION.md](./BLOCKS_AND_MOTION.md).
 
 ## Use A Theme
 
@@ -92,6 +93,7 @@ Rules:
 - `actions` declares commands handled by theme JavaScript. It does not define application logic.
 - `actions` and `supportedBlocks` should be unique. Duplicates produce warnings and the first entry wins.
 - Generated HTML should use normal class names such as `page`, `hero`, and `card`. Themes should not add an `mds-` prefix unless they intentionally want one.
+- Theme-owned components are ordinary block templates. A custom component such as `pricing-plan` or a motion primitive such as `motion` is registered the same way as `hero` or `card`.
 
 ## Block Templates
 
@@ -107,15 +109,30 @@ Common variables:
 
 ```txt
 {{ type }}      escaped block type
-{{ name }}      escaped block name
-{{ id }}        escaped block id value
-{{ attrs }}     generated attributes, currently an escaped id attribute
+{{ name }}      escaped explicit block name, when provided
+{{ id }}        escaped resolved block id value
+{{ attrs }}     generated safe root attributes
 {{ children }}  rendered child HTML
 {{ slots }}     rendered slot HTML
 {{ summary }}   escaped summary text for details-like blocks
+{{ attr:name }} escaped value for one block attribute
 ```
 
-Prefer `{{ attrs }}` for ids because it disappears when the block has no name.
+Prefer `{{ attrs }}` on the root element because it preserves generated attributes such as resolved ids and safe theme-facing block attributes.
+
+Block ids follow Markdown-like anchors. If an author writes `::: section product-intro`, the explicit name becomes the id. If no name is provided, the renderer can derive an id from the first heading or `title` slot and de-duplicate it:
+
+```mds
+::: section
+# Product Intro!
+:::
+```
+
+```txt
+Product Intro! -> product-intro
+```
+
+Theme templates should use `{{ id }}` or `{{ attrs }}` for anchors. Human-readable titles should come from rendered content or slots, not from `{{ name }}`.
 
 A file without `<template data-block>` uses its filename as the block type:
 
@@ -154,6 +171,58 @@ A file can also define multiple aliases:
 ```
 
 Later sources override earlier templates.
+
+## Block Attributes
+
+Block attributes are an advanced authoring feature. They let a theme expose controlled component variants without turning MDS into HTML or JSX.
+
+```mds
+::: hero landing motion="fade-up" tone="dark"
+# Launch faster
+:::
+```
+
+Themes can consume those attributes:
+
+```html
+<section{{ attrs }} class="hero hero-{{ attr:tone }}" data-motion="{{ attr:motion }}">
+  {{ children }}
+</section>
+```
+
+Guidelines:
+
+- Prefer semantic block names and slots for ordinary content.
+- Use attributes for compact theme-defined options such as `variant`, `tone`, `motion`, `delay`, or `columns`.
+- Do not use curly attribute syntax.
+- Do not use event-handler attributes such as `onclick`.
+- Do not use attributes to embed JavaScript or large content payloads.
+
+## Motion Blocks
+
+Motion is implemented by themes, not by a separate MDS animation runtime.
+
+```mds
+::: motion preset="fade-up" trigger="view" stagger=80
+::: card
+## One
+:::
+
+::: card
+## Two
+:::
+:::
+```
+
+A theme can render `motion` as a wrapper with CSS variables and data attributes:
+
+```html
+<div{{ attrs }} class="motion" data-motion="{{ attr:preset }}" data-trigger="{{ attr:trigger }}">
+  {{ children }}
+</div>
+```
+
+The theme CSS and JavaScript decide whether that means CSS transitions, `IntersectionObserver`, Web Animations API, Motion One, GSAP, or another implementation. The generated page remains standalone HTML.
 
 ## Shell Template
 

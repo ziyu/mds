@@ -14,7 +14,7 @@ description: A polished standalone page generated from semantic Markdown.
 layout: landing
 ---
 
-::: hero
+::: hero motion="fade-up" delay=80 duration=760
 --- title
 # MDS turns Markdown into pages
 
@@ -33,7 +33,7 @@ Write content. Choose a theme. Ship standalone HTML.
 [Contact => #contact]
 :::
 
-::: cards
+::: cards motion="fade-up" delay=180 stagger=90
 
 ::: card authoring
 ## Simple authoring
@@ -60,7 +60,7 @@ The final artifact is plain HTML with embedded CSS and JavaScript.
 Markdown is simple. HTML is rich. MDS keeps authoring simple while compiling to HTML.
 
 ::: warning
-Authors should not write \`key=value\` attributes in content. Themes decide presentation.
+Authors usually write semantic blocks first. Advanced theme options can use block attrs.
 :::
 
 --- right
@@ -162,6 +162,48 @@ The action completed.
 
 ::: quote
 Good authoring tools make the simple path feel complete.
+:::
+`
+  },
+  {
+    id: "motion",
+    label: "Motion",
+    source: `---
+title: Motion And Attributes
+---
+
+# Motion And Attributes
+
+::: hero motion="fade-up" delay=80
+--- title
+# Motion is a theme block capability
+
+--- body
+MDS keeps animation declarative. The Studio theme decides how it moves.
+:::
+
+::: motion preset="fade-up" trigger="view" stagger=90
+
+::: card
+## First card
+This card is inside a motion wrapper.
+:::
+
+::: card
+## Second card
+The wrapper can stagger its children.
+:::
+
+::: card
+## Third card
+No animation runtime belongs to MDS core.
+:::
+
+:::
+
+::: section custom-section tone="quiet" columns=3
+## Custom block attrs
+Attributes are preserved for themes and advanced components.
 :::
 `
   },

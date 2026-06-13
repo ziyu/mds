@@ -176,4 +176,23 @@ describe("JSX themes", () => {
     expect(source.files["blocks/hero.html"]).toContain("{{ slot:title }}");
     expect(source.files["blocks/hero.html"]).toContain("{{ children }}");
   });
+
+  it("exposes block attribute placeholders", () => {
+    const theme = defineJsxTheme({
+      name: "attrs",
+      blocks: {
+        card: (block: ThemeTemplateProps) =>
+          jsx(Root, {
+            block,
+            className: `card tone-${block.attr("tone")} motion-${block.attr("motion", "fade-up")}`,
+            children: jsx(Content, { block })
+          })
+      }
+    });
+
+    const source = createThemeSourceFromJsxTheme(theme);
+
+    expect(source.files["blocks/card.html"]).toContain("tone-{{ attr:tone }}");
+    expect(source.files["blocks/card.html"]).toContain("motion-{{ attr:motion:fade-up }}");
+  });
 });

@@ -1,6 +1,6 @@
 
 > **Markdown 负责内容，MDS 只增加少量“语义指令”。**
-> 作者不写 HTML 属性，不写 JSX，不写 XML，不写复杂参数。
+> 普通作者主要写内容和 block；高级作者可以给 block 传少量属性，但不写 JSX、XML 或 JavaScript。
 
 ---
 
@@ -22,9 +22,10 @@ MDS 的核心目标不是“让 Markdown 支持所有 HTML 功能”，而是：
 1. 普通 Markdown 完全兼容。
 2. 不引入 XML 风格标签。
 3. 不引入 JSX。
-4. 不在正文里写 key=value 属性。
-5. 所有复杂样式、动画、交互参数交给主题和插件。
-6. 文档作者只写语义、内容和少量动作。
+4. block 是唯一扩展点：自定义组件是 block，motion 也是 block。
+5. block 属性是高级能力，默认不推荐，但语法支持并进入 AST。
+6. 所有复杂样式、动画、交互参数由主题和插件解释。
+7. 文档作者主要写语义、内容和少量动作。
 ```
 
 ---
@@ -92,7 +93,7 @@ draft       是否草稿
 ```
 
 注意：
-frontmatter 是**页面级配置**，不是正文属性系统。
+frontmatter 是**页面级配置**，不是组件属性系统。
 
 正文中尽量不要出现：
 
@@ -105,6 +106,14 @@ frontmatter 是**页面级配置**，不是正文属性系统。
 ```mds
 ::: warning
 危险操作，请谨慎。
+:::
+```
+
+高级用户可以在 block 上写属性，但这应该服务于主题暴露的组件能力，而不是把 MDS 写成 HTML：
+
+```mds
+::: card variant="featured" motion="fade-up"
+重要内容。
 :::
 ```
 
@@ -167,7 +176,7 @@ MDS 最重要的扩展是语义块。
 :::
 ```
 
-块的语法只有两种：
+块的基本语法有三种：
 
 ```mds
 ::: 类型
@@ -183,6 +192,14 @@ MDS 最重要的扩展是语义块。
 :::
 ```
 
+或者高级属性形式：
+
+```mds
+::: 类型 名称? key="value" flag count=3
+内容
+:::
+```
+
 比如：
 
 ```mds
@@ -193,12 +210,28 @@ MDS 最重要的扩展是语义块。
 [查看 FAQ !toggle faq]
 ```
 
-这里的 `faq` 是块名称，用于动作引用。
-它不是属性，也不支持 `key=value`。
+这里的 `faq` 是块名称，也就是稳定引用用的 block id。
+它不是属性。
+
+属性由主题解释：
+
+```mds
+::: hero landing motion="fade-up" tone="dark"
+# 重新想象 Markdown
+:::
+```
+
+这里：
+
+```txt
+type: hero
+name: landing
+attrs: { motion: "fade-up", tone: "dark" }
+```
 
 ---
 
-# 5. 块名称规则
+# 5. 块名称、显示标题与属性规则
 
 ```txt
 ::: hero
@@ -206,6 +239,8 @@ MDS 最重要的扩展是语义块。
 ::: warning
 ::: details faq
 ::: tabs product
+::: card variant="featured"
+::: motion preset="fade-up" trigger="view"
 ```
 
 解释：
@@ -214,34 +249,74 @@ MDS 最重要的扩展是语义块。
 | ------------------ | --------------------- |
 | `::: hero`         | 一个 hero 块             |
 | `::: card`         | 一个 card 块             |
-| `::: details faq`  | 一个名为 faq 的 details 块  |
-| `::: tabs product` | 一个名为 product 的 tabs 块 |
+| `::: details faq`  | 一个 id 为 `faq` 的 details 块 |
+| `::: tabs product` | 一个 id 为 `product` 的 tabs 块 |
+| `::: card variant="featured"` | 一个带 `variant` 属性的 card 块 |
+| `::: motion preset="fade-up"` | 一个由主题实现的 motion 块 |
 
 限制：
 
 ```txt
 块类型只能是一个单词。
-块名称可选。
-块名称只能是一个单词。
-不允许 key=value。
-不允许花括号属性。
+块名称可选，它是机器引用用的 id。
+块名称只能是一个简单 token，不包含空格。
+属性可选。
+属性支持 key=value、key="value"、key='value'、boolean flag。
+不使用花括号属性。
+不允许事件处理器属性表达业务逻辑。
 ```
 
-也就是说，不允许：
+块名称不是显示标题。带空格、中文、标点的人类可读标题应该写在 Markdown heading 或 `title` slot 里：
 
 ```mds
-::: card {type=warning animated=true}
+::: section
+# Product Intro!
+内容
 :::
 ```
 
-应该写成：
+如果没有显式块名称，MDS 可以像 Markdown heading anchor 一样从第一个标题生成 id：
+
+```txt
+Product Intro! -> #product-intro
+产品介绍 -> #产品介绍
+产品介绍 -> #产品介绍-2
+```
+
+如果需要长期稳定的引用，推荐显式写简单 id：
+
+```mds
+::: section product-intro
+# Product Intro!
+内容
+:::
+
+[查看介绍 -> #product-intro]
+```
+
+不要把自然语言标题写成 block name：
+
+```mds
+::: section "Product Intro!"
+```
+
+这会让 block opener、attrs、action target 和 URL hash 都变复杂。MDS 的规则是：`type` 决定组件，`name/id` 用于引用，heading/slot 用于显示标题。
+
+推荐：
 
 ```mds
 ::: warning
 :::
 ```
 
-或者由主题决定 card 的样式。
+高级用法：
+
+```mds
+::: card variant="warning" motion="fade-up"
+:::
+```
+
+推荐优先使用语义 block；只有当主题明确暴露组件属性时，再使用 attrs。
 
 ---
 
@@ -331,7 +406,7 @@ MDS 最重要的扩展是语义块。
 :::
 ```
 
-不要写：
+普通作者不要写：
 
 ```mds
 ::: alert {type=warning}
@@ -339,7 +414,15 @@ MDS 最重要的扩展是语义块。
 :::
 ```
 
-MDS 应该用块类型表达语义，而不是用属性表达差异。
+如果主题真的提供 `alert` 组件，也可以用非花括号属性调用：
+
+```mds
+::: alert tone="warning"
+删除操作不可恢复。
+:::
+```
+
+但 MDS 推荐先用块类型表达常见语义，而不是把所有差异都放进属性。
 
 ---
 
@@ -392,7 +475,7 @@ MDS 应该用块类型表达语义，而不是用属性表达差异。
 
 # 7. 布局块
 
-为了避免属性，布局也用固定语义块。
+布局优先用固定语义块，必要时允许主题定义属性。
 
 ## 7.1 横向分栏
 
@@ -430,9 +513,7 @@ MDS 应该用块类型表达语义，而不是用属性表达差异。
 :::
 ```
 
-如果需要不同列数，不在正文里写 `columns=3`。
-
-而是由主题决定，或者使用固定块类型：
+如果需要不同列数，推荐使用固定块类型：
 
 ```mds
 ::: grid-2
@@ -448,8 +529,10 @@ MDS 应该用块类型表达语义，而不是用属性表达差异。
 这比下面这种更符合 MDS 的简洁性：
 
 ```mds
-::: grid {columns=3 gap=24}
+::: grid columns=3 gap=24
 ```
+
+但高级用户可以使用 `columns=3` 这类属性，只要目标主题支持。parser 保留属性，theme 决定是否消费。
 
 ---
 
@@ -791,9 +874,20 @@ MDS 不要求作者写 JSX。
 
 ---
 
-# 17. 动画块
+# 17. 动画与 Motion Block
 
-动画不写参数，而写语义。
+MDS 不内置专门的动画系统。动画是主题提供的 block 能力。
+
+也就是说，`motion`、`reveal`、`float`、`scene` 都只是普通 block：
+
+```txt
+::: motion
+::: reveal
+::: float
+::: scene
+```
+
+theme 可以完整实现这些 block 的 CSS、JavaScript、IntersectionObserver、Web Animations API 或第三方动画库。MDS 只负责把 block 和 attrs 放进 AST，再交给 theme 渲染。
 
 ## 17.1 reveal
 
@@ -831,7 +925,7 @@ MDS 不要求作者写 JSX。
 :::
 ```
 
-动画块只表达意图：
+动画 block 表达意图：
 
 ```txt
 reveal  进入视口时出现
@@ -841,13 +935,23 @@ scene   沉浸式场景
 motion  主题定义的动态区域
 ```
 
-不要写：
+显式调用主题动画：
 
 ```mds
-::: reveal {duration=300 easing=ease-out delay=100}
+::: motion preset="fade-up" trigger="view"
+# 滚动出现
+:::
 ```
 
-这些参数交给主题。
+或者把主题动画作为普通 block 属性传给组件：
+
+```mds
+::: hero motion="fade-up" delay=120
+# 有进入动画的 Hero
+:::
+```
+
+默认建议使用主题预设。高级属性可以控制细节，但具体含义由主题定义。
 
 ---
 

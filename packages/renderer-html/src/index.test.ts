@@ -55,7 +55,7 @@ Markdown 内容。
     expect(html).toContain('<html lang="zh-CN">');
     expect(html).toContain("<title>Demo</title>");
     expect(html).toContain('<meta name="description" content="A demo page">');
-    expect(html).toContain('<section class="hero">');
+    expect(html).toContain('<section id="mds" class="hero">');
     expect(html).toContain('<a class="action primary" href="/docs">开始</a>');
     expect(html).toContain('target="_blank"');
     expect(html).toContain('<nav id="main" class="nav" aria-label="main">');
@@ -230,10 +230,33 @@ title: Shell
 # Hero
 :::
 `);
-    const html = renderHtml(document, {
+    const result = renderHtmlResult(document, {
       includeDefaultBlockRenderers: false
     });
 
-    expect(html).toContain('<section class="block hero" data-block="hero">');
+    expect(result.html).toContain('<section id="hero" class="block hero" data-block="hero">');
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "missing-block-renderer",
+        severity: "warning"
+      })
+    );
+  });
+
+  it("renders resolved block ids and safe block attributes", () => {
+    const document = parseMds(`::: card motion="fade-up" delay=120 onclick="bad"
+# Feature Card
+:::
+`);
+    const result = renderHtmlResult(document);
+
+    expect(result.html).toContain('<article id="feature-card" data-attr-motion="fade-up" data-attr-delay="120" class="card">');
+    expect(result.html).not.toContain("onclick");
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "unsafe-block-attribute",
+        severity: "warning"
+      })
+    );
   });
 });
