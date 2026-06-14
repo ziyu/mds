@@ -24,7 +24,18 @@ export function injectPreviewNavigationGuard(html: string): string {
   const script = `<script>
 (() => {
   document.addEventListener("click", (event) => {
-    const missingAction = event.target.closest('[data-action-missing="true"]');
+    const target =
+      event.target instanceof Element
+        ? event.target
+        : event.target instanceof Text
+          ? event.target.parentElement
+          : null;
+
+    if (!target) {
+      return;
+    }
+
+    const missingAction = target.closest('[data-action-missing="true"]');
     if (missingAction instanceof HTMLElement) {
       event.preventDefault();
       event.stopPropagation();
@@ -38,7 +49,7 @@ export function injectPreviewNavigationGuard(html: string): string {
       return;
     }
 
-    const link = event.target.closest("a[href]");
+    const link = target.closest("a[href]");
     if (!(link instanceof HTMLAnchorElement)) {
       return;
     }

@@ -275,6 +275,6 @@ The renderer should emit a warning so the editor can explain that the selected t
 3. Add diagnostics for invalid or unsafe attributes.
 4. Expose `attrs`, `attr(name)`, and safe root attribute helpers to templates and SDKs.
 5. Update HTML renderer fallback to preserve unknown block type, name, and safe attrs.
-6. Add Studio theme `motion` block and component-level `motion` attrs.
+6. Add Canvas `motion` block and component-level `motion` attrs.
 7. Add examples for custom components, motion wrappers, and advanced attrs.
 8. Add tests for parsing, rendering, diagnostics, SDK helpers, and standalone theme behavior.

@@ -1,5 +1,5 @@
 {
-  "name": "@mds/theme-studio",
+  "name": "@mds/theme-canvas",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -17,7 +17,7 @@
     }
   },
   "scripts": {
-    "build": "pnpm --dir ../.. build:theme themes/studio",
+    "build": "pnpm --dir ../.. build:theme themes/canvas",
     "check": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

@@ -4,7 +4,7 @@ import { Flow, Surface } from "./components/Surface.tsx";
 
 export default defineJsxTheme({
   name: "clarity",
-  label: "MDS Clarity",
+  label: "Clarity",
   description: "A package-style theme example with separated source and built artifacts.",
   author: "MDS",
   preview: "preview.svg",

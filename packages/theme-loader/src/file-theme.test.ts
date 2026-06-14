@@ -179,7 +179,7 @@ describe("loadThemeDirectory", () => {
     expect(themes).toContainEqual(
       expect.objectContaining({
         name: "default",
-        label: "MDS Default",
+        label: "Default",
         description: expect.any(String),
         preview: "preview.svg",
         tags: expect.arrayContaining(["starter"])
@@ -188,19 +188,19 @@ describe("loadThemeDirectory", () => {
     expect(themes).toContainEqual(
       expect.objectContaining({
         name: "folio",
-        label: "MDS Folio"
+        label: "Folio"
       })
     );
     expect(themes).toContainEqual(
       expect.objectContaining({
         name: "atelier",
-        label: "MDS Atelier"
+        label: "Atelier"
       })
     );
     expect(themes).toContainEqual(
       expect.objectContaining({
         name: "clarity",
-        label: "MDS Clarity",
+        label: "Clarity",
         source: resolve("../..", "themes/clarity/dist/theme")
       })
     );

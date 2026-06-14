@@ -4,7 +4,7 @@ import { Content, defineJsxTheme, Fragment, jsx, Root, Slot, Slots } from "../..
 
 export default defineJsxTheme({
   name: "atelier",
-  label: "MDS Atelier",
+  label: "Atelier",
   description: "A polished JSX-authored package-style theme for rich landing pages and product narratives.",
   author: "MDS",
   preview: "preview.svg",

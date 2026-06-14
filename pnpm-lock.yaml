@@ -269,9 +269,7 @@ importers:
 
   themes/atelier: {}
 
-  themes/clarity: {}
-
-  themes/studio:
+  themes/canvas:
     dependencies:
       '@mds/theme-sdk-react':
         specifier: workspace:*
@@ -286,6 +284,8 @@ importers:
       typescript:
         specifier: ^5.8.0
         version: 5.9.3
+
+  themes/clarity: {}
 
 packages:
 

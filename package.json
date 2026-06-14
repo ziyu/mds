@@ -14,7 +14,7 @@
     "build:theme": "tsx packages/theme-builder/src/cli.ts build",
     "build:theme:atelier": "pnpm build:theme themes/atelier",
     "build:theme:clarity": "pnpm build:theme themes/clarity",
-    "build:theme:studio": "pnpm build:theme themes/studio"
+    "build:theme:canvas": "pnpm build:theme themes/canvas"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

@@ -15,6 +15,7 @@ blocks/
 
 For the full architecture, artifact contract, diagnostics model, and roadmap, see [THEME_DESIGN.md](./THEME_DESIGN.md).
 For the block extension model, optional block attributes, and motion-as-block design, see [BLOCKS_AND_MOTION.md](./BLOCKS_AND_MOTION.md).
+For the shared component vocabulary and Canvas component roadmap, see [COMPONENTS.md](./COMPONENTS.md).
 
 ## Use A Theme
 
@@ -394,7 +395,7 @@ Repository examples:
 
 - `themes/atelier`: in-place JSX-authored artifact. Run `pnpm build:theme:atelier`.
 - `themes/clarity`: package-style theme with source under `src/` and artifact under `dist/theme`. Run `pnpm build:theme:clarity`.
-- `themes/studio`: React SDK package theme with Tailwind v4 pipeline and shadcn-style local components. Run `pnpm build:theme:studio`.
+- `themes/canvas`: React SDK package theme with Tailwind v4 pipeline and shadcn-style local components. Run `pnpm build:theme:canvas`.
 
 ## HTML SDK Authoring
 

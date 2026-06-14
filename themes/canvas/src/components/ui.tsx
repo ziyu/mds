@@ -14,6 +14,7 @@ export function Surface(props: {
   duration?: number | string;
   stagger?: number | string;
   once?: boolean | string;
+  tabIndex?: number;
   children?: React.ReactNode;
 }) {
   const hiddenProps = props.hidden === undefined ? {} : { hidden: props.hidden };
@@ -29,6 +30,7 @@ export function Surface(props: {
       data-motion-duration={attrFallback(props.block, "duration", props.duration)}
       data-motion-stagger={attrFallback(props.block, "stagger", props.stagger)}
       data-motion-once={attrFallback(props.block, "once", props.once)}
+      tabIndex={props.tabIndex}
       {...hiddenProps}
     >
       {props.children ?? <Flow block={props.block} />}

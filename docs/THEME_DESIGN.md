@@ -8,6 +8,8 @@ The most important rule:
 
 MDS should let simple authors drop a folder into `themes/`, while letting developers use modern package workflows to build sophisticated themes quickly.
 
+For the shared block/component vocabulary and Canvas component roadmap, see [COMPONENTS.md](./COMPONENTS.md).
+
 ## Goals
 
 - Keep ordinary theme customization file-based and approachable.
@@ -666,7 +668,7 @@ mds-theme inspect ./themes/clarity
 
 `themes/clarity` keeps source files under `src/`, imports a local component module, bundles CSS imports, bundles `src/script.ts` to artifact JavaScript, and commits the built `dist/theme` artifact. Runtime loading resolves the package directory to `package.json#mdsTheme.dist`.
 
-`themes/studio` exercises the React SDK and Tailwind v4 pipeline. It uses local shadcn-style components, `@mds/theme-sdk-react`, `mdsTheme.pipeline.css = "tailwind"`, and still emits a plain artifact under `dist/theme`.
+`themes/canvas` exercises the React SDK and Tailwind v4 pipeline. It uses local shadcn-style components, `@mds/theme-sdk-react`, `mdsTheme.pipeline.css = "tailwind"`, and still emits a plain artifact under `dist/theme`.
 
 Current package themes can use the MDS JSX runtime, the HTML SDK, or the React SDK. Future phases can add Preact, Vue, Sass, and richer bundler adapters without changing the artifact format.
 
@@ -1157,7 +1159,7 @@ Acceptance:
 1. Implement block attributes in AST and parser.
 2. Add renderer diagnostics for malformed, curly, or unsafe attributes.
 3. Expose `attr(name)` and safe root attrs in file templates, HTML SDK, JSX runtime, and React SDK.
-4. Implement a `motion` block in `themes/studio`.
-5. Let Studio components consume simple motion attrs such as `motion`, `delay`, and `stagger`.
+4. Implement a `motion` block in `themes/canvas`.
+5. Let Canvas components consume simple motion attrs such as `motion`, `delay`, and `stagger`.
 6. Add examples for custom components, motion wrappers, and advanced attrs.
 7. Keep `docs/THEMES.md` as the short user guide, [BLOCKS_AND_MOTION.md](./BLOCKS_AND_MOTION.md) as the extension model, and this document as the architecture reference.
