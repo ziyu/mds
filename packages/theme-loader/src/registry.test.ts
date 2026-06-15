@@ -19,7 +19,8 @@ describe("theme registry", () => {
         homepage: "https://example.com",
         preview: "preview.svg",
         tags: ["docs"],
-        supportedBlocks: ["hero"]
+        supportedBlocks: ["hero"],
+        buildable: true
       })
     ).toBe(true);
     expect(isThemeSummary({ name: "default" })).toBe(false);

@@ -157,6 +157,8 @@ Core controls:
 - Button: copy generated HTML.
 - Button: download generated HTML.
 
+Theme build and inspect are not document-level controls. Keep them in the preview panel's theme toolbelt because they operate on the effective theme that produces the iframe output. See [EDITOR_WORKFLOW.md](./EDITOR_WORKFLOW.md) for the current editor surface rules.
+
 ## Preview Strategy
 
 Render into an iframe with `srcdoc`:
@@ -269,7 +271,7 @@ Acceptance:
 
 ### Phase 3: Editor Polish
 
-- Add MDS-aware highlighting for block markers, slots, actions, media, and forms.
+- Add MDS-aware highlighting for block markers, slots, actions, attributes, frontmatter, and forms.
 - Add line decorations for diagnostics.
 - Add keyboard shortcuts.
 - Add localStorage persistence.

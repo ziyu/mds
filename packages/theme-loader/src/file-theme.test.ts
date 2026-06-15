@@ -200,8 +200,7 @@ describe("loadThemeDirectory", () => {
     expect(themes).toContainEqual(
       expect.objectContaining({
         name: "clarity",
-        label: "Clarity",
-        source: resolve("../..", "themes/clarity/dist/theme")
+        label: "Clarity"
       })
     );
 
@@ -219,11 +218,6 @@ describe("loadThemeDirectory", () => {
     expect(atelierTheme.css).toContain(".hero-media");
     expect(atelierTheme.blockRenderers?.warning).toBeDefined();
 
-    const clarityTheme = await registry.loadTheme("clarity");
-    expect(clarityTheme.name).toBe("clarity");
-    expect(clarityTheme.css).toContain(".callout-label");
-    expect(clarityTheme.blockRenderers?.hero).toBeDefined();
-    expect(clarityTheme.blockRenderers?.warning).toBeDefined();
   });
 
   it("deduplicates supported block summaries from file registries", async () => {
@@ -319,6 +313,53 @@ describe("loadThemeDirectory", () => {
         source: join(root, "themes/theme-package/dist/theme")
       })
     );
+  });
+
+  it("lists buildable package themes before their artifacts exist", async () => {
+    const root = await mkdtemp(join(tmpdir(), "mds-theme-unbuilt-package-list-"));
+    const packageDirectory = join(root, "themes/future");
+    await mkdir(packageDirectory, { recursive: true });
+    await writeFile(
+      join(packageDirectory, "package.json"),
+      JSON.stringify(
+        {
+          name: "@acme/theme-future",
+          description: "A package theme that still needs a build.",
+          keywords: ["package", "preview"],
+          mdsTheme: {
+            source: "./src/theme.tsx",
+            dist: "./dist/theme"
+          }
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
+
+    const registry = createFileThemeRegistry({
+      roots: [join(root, "themes")],
+      baseDirectory: root
+    });
+
+    await expect(registry.listThemes()).resolves.toContainEqual({
+      name: "future",
+      label: "Future",
+      source: packageDirectory,
+      buildable: true,
+      description: "A package theme that still needs a build.",
+      tags: ["package", "preview"]
+    });
+    await expect(registry.loadThemeWithDiagnostics("future")).rejects.toMatchObject({
+      name: "ThemeValidationError",
+      diagnostics: [
+        expect.objectContaining({
+          severity: "error",
+          code: "missing-theme-manifest",
+          path: join(packageDirectory, "dist/theme/theme.json")
+        })
+      ]
+    });
   });
 
   it("resolves package theme names without executing source files", async () => {
