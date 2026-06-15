@@ -22,6 +22,7 @@ export interface ThemeSummary {
   preview?: string;
   tags?: string[];
   supportedBlocks?: string[];
+  buildable?: boolean;
 }
 
 export interface ThemeRegistry {
@@ -33,6 +34,7 @@ export interface ThemeRegistry {
 export interface ThemeSummaryOptions {
   source?: string;
   fallbackName?: string;
+  buildable?: boolean;
 }
 
 export function createThemeSummary(manifest: ThemeSource["manifest"], options: ThemeSummaryOptions = {}): ThemeSummary {
@@ -41,6 +43,7 @@ export function createThemeSummary(manifest: ThemeSource["manifest"], options: T
     name,
     label: resolveThemeLabel(manifest, name),
     ...(options.source === undefined ? {} : { source: options.source }),
+    ...(options.buildable === true ? { buildable: true } : {}),
     ...themeSummaryMetadata(manifest)
   };
 }
@@ -56,7 +59,8 @@ export function isThemeSummary(value: unknown): value is ThemeSummary {
     hasOptionalString(value, "homepage") &&
     hasOptionalString(value, "preview") &&
     hasOptionalStringArray(value, "tags") &&
-    hasOptionalStringArray(value, "supportedBlocks")
+    hasOptionalStringArray(value, "supportedBlocks") &&
+    (value.buildable === undefined || typeof value.buildable === "boolean")
   );
 }
 

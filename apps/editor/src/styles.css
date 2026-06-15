@@ -12,6 +12,11 @@
   --danger: #b42318;
   --warning: #a86100;
   --success: #047857;
+  --editor-selection: rgb(36 92 153 / 22%);
+  --editor-selection-strong: rgb(36 92 153 / 30%);
+  --editor-selection-muted: rgb(36 92 153 / 16%);
+  --editor-selection-token: rgb(196 224 252 / 88%);
+  --editor-selection-token-ring: rgb(36 92 153 / 42%);
   font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
 }
 
@@ -161,30 +166,6 @@ select {
   padding: 0.5rem 0.75rem;
 }
 
-.theme-build-status {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--success), transparent 55%);
-  background: color-mix(in srgb, var(--success), transparent 90%);
-  color: var(--text);
-  padding: 0.45rem 0.75rem;
-  font-size: 0.82rem;
-}
-
-.theme-build-status strong {
-  color: var(--success);
-  text-transform: uppercase;
-  font-size: 0.72rem;
-}
-
-.theme-build-status code {
-  margin-left: auto;
-  color: var(--muted);
-  font-family: "SFMono-Regular", Consolas, monospace;
-  font-size: 0.76rem;
-}
-
 .app-error-shell {
   display: grid;
   place-items: center;
@@ -267,8 +248,41 @@ select {
   font-size: 14px;
 }
 
+.editor-host .cm-editor .cm-selectionBackground {
+  background: var(--editor-selection-muted) !important;
+}
+
+.editor-host .cm-editor.cm-focused .cm-selectionBackground {
+  background: var(--editor-selection-strong) !important;
+}
+
+.editor-host .cm-editor .cm-content ::selection,
+.editor-host .cm-editor .cm-line ::selection {
+  background: var(--editor-selection-strong);
+  color: #080f18;
+}
+
+.editor-host .cm-editor:not(.cm-focused) .cm-selectionBackground {
+  background: var(--editor-selection) !important;
+}
+
+.editor-host .cm-editor.cm-focused .cm-cursor {
+  border-left-color: var(--accent-strong);
+}
+
+.editor-host .cm-mds-selection-token {
+  border-radius: 2px;
+  background: var(--editor-selection-token) !important;
+  color: var(--text) !important;
+  box-shadow: 0 0 0 1px var(--editor-selection-token-ring);
+}
+
 .editor-host .cm-scroller {
   font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+.editor-host .cm-content {
+  padding: 0.7rem 0;
 }
 
 .editor-host .cm-gutters {
@@ -279,14 +293,178 @@ select {
 
 .editor-host .cm-activeLine,
 .editor-host .cm-activeLineGutter {
-  background: #f3eadb;
+  background: rgb(243 234 219 / 68%);
+}
+
+.editor-host .cm-mds-frontmatter-line {
+  background: rgb(238 246 241 / 62%);
+}
+
+.editor-host .cm-mds-block-line {
+  background: rgb(238 243 251 / 62%);
+}
+
+.editor-host .cm-mds-block-close-line {
+  background: rgb(246 241 235 / 62%);
+}
+
+.editor-host .cm-mds-slot-line {
+  background: rgb(255 246 223 / 64%);
+}
+
+.editor-host .cm-mds-form-line {
+  background: rgb(241 243 238 / 62%);
+}
+
+.editor-host .cm-mds-block-fence,
+.editor-host .cm-mds-slot-fence,
+.editor-host .cm-mds-form-marker {
+  color: #9a4f00;
+  font-weight: 800;
+}
+
+.editor-host .cm-mds-block-type {
+  color: #124d77;
+  font-weight: 800;
+}
+
+.editor-host .cm-mds-block-name,
+.editor-host .cm-mds-slot-name {
+  color: #6f3d84;
+  font-weight: 700;
+}
+
+.editor-host .cm-mds-attr,
+.editor-host .cm-mds-frontmatter-key {
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.editor-host .cm-mds-action {
+  color: #b42318;
+  font-weight: 800;
+}
+
+.editor-host .cm-mds-link-arrow {
+  color: #245c99;
+  font-weight: 800;
 }
 
 .preview-panel {
   position: relative;
+  grid-template-rows: auto auto minmax(0, 1fr);
   background:
     linear-gradient(90deg, rgb(23 21 18 / 5%) 1px, transparent 1px) 0 0 / 28px 28px,
     #ded8cc;
+}
+
+.theme-toolbelt {
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--panel), #e8f0ed 45%);
+}
+
+.theme-toolbelt-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.55rem;
+  padding: 0.55rem 0.7rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.theme-toolbelt-summary::marker {
+  color: var(--accent);
+}
+
+.theme-toolbelt-body {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem 0.75rem;
+  border-top: 1px solid color-mix(in srgb, var(--line), transparent 35%);
+  padding: 0.55rem 0.7rem;
+}
+
+.theme-toolbelt-copy {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.theme-toolbelt-copy strong {
+  color: var(--text);
+  font-size: 0.82rem;
+}
+
+.theme-toolbelt-copy span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.theme-toolbelt-actions {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.theme-toolbelt-actions button {
+  min-width: 4.5rem;
+  min-height: 1.9rem;
+  padding: 0.25rem 0.55rem;
+}
+
+.theme-toolbelt-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.theme-toolbelt-note {
+  grid-column: 1;
+  grid-row: 1;
+  margin: 0;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.theme-build-status {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--success), transparent 55%);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--success), transparent 92%);
+  color: var(--text);
+  padding: 0.42rem 0.55rem;
+  font-size: 0.8rem;
+}
+
+.theme-build-status strong {
+  color: var(--success);
+  text-transform: uppercase;
+  font-size: 0.68rem;
+}
+
+.theme-build-status span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.theme-build-status code {
+  margin-left: auto;
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.74rem;
 }
 
 .preview-toast {
@@ -444,5 +622,33 @@ select {
 
   .preview-panel {
     min-height: 42rem;
+  }
+
+  .theme-toolbelt {
+    display: block;
+  }
+
+  .theme-toolbelt-body {
+    grid-template-columns: 1fr;
+  }
+
+  .theme-toolbelt-actions {
+    grid-column: auto;
+    grid-row: auto;
+    justify-content: flex-start;
+  }
+
+  .theme-toolbelt-note {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .theme-build-status {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .theme-build-status code {
+    margin-left: 0;
   }
 }

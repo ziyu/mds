@@ -124,6 +124,65 @@ describe("editor theme API helpers", () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it("serves buildable package themes in the theme list before they are built", async () => {
+    const project = await mkdtemp(join(tmpdir(), "mds-editor-theme-list-unbuilt-api-"));
+    const themesRoot = join(project, "themes");
+    const theme = join(themesRoot, "canvas");
+    await mkdir(theme, {
+      recursive: true
+    });
+    await writeFile(
+      join(theme, "package.json"),
+      JSON.stringify(
+        {
+          name: "@mds/theme-canvas",
+          description: "Buildable canvas theme.",
+          mdsTheme: {
+            source: "./src/theme.tsx",
+            dist: "./dist/theme"
+          }
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
+
+    const handler = createThemeApiMiddleware({
+      workspaceRoot: project,
+      themesRoot
+    });
+    const response = createMemoryResponse();
+    const next = vi.fn();
+
+    await handler(
+      {
+        url: "/__mds/themes",
+        method: "GET"
+      },
+      response,
+      next
+    );
+    const body = JSON.parse(response.body) as Array<{
+      name: string;
+      label: string;
+      source?: string;
+      buildable?: boolean;
+      description?: string;
+    }>;
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["Content-Type"]).toBe("application/json");
+    expect(body).toContainEqual({
+      name: "canvas",
+      label: "Canvas",
+      source: theme,
+      buildable: true,
+      description: "Buildable canvas theme."
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it("serves structured theme inspection errors from the dev server API", async () => {
     const project = await mkdtemp(join(tmpdir(), "mds-editor-theme-inspect-error-api-"));
     const themesRoot = join(project, "themes");

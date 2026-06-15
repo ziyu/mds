@@ -66,6 +66,13 @@ export function App() {
   const effectiveThemeRef = frontmatterThemeRef ?? previewThemeRef;
   const hasThemeList = themes.length > 0;
   const knownThemeRefs = useMemo(() => new Set(themes.map((availableTheme) => availableTheme.name)), [themes]);
+  const effectiveThemeSummary = useMemo(
+    () => themes.find((availableTheme) => availableTheme.name === effectiveThemeRef),
+    [effectiveThemeRef, themes]
+  );
+  const canBuildEffectiveTheme =
+    effectiveThemeSummary?.buildable === true ||
+    (effectiveThemeSummary === undefined && canTryUnlistedThemeRef(effectiveThemeRef));
 
   useEffect(() => {
     let cancelled = false;
@@ -167,28 +174,23 @@ export function App() {
     setThemeError(undefined);
     setTheme(undefined);
     setThemeDiagnostics([]);
+    setThemeBuildState("idle");
 
-    themeProvider
-      .loadThemeWithDiagnostics(effectiveThemeRef)
-      .then((result) => {
-        if (!cancelled) {
-          setTheme(result.theme);
-          setThemeDiagnostics(result.diagnostics.map(themeDiagnosticToDiagnostic));
-        }
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) {
-          const message = error instanceof Error ? error.message : String(error);
-          setTheme(undefined);
-          setThemeError(message);
-          setThemeDiagnostics(themeDiagnosticsFromError(error, message));
-        }
-      });
+    void loadThemeForPreview(effectiveThemeRef, () => cancelled, {
+      setTheme,
+      setThemeError,
+      setThemeDiagnostics,
+      setThemeBuildState,
+      setThemeBuildSummary,
+      setThemeInspectionSummary,
+      setPreviewNotice,
+      canAutoBuild: canBuildEffectiveTheme
+    });
 
     return () => {
       cancelled = true;
     };
-  }, [effectiveThemeRef, hasThemeList, knownThemeRefs, themeReloadToken]);
+  }, [canBuildEffectiveTheme, effectiveThemeRef, hasThemeList, knownThemeRefs, themeReloadToken]);
 
   const document = useMemo(() => parseMds(source), [source]);
   const renderState = useMemo<RenderState>(() => {
@@ -237,6 +239,11 @@ export function App() {
   }, []);
 
   const handleBuildTheme = useCallback(async () => {
+    if (!canBuildEffectiveTheme) {
+      setPreviewNotice(`Theme does not need build: ${effectiveThemeRef}`);
+      return;
+    }
+
     setThemeBuildState("building");
     setPreviewNotice(`Building theme: ${effectiveThemeRef}`);
 
@@ -256,7 +263,7 @@ export function App() {
     } finally {
       setThemeBuildState("idle");
     }
-  }, [effectiveThemeRef]);
+  }, [canBuildEffectiveTheme, effectiveThemeRef]);
 
   const handleInspectTheme = useCallback(async () => {
     setThemeInspectionState("inspecting");
@@ -330,12 +337,6 @@ export function App() {
           ))}
         </div>
         <div className="toolbar-actions">
-          <button type="button" onClick={handleBuildTheme} disabled={themeBuildState === "building"}>
-            {themeBuildState === "building" ? "Building..." : "Build Theme"}
-          </button>
-          <button type="button" onClick={handleInspectTheme} disabled={themeInspectionState === "inspecting"}>
-            {themeInspectionState === "inspecting" ? "Inspecting..." : "Inspect Theme"}
-          </button>
           <button type="button" onClick={handleCopyHtml}>
             Copy HTML
           </button>
@@ -344,22 +345,6 @@ export function App() {
           </button>
         </div>
       </header>
-
-      {themeBuildSummary?.ref === effectiveThemeRef ? (
-        <div className="theme-build-status" role="status">
-          <strong>Last build</strong>
-          <span>{formatThemeBuildSummary(themeBuildSummary)}</span>
-          <code>{formatThemeBuildOutput(themeBuildSummary)}</code>
-        </div>
-      ) : null}
-
-      {themeInspectionSummary?.ref === effectiveThemeRef ? (
-        <div className="theme-build-status" role="status">
-          <strong>Last inspect</strong>
-          <span>{formatThemeInspectionSummary(themeInspectionSummary)}</span>
-          <code>{formatThemeInspectionOutput(themeInspectionSummary)}</code>
-        </div>
-      ) : null}
 
       {themeError === undefined ? null : <div className="theme-error">{themeError}</div>}
       {renderState.error === undefined ? null : <div className="theme-error">{renderState.error}</div>}
@@ -377,6 +362,50 @@ export function App() {
             <span>Preview</span>
             <code>{previewSize} / {effectiveThemeRef}</code>
           </div>
+          <details className="theme-toolbelt">
+            <summary className="theme-toolbelt-summary">
+              <span className="theme-toolbelt-copy">
+                <strong>Theme tools</strong>
+                <span>
+                  {frontmatterThemeRef === undefined
+                    ? `Using selected theme "${effectiveThemeRef}"`
+                    : `Using frontmatter theme "${effectiveThemeRef}"`}
+                </span>
+              </span>
+            </summary>
+            <div className="theme-toolbelt-body">
+              <div className="theme-toolbelt-actions">
+                <button
+                  type="button"
+                  onClick={handleBuildTheme}
+                  disabled={!canBuildEffectiveTheme || themeBuildState === "building"}
+                  title={canBuildEffectiveTheme ? "Build this package theme" : "This theme is a static artifact and does not need build"}
+                >
+                  {themeBuildState === "building" ? "Building..." : "Build"}
+                </button>
+                <button type="button" onClick={handleInspectTheme} disabled={themeInspectionState === "inspecting"}>
+                  {themeInspectionState === "inspecting" ? "Inspecting..." : "Inspect"}
+                </button>
+              </div>
+              {canBuildEffectiveTheme ? null : (
+                <p className="theme-toolbelt-note">This theme is already a static artifact.</p>
+              )}
+              {themeBuildSummary?.ref === effectiveThemeRef ? (
+                <div className="theme-build-status" role="status">
+                  <strong>Last build</strong>
+                  <span>{formatThemeBuildSummary(themeBuildSummary)}</span>
+                  <code>{formatThemeBuildOutput(themeBuildSummary)}</code>
+                </div>
+              ) : null}
+              {themeInspectionSummary?.ref === effectiveThemeRef ? (
+                <div className="theme-build-status" role="status">
+                  <strong>Last inspect</strong>
+                  <span>{formatThemeInspectionSummary(themeInspectionSummary)}</span>
+                  <code>{formatThemeInspectionOutput(themeInspectionSummary)}</code>
+                </div>
+              ) : null}
+            </div>
+          </details>
           {previewNotice === undefined ? null : (
             <div className="preview-toast" role="status">
               {previewNotice}
@@ -433,6 +462,107 @@ function themeDiagnosticsFromError(error: unknown, message: string): EditorDiagn
   }
 
   return [themeErrorToDiagnostic(message)];
+}
+
+interface ThemePreviewLoadCallbacks {
+  setTheme: (theme: HtmlTheme | undefined) => void;
+  setThemeError: (message: string | undefined) => void;
+  setThemeDiagnostics: (diagnostics: EditorDiagnostic[]) => void;
+  setThemeBuildState: (state: "idle" | "building") => void;
+  setThemeBuildSummary: (summary: ThemeBuildSummary | undefined) => void;
+  setThemeInspectionSummary: (summary: ThemeInspectionSummary | undefined) => void;
+  setPreviewNotice: (message: string | undefined) => void;
+  canAutoBuild: boolean;
+}
+
+async function loadThemeForPreview(
+  ref: string,
+  isCancelled: () => boolean,
+  callbacks: ThemePreviewLoadCallbacks
+): Promise<void> {
+  try {
+    const result = await themeProvider.loadThemeWithDiagnostics(ref);
+    if (isCancelled()) {
+      return;
+    }
+
+    callbacks.setTheme(result.theme);
+    callbacks.setThemeDiagnostics(result.diagnostics.map(themeDiagnosticToDiagnostic));
+    return;
+  } catch (error) {
+    if (isCancelled()) {
+      return;
+    }
+
+    if (callbacks.canAutoBuild && shouldAutoBuildTheme(error)) {
+      await buildAndReloadThemeForPreview(ref, isCancelled, callbacks);
+      return;
+    }
+
+    applyThemeLoadError(error, callbacks);
+  }
+}
+
+async function buildAndReloadThemeForPreview(
+  ref: string,
+  isCancelled: () => boolean,
+  callbacks: ThemePreviewLoadCallbacks
+): Promise<void> {
+  callbacks.setThemeBuildState("building");
+  callbacks.setPreviewNotice(`Building theme: ${ref}`);
+
+  try {
+    const buildResult = await buildThemePackageWithDiagnostics(ref);
+    if (isCancelled()) {
+      return;
+    }
+
+    callbacks.setThemeBuildSummary(createThemeBuildSummary(ref, buildResult));
+    callbacks.setThemeInspectionSummary(undefined);
+    callbacks.setThemeError(undefined);
+    callbacks.setPreviewNotice(`Theme built: ${ref}`);
+
+    const loadResult = await themeProvider.loadThemeWithDiagnostics(ref);
+    if (isCancelled()) {
+      return;
+    }
+
+    callbacks.setTheme(loadResult.theme);
+    callbacks.setThemeDiagnostics(loadResult.diagnostics.map(themeDiagnosticToDiagnostic));
+  } catch (error) {
+    if (isCancelled()) {
+      return;
+    }
+
+    callbacks.setTheme(undefined);
+    callbacks.setThemeBuildSummary(undefined);
+    callbacks.setPreviewNotice(`Theme build failed: ${ref}`);
+    applyThemeBuildOrLoadError(error, callbacks);
+  } finally {
+    if (!isCancelled()) {
+      callbacks.setThemeBuildState("idle");
+    }
+  }
+}
+
+function applyThemeLoadError(error: unknown, callbacks: ThemePreviewLoadCallbacks): void {
+  const message = error instanceof Error ? error.message : String(error);
+  callbacks.setTheme(undefined);
+  callbacks.setThemeError(message);
+  callbacks.setThemeDiagnostics(themeDiagnosticsFromError(error, message));
+}
+
+function applyThemeBuildOrLoadError(error: unknown, callbacks: ThemePreviewLoadCallbacks): void {
+  const message = error instanceof Error ? error.message : String(error);
+  callbacks.setThemeError(message);
+  callbacks.setThemeDiagnostics(themeBuildErrorToEditorDiagnostics(error, message));
+}
+
+function shouldAutoBuildTheme(error: unknown): boolean {
+  return (
+    error instanceof ThemeValidationError &&
+    error.diagnostics.some((diagnostic) => diagnostic.code === "missing-theme-manifest")
+  );
 }
 
 function canTryUnlistedThemeRef(ref: string): boolean {
