@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { parseMds } from "@mds/parser";
 import { renderHtmlResult, type HtmlTheme } from "@mds/renderer-html";
 import { ThemeValidationError, type ThemeSummary } from "@mds/theme-loader/browser";
@@ -8,7 +8,7 @@ import {
   withDiagnosticsSource,
   type EditorDiagnostic
 } from "./editor-diagnostics.js";
-import { EditorPane } from "./editor-pane.js";
+import { EditorPane, type EditorPaneHandle } from "./editor-pane.js";
 import { examples } from "./examples.js";
 import { PreviewPane, type PreviewSize } from "./preview-pane.js";
 import {
@@ -46,6 +46,14 @@ interface RenderState {
   error?: string;
 }
 
+interface ThemeBuildProgress {
+  ref: string;
+}
+
+interface ThemeInspectionProgress {
+  ref: string;
+}
+
 export function App() {
   const [source, setSource] = useState(initialExample.source);
   const [exampleId, setExampleId] = useState(initialExample.id);
@@ -56,11 +64,13 @@ export function App() {
   const [themeError, setThemeError] = useState<string | undefined>();
   const [themeDiagnostics, setThemeDiagnostics] = useState<EditorDiagnostic[]>([]);
   const [themeReloadToken, setThemeReloadToken] = useState(0);
-  const [themeBuildState, setThemeBuildState] = useState<"idle" | "building">("idle");
+  const [themeBuildProgress, setThemeBuildProgress] = useState<ThemeBuildProgress | undefined>();
   const [themeBuildSummary, setThemeBuildSummary] = useState<ThemeBuildSummary | undefined>();
-  const [themeInspectionState, setThemeInspectionState] = useState<"idle" | "inspecting">("idle");
+  const [themeInspectionProgress, setThemeInspectionProgress] = useState<ThemeInspectionProgress | undefined>();
   const [themeInspectionSummary, setThemeInspectionSummary] = useState<ThemeInspectionSummary | undefined>();
   const [previewNotice, setPreviewNotice] = useState<string | undefined>();
+  const [isPreviewFullscreen, setIsPreviewFullscreen] = useState(false);
+  const editorPaneRef = useRef<EditorPaneHandle | null>(null);
 
   const frontmatterThemeRef = useMemo(() => readThemeRef(source), [source]);
   const effectiveThemeRef = frontmatterThemeRef ?? previewThemeRef;
@@ -73,6 +83,8 @@ export function App() {
   const canBuildEffectiveTheme =
     effectiveThemeSummary?.buildable === true ||
     (effectiveThemeSummary === undefined && canTryUnlistedThemeRef(effectiveThemeRef));
+  const isBuildingEffectiveTheme = themeBuildProgress?.ref === effectiveThemeRef;
+  const isInspectingEffectiveTheme = themeInspectionProgress?.ref === effectiveThemeRef;
 
   useEffect(() => {
     let cancelled = false;
@@ -119,6 +131,21 @@ export function App() {
     const timeout = window.setTimeout(() => setPreviewNotice(undefined), 2400);
     return () => window.clearTimeout(timeout);
   }, [previewNotice]);
+
+  useEffect(() => {
+    if (!isPreviewFullscreen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsPreviewFullscreen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isPreviewFullscreen]);
 
   useEffect(() => {
     if (import.meta.hot === undefined) {
@@ -174,13 +201,12 @@ export function App() {
     setThemeError(undefined);
     setTheme(undefined);
     setThemeDiagnostics([]);
-    setThemeBuildState("idle");
 
     void loadThemeForPreview(effectiveThemeRef, () => cancelled, {
       setTheme,
       setThemeError,
       setThemeDiagnostics,
-      setThemeBuildState,
+      setThemeBuildProgress,
       setThemeBuildSummary,
       setThemeInspectionSummary,
       setPreviewNotice,
@@ -244,7 +270,7 @@ export function App() {
       return;
     }
 
-    setThemeBuildState("building");
+    setThemeBuildProgress({ ref: effectiveThemeRef });
     setPreviewNotice(`Building theme: ${effectiveThemeRef}`);
 
     try {
@@ -261,12 +287,12 @@ export function App() {
       setThemeBuildSummary(undefined);
       setThemeDiagnostics(themeBuildErrorToEditorDiagnostics(error, message));
     } finally {
-      setThemeBuildState("idle");
+      setThemeBuildProgress((progress) => (progress?.ref === effectiveThemeRef ? undefined : progress));
     }
   }, [canBuildEffectiveTheme, effectiveThemeRef]);
 
   const handleInspectTheme = useCallback(async () => {
-    setThemeInspectionState("inspecting");
+    setThemeInspectionProgress({ ref: effectiveThemeRef });
     setPreviewNotice(`Inspecting theme: ${effectiveThemeRef}`);
 
     try {
@@ -281,7 +307,7 @@ export function App() {
       setThemeInspectionSummary(undefined);
       setThemeDiagnostics(themeBuildErrorToEditorDiagnostics(error, message));
     } finally {
-      setThemeInspectionState("idle");
+      setThemeInspectionProgress((progress) => (progress?.ref === effectiveThemeRef ? undefined : progress));
     }
   }, [effectiveThemeRef]);
 
@@ -296,6 +322,18 @@ export function App() {
     link.click();
     URL.revokeObjectURL(url);
   }, [renderState.html, selectedExample.id]);
+
+  const handleFoldAllMds = useCallback(() => {
+    editorPaneRef.current?.foldAllMds();
+  }, []);
+
+  const handleUnfoldAllMds = useCallback(() => {
+    editorPaneRef.current?.unfoldAllMds();
+  }, []);
+
+  const handleTogglePreviewFullscreen = useCallback(() => {
+    setIsPreviewFullscreen((current) => !current);
+  }, []);
 
   return (
     <main className="app-shell">
@@ -314,16 +352,59 @@ export function App() {
             ))}
           </select>
         </label>
-        <label className="toolbar-field">
-          <span>Theme</span>
-          <select value={previewThemeRef} onChange={(event) => handleThemeChange(event.target.value)}>
-            {themeOptions(themes, previewThemeRef).map((availableTheme) => (
-              <option key={availableTheme.name} value={availableTheme.name}>
-                {availableTheme.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="toolbar-field theme-toolbar-field">
+          <label className="theme-select-field">
+            <span>Theme</span>
+            <select value={previewThemeRef} onChange={(event) => handleThemeChange(event.target.value)}>
+              {themeOptions(themes, previewThemeRef).map((availableTheme) => (
+                <option key={availableTheme.name} value={availableTheme.name}>
+                  {availableTheme.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <details className="theme-toolbelt">
+            <summary
+              className="theme-toolbelt-summary"
+              title={
+                frontmatterThemeRef === undefined
+                  ? `Using selected theme "${effectiveThemeRef}"`
+                  : `Using frontmatter theme "${effectiveThemeRef}"`
+              }
+            >
+              Theme tools
+            </summary>
+            <div className="theme-toolbelt-body">
+              <div className="theme-toolbelt-actions">
+                <button
+                  type="button"
+                  onClick={handleBuildTheme}
+                  disabled={!canBuildEffectiveTheme || isBuildingEffectiveTheme}
+                  title={canBuildEffectiveTheme ? "Build this package theme" : "This theme is a static artifact and does not need build"}
+                >
+                  {isBuildingEffectiveTheme ? "Building..." : "Build"}
+                </button>
+                <button type="button" onClick={handleInspectTheme} disabled={isInspectingEffectiveTheme}>
+                  {isInspectingEffectiveTheme ? "Inspecting..." : "Inspect"}
+                </button>
+              </div>
+              {themeBuildSummary?.ref === effectiveThemeRef ? (
+                <div className="theme-build-status" role="status">
+                  <strong>Last build</strong>
+                  <span>{formatThemeBuildSummary(themeBuildSummary)}</span>
+                  <code>{formatThemeBuildOutput(themeBuildSummary)}</code>
+                </div>
+              ) : null}
+              {themeInspectionSummary?.ref === effectiveThemeRef ? (
+                <div className="theme-build-status" role="status">
+                  <strong>Last inspect</strong>
+                  <span>{formatThemeInspectionSummary(themeInspectionSummary)}</span>
+                  <code>{formatThemeInspectionOutput(themeInspectionSummary)}</code>
+                </div>
+              ) : null}
+            </div>
+          </details>
+        </div>
         <div className="segmented" role="group" aria-label="Preview size">
           {(["desktop", "tablet", "mobile"] satisfies PreviewSize[]).map((size) => (
             <button
@@ -352,60 +433,31 @@ export function App() {
       <section className="workspace">
         <div className="panel editor-panel">
           <div className="panel-title">
-            <span>Source</span>
-            <code>{source.length.toLocaleString()} chars</code>
+            <span className="panel-title-copy">
+              <span>Source</span>
+              <code>{source.length.toLocaleString()} chars</code>
+            </span>
+            <span className="panel-title-actions">
+              <button type="button" onClick={handleFoldAllMds}>
+                Fold all
+              </button>
+              <button type="button" onClick={handleUnfoldAllMds}>
+                Expand all
+              </button>
+            </span>
           </div>
-          <EditorPane value={source} onChange={setSource} />
+          <EditorPane ref={editorPaneRef} value={source} onChange={setSource} />
         </div>
-        <div className="panel preview-panel">
+        <div className={isPreviewFullscreen ? "panel preview-panel preview-panel-fullscreen" : "panel preview-panel"}>
           <div className="panel-title">
             <span>Preview</span>
-            <code>{previewSize} / {effectiveThemeRef}</code>
+            <span className="panel-title-actions">
+              <code>{previewSize} / {effectiveThemeRef}</code>
+              <button type="button" onClick={handleTogglePreviewFullscreen}>
+                {isPreviewFullscreen ? "Exit fullscreen" : "Fullscreen"}
+              </button>
+            </span>
           </div>
-          <details className="theme-toolbelt">
-            <summary className="theme-toolbelt-summary">
-              <span className="theme-toolbelt-copy">
-                <strong>Theme tools</strong>
-                <span>
-                  {frontmatterThemeRef === undefined
-                    ? `Using selected theme "${effectiveThemeRef}"`
-                    : `Using frontmatter theme "${effectiveThemeRef}"`}
-                </span>
-              </span>
-            </summary>
-            <div className="theme-toolbelt-body">
-              <div className="theme-toolbelt-actions">
-                <button
-                  type="button"
-                  onClick={handleBuildTheme}
-                  disabled={!canBuildEffectiveTheme || themeBuildState === "building"}
-                  title={canBuildEffectiveTheme ? "Build this package theme" : "This theme is a static artifact and does not need build"}
-                >
-                  {themeBuildState === "building" ? "Building..." : "Build"}
-                </button>
-                <button type="button" onClick={handleInspectTheme} disabled={themeInspectionState === "inspecting"}>
-                  {themeInspectionState === "inspecting" ? "Inspecting..." : "Inspect"}
-                </button>
-              </div>
-              {canBuildEffectiveTheme ? null : (
-                <p className="theme-toolbelt-note">This theme is already a static artifact.</p>
-              )}
-              {themeBuildSummary?.ref === effectiveThemeRef ? (
-                <div className="theme-build-status" role="status">
-                  <strong>Last build</strong>
-                  <span>{formatThemeBuildSummary(themeBuildSummary)}</span>
-                  <code>{formatThemeBuildOutput(themeBuildSummary)}</code>
-                </div>
-              ) : null}
-              {themeInspectionSummary?.ref === effectiveThemeRef ? (
-                <div className="theme-build-status" role="status">
-                  <strong>Last inspect</strong>
-                  <span>{formatThemeInspectionSummary(themeInspectionSummary)}</span>
-                  <code>{formatThemeInspectionOutput(themeInspectionSummary)}</code>
-                </div>
-              ) : null}
-            </div>
-          </details>
           {previewNotice === undefined ? null : (
             <div className="preview-toast" role="status">
               {previewNotice}
@@ -468,7 +520,7 @@ interface ThemePreviewLoadCallbacks {
   setTheme: (theme: HtmlTheme | undefined) => void;
   setThemeError: (message: string | undefined) => void;
   setThemeDiagnostics: (diagnostics: EditorDiagnostic[]) => void;
-  setThemeBuildState: (state: "idle" | "building") => void;
+  setThemeBuildProgress: Dispatch<SetStateAction<ThemeBuildProgress | undefined>>;
   setThemeBuildSummary: (summary: ThemeBuildSummary | undefined) => void;
   setThemeInspectionSummary: (summary: ThemeInspectionSummary | undefined) => void;
   setPreviewNotice: (message: string | undefined) => void;
@@ -508,7 +560,7 @@ async function buildAndReloadThemeForPreview(
   isCancelled: () => boolean,
   callbacks: ThemePreviewLoadCallbacks
 ): Promise<void> {
-  callbacks.setThemeBuildState("building");
+  callbacks.setThemeBuildProgress({ ref });
   callbacks.setPreviewNotice(`Building theme: ${ref}`);
 
   try {
@@ -540,7 +592,7 @@ async function buildAndReloadThemeForPreview(
     applyThemeBuildOrLoadError(error, callbacks);
   } finally {
     if (!isCancelled()) {
-      callbacks.setThemeBuildState("idle");
+      callbacks.setThemeBuildProgress((progress) => (progress?.ref === ref ? undefined : progress));
     }
   }
 }

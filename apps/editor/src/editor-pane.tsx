@@ -1,12 +1,15 @@
-import { useEffect, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { markdown } from "@codemirror/lang-markdown";
-import type { Extension } from "@codemirror/state";
+import type { EditorState, Extension, Text } from "@codemirror/state";
+import { foldEffect, foldedRanges, unfoldEffect } from "@codemirror/language";
 import {
   Decoration,
   type DecorationSet,
   EditorView,
+  GutterMarker,
   ViewPlugin,
-  ViewUpdate
+  ViewUpdate,
+  gutter
 } from "@codemirror/view";
 import { basicSetup } from "codemirror";
 
@@ -15,7 +18,15 @@ export interface EditorPaneProps {
   onChange: (value: string) => void;
 }
 
-export function EditorPane({ value, onChange }: EditorPaneProps) {
+export interface EditorPaneHandle {
+  foldAllMds: () => void;
+  unfoldAllMds: () => void;
+}
+
+export const EditorPane = forwardRef<EditorPaneHandle, EditorPaneProps>(function EditorPane(
+  { value, onChange },
+  ref
+) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
@@ -23,6 +34,27 @@ export function EditorPane({ value, onChange }: EditorPaneProps) {
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
+
+  useImperativeHandle(ref, () => ({
+    foldAllMds() {
+      const view = viewRef.current;
+
+      if (view === null) {
+        return;
+      }
+
+      foldAllMdsRanges(view);
+    },
+    unfoldAllMds() {
+      const view = viewRef.current;
+
+      if (view === null) {
+        return;
+      }
+
+      unfoldAllMdsRanges(view);
+    }
+  }), []);
 
   useEffect(() => {
     if (hostRef.current === null || viewRef.current !== null) {
@@ -35,6 +67,7 @@ export function EditorPane({ value, onChange }: EditorPaneProps) {
       extensions: [
         basicSetup,
         markdown(),
+        mdsFoldGutter,
         mdsEditorExtensions,
         EditorView.lineWrapping,
         EditorView.updateListener.of((update) => {
@@ -74,7 +107,7 @@ export function EditorPane({ value, onChange }: EditorPaneProps) {
   }, [value]);
 
   return <div ref={hostRef} className="editor-host" />;
-}
+});
 
 const mdsBlockLine = Decoration.line({
   attributes: {
@@ -129,6 +162,70 @@ interface MdsDecorationRange {
   decoration: Decoration;
 }
 
+interface MdsFoldRange {
+  from: number;
+  to: number;
+}
+
+interface MdsBlockFrame {
+  lineNumber: number;
+  start: number;
+  contentStart: number;
+}
+
+class MdsFoldMarker extends GutterMarker {
+  constructor(readonly open: boolean) {
+    super();
+  }
+
+  eq(other: GutterMarker): boolean {
+    return other instanceof MdsFoldMarker && other.open === this.open;
+  }
+
+  toDOM(): Node {
+    const marker = document.createElement("span");
+    marker.className = "cm-mds-fold-marker";
+    marker.textContent = this.open ? "⌄" : "›";
+    marker.title = this.open ? "Fold MDS block" : "Unfold MDS block";
+    return marker;
+  }
+}
+
+const mdsOpenFoldMarker = new MdsFoldMarker(true);
+const mdsClosedFoldMarker = new MdsFoldMarker(false);
+
+const mdsFoldGutter = gutter({
+  class: "cm-mds-foldGutter",
+  lineMarker(view, line) {
+    const range = findMdsFoldRange(view.state.doc, line.from);
+
+    if (range === null) {
+      return null;
+    }
+
+    return findFoldedMdsRange(view.state, range) === null ? mdsOpenFoldMarker : mdsClosedFoldMarker;
+  },
+  lineMarkerChange(update) {
+    return update.docChanged || update.viewportChanged || foldedRanges(update.startState) !== foldedRanges(update.state);
+  },
+  domEventHandlers: {
+    click(view, line, event) {
+      const range = findMdsFoldRange(view.state.doc, line.from);
+
+      if (range === null) {
+        return false;
+      }
+
+      event.preventDefault();
+      const folded = findFoldedMdsRange(view.state, range);
+      view.dispatch({
+        effects: folded === null ? foldEffect.of(range) : unfoldEffect.of(folded)
+      });
+      return true;
+    }
+  }
+});
+
 const mdsEditorExtensions: Extension[] = [
   ViewPlugin.fromClass(
     class {
@@ -167,6 +264,201 @@ const mdsEditorExtensions: Extension[] = [
     }
   )
 ];
+
+function findFoldedMdsRange(state: EditorState, range: MdsFoldRange): MdsFoldRange | null {
+  let folded: MdsFoldRange | null = null;
+
+  foldedRanges(state).between(range.from, range.from, (from, to) => {
+    if (from === range.from && to === range.to) {
+      folded = { from, to };
+    }
+  });
+
+  return folded;
+}
+
+function foldAllMdsRanges(view: EditorView): void {
+  const ranges = collectTopLevelMdsFoldRanges(view.state.doc)
+    .filter((range) => findFoldedMdsRange(view.state, range) === null);
+
+  if (ranges.length === 0) {
+    return;
+  }
+
+  view.dispatch({
+    effects: ranges.map((range) => foldEffect.of(range))
+  });
+}
+
+function unfoldAllMdsRanges(view: EditorView): void {
+  const effects: ReturnType<typeof unfoldEffect.of>[] = [];
+
+  foldedRanges(view.state).between(0, view.state.doc.length, (from, to) => {
+    effects.push(unfoldEffect.of({ from, to }));
+  });
+
+  if (effects.length === 0) {
+    return;
+  }
+
+  view.dispatch({ effects });
+}
+
+function collectTopLevelMdsFoldRanges(document: Text): MdsFoldRange[] {
+  const ranges: MdsFoldRange[] = [];
+  let foldedUntil = -1;
+
+  for (let lineNumber = 1; lineNumber <= document.lines; lineNumber += 1) {
+    const line = document.line(lineNumber);
+
+    if (line.from < foldedUntil) {
+      continue;
+    }
+
+    const range = findMdsFoldRange(document, line.from);
+
+    if (range === null) {
+      continue;
+    }
+
+    ranges.push(range);
+    foldedUntil = range.to;
+  }
+
+  return ranges;
+}
+
+function findMdsFoldRange(document: Text, lineStart: number): MdsFoldRange | null {
+  const line = document.lineAt(lineStart);
+  const text = line.text;
+  const frontmatterLines = readFrontmatterLineNumbers(document);
+
+  if (frontmatterLines !== undefined && line.number >= frontmatterLines.from && line.number <= frontmatterLines.to) {
+    return null;
+  }
+
+  if (isMdsOpeningBlockLine(text)) {
+    return findMdsBlockFoldRange(document, line.number);
+  }
+
+  if (isMdsSlotLine(text)) {
+    return findMdsSlotFoldRange(document, line.number);
+  }
+
+  return null;
+}
+
+function findMdsBlockFoldRange(document: Text, lineNumber: number): MdsFoldRange | null {
+  const startLine = document.line(lineNumber);
+  const stack: MdsBlockFrame[] = [
+    {
+      lineNumber,
+      start: startLine.from,
+      contentStart: startLine.to
+    }
+  ];
+
+  for (let currentLineNumber = lineNumber + 1; currentLineNumber <= document.lines; currentLineNumber += 1) {
+    const line = document.line(currentLineNumber);
+
+    if (isMdsOpeningBlockLine(line.text)) {
+      stack.push({
+        lineNumber: currentLineNumber,
+        start: line.from,
+        contentStart: line.to
+      });
+      continue;
+    }
+
+    if (!isMdsClosingBlockLine(line.text)) {
+      continue;
+    }
+
+    const currentBlock = stack.pop();
+
+    if (currentBlock === undefined) {
+      continue;
+    }
+
+    if (currentBlock.lineNumber === lineNumber) {
+      return createFoldRange(currentBlock.contentStart, line.to);
+    }
+  }
+
+  return createFoldRange(startLine.to, document.length);
+}
+
+function findMdsSlotFoldRange(document: Text, lineNumber: number): MdsFoldRange | null {
+  const startLine = document.line(lineNumber);
+  const parentBlockEndLine = findContainingMdsBlockEndLine(document, lineNumber);
+  const limitLineNumber = parentBlockEndLine ?? document.lines;
+
+  for (let currentLineNumber = lineNumber + 1; currentLineNumber <= limitLineNumber; currentLineNumber += 1) {
+    const line = document.line(currentLineNumber);
+
+    if (isMdsSlotLine(line.text) || isMdsClosingBlockLine(line.text) || currentLineNumber === limitLineNumber) {
+      return createFoldRange(startLine.to, line.from);
+    }
+  }
+
+  return null;
+}
+
+function findContainingMdsBlockEndLine(document: Text, lineNumber: number): number | undefined {
+  const stack: number[] = [];
+
+  for (let currentLineNumber = 1; currentLineNumber <= document.lines; currentLineNumber += 1) {
+    const line = document.line(currentLineNumber);
+
+    if (isMdsOpeningBlockLine(line.text)) {
+      stack.push(currentLineNumber);
+      continue;
+    }
+
+    if (isMdsClosingBlockLine(line.text) && stack.length > 0) {
+      const blockStartLine = stack.pop();
+
+      if (blockStartLine !== undefined && blockStartLine < lineNumber && lineNumber < currentLineNumber) {
+        return currentLineNumber;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function createFoldRange(from: number, to: number): MdsFoldRange | null {
+  return to > from ? { from, to } : null;
+}
+
+function readFrontmatterLineNumbers(document: Text): { from: number; to: number } | undefined {
+  if (document.lines < 2 || document.line(1).text.trim() !== "---") {
+    return undefined;
+  }
+
+  for (let lineNumber = 2; lineNumber <= document.lines; lineNumber += 1) {
+    if (document.line(lineNumber).text.trim() === "---") {
+      return {
+        from: 1,
+        to: lineNumber
+      };
+    }
+  }
+
+  return undefined;
+}
+
+function isMdsOpeningBlockLine(text: string): boolean {
+  return /^\s*:{3,}\s+[A-Za-z][\w-]*(?:\s|$)/.test(text);
+}
+
+function isMdsClosingBlockLine(text: string): boolean {
+  return /^\s*:{3,}\s*$/.test(text);
+}
+
+function isMdsSlotLine(text: string): boolean {
+  return /^\s*---\s+\S/.test(text);
+}
 
 function buildMdsSelectionDecorations(view: EditorView): DecorationSet {
   if (view.state.selection.ranges.every((range) => range.empty)) {

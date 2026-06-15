@@ -132,6 +132,16 @@ select {
   font-size: 0.85rem;
 }
 
+.theme-toolbar-field {
+  gap: 0.5rem;
+}
+
+.theme-select-field {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
 .segmented {
   display: flex;
   align-items: center;
@@ -224,6 +234,7 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.7rem;
   min-height: 2.4rem;
   border-bottom: 1px solid var(--line);
   color: var(--muted);
@@ -231,9 +242,36 @@ select {
   padding: 0.45rem 0.7rem;
 }
 
+.panel-title-copy {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
 .panel-title code {
   color: var(--accent);
   font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+.panel-title-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+
+.panel-title-actions button {
+  min-height: 1.7rem;
+  border-color: color-mix(in srgb, var(--line-strong), transparent 15%);
+  background: color-mix(in srgb, var(--panel-strong), #fff 38%);
+  color: var(--muted);
+  padding: 0.18rem 0.5rem;
+  font-size: 0.74rem;
+}
+
+.panel-title-actions button:hover {
+  color: var(--accent);
 }
 
 .editor-host {
@@ -289,6 +327,37 @@ select {
   background: #f1eee8;
   border-right: 1px solid var(--line);
   color: #81786d;
+}
+
+.editor-host .cm-foldGutter {
+  display: none !important;
+}
+
+.editor-host .cm-mds-foldGutter {
+  min-width: 1.15rem;
+}
+
+.editor-host .cm-mds-foldGutter .cm-gutterElement {
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.editor-host .cm-mds-fold-marker {
+  display: inline-grid;
+  place-items: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 4px;
+  color: #8b5208;
+  cursor: pointer;
+  font-size: 0.82rem;
+  line-height: 1;
+}
+
+.editor-host .cm-mds-fold-marker:hover {
+  background: rgb(154 79 0 / 12%);
+  color: #5f3400;
 }
 
 .editor-host .cm-activeLine,
@@ -352,70 +421,95 @@ select {
 
 .preview-panel {
   position: relative;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   background:
     linear-gradient(90deg, rgb(23 21 18 / 5%) 1px, transparent 1px) 0 0 / 28px 28px,
     #ded8cc;
 }
 
+.preview-panel-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  width: 100vw;
+  height: 100vh;
+  border: 0;
+}
+
+.preview-panel-fullscreen .panel-title {
+  background: color-mix(in srgb, var(--panel), #fff 22%);
+}
+
+.preview-panel-fullscreen .preview-frame {
+  padding: 1.1rem;
+}
+
 .theme-toolbelt {
-  border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--panel), #e8f0ed 45%);
+  position: relative;
+  z-index: 20;
+  flex: 0 0 auto;
 }
 
 .theme-toolbelt-summary {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
-  min-height: 2.55rem;
-  padding: 0.55rem 0.7rem;
-  color: var(--text);
+  justify-content: center;
+  min-height: 1.75rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: var(--panel-strong);
+  color: var(--accent-strong);
+  padding: 0.15rem 0.65rem;
   cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1;
+  list-style: none;
+  user-select: none;
 }
 
 .theme-toolbelt-summary::marker {
+  content: "";
+}
+
+.theme-toolbelt-summary::-webkit-details-marker {
+  display: none;
+}
+
+.theme-toolbelt[open] .theme-toolbelt-summary,
+.theme-toolbelt-summary:hover {
+  border-color: var(--accent);
   color: var(--accent);
 }
 
+.theme-toolbelt:not([open]) .theme-toolbelt-body {
+  display: none;
+}
+
 .theme-toolbelt-body {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
   display: grid;
-  grid-template-columns: minmax(12rem, 1fr) auto;
-  align-items: center;
-  gap: 0.55rem 0.75rem;
-  border-top: 1px solid color-mix(in srgb, var(--line), transparent 35%);
-  padding: 0.55rem 0.7rem;
-}
-
-.theme-toolbelt-copy {
-  display: grid;
-  gap: 0.12rem;
-  min-width: 0;
-}
-
-.theme-toolbelt-copy strong {
-  color: var(--text);
-  font-size: 0.82rem;
-}
-
-.theme-toolbelt-copy span {
-  color: var(--muted);
-  font-size: 0.78rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  width: max-content;
+  max-width: min(28rem, calc(100vw - 1.5rem));
+  gap: 0.45rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel), #fff 55%);
+  box-shadow: 0 12px 32px rgb(23 21 18 / 14%);
+  padding: 0.45rem;
 }
 
 .theme-toolbelt-actions {
-  grid-column: 2;
-  grid-row: 1;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.4rem;
-  justify-content: flex-end;
 }
 
 .theme-toolbelt-actions button {
-  min-width: 4.5rem;
-  min-height: 1.9rem;
+  min-width: 4.75rem;
+  min-height: 1.85rem;
   padding: 0.25rem 0.55rem;
 }
 
@@ -424,17 +518,7 @@ select {
   opacity: 0.5;
 }
 
-.theme-toolbelt-note {
-  grid-column: 1;
-  grid-row: 1;
-  margin: 0;
-  min-width: 0;
-  color: var(--muted);
-  font-size: 0.78rem;
-}
-
 .theme-build-status {
-  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   gap: 0.55rem;
@@ -622,25 +706,6 @@ select {
 
   .preview-panel {
     min-height: 42rem;
-  }
-
-  .theme-toolbelt {
-    display: block;
-  }
-
-  .theme-toolbelt-body {
-    grid-template-columns: 1fr;
-  }
-
-  .theme-toolbelt-actions {
-    grid-column: auto;
-    grid-row: auto;
-    justify-content: flex-start;
-  }
-
-  .theme-toolbelt-note {
-    grid-column: auto;
-    grid-row: auto;
   }
 
   .theme-build-status {
