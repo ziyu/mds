@@ -1,12 +1,12 @@
 # Publishing MDS
 
-MDS publishes eleven fixed-version public packages under `@mds-crate`. The first release uses the npm `next` dist-tag and a one-time authenticated bootstrap. Later releases should use npm trusted publishing.
+MDS publishes eleven fixed-version public packages under `@mds-crate`. The authenticated `0.1.0-beta.1` bootstrap release is complete, and all eleven packages now trust the GitHub Actions publisher. Subsequent releases use npm trusted publishing.
 
 Reference: [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/), [`npm trust github`](https://docs.npmjs.com/cli/v11/commands/npm-trust/), and [npm provenance](https://docs.npmjs.com/generating-provenance-statements/).
 
-## Current gates
+## Bootstrap gates
 
-Before the first publication:
+The first publication required:
 
 1. Push the feature commit to `main` so the Release PR workflow creates `chore: version packages`.
 2. Review and merge that version PR. It must move every public package from `0.1.0-beta.0` to the same `0.1.0-beta.1` version.
@@ -30,7 +30,7 @@ pnpm release:publish:next
 pnpm release:verify:next
 ```
 
-`release:publish:next` packs every package with pnpm so `workspace:` dependencies become publishable version references, then publishes those tarballs with npm in dependency order. The command is hard-coded to the `next` dist-tag and creates package Git tags only after every npm publish succeeds. Use `pnpm release:publish:next:dry-run` to exercise the exact packing path without changing npm. Do not use `latest` for the beta. If publication stops partway through, do not bump or reuse versions blindly: inspect the registry, let `release:check` report exact versions that already exist, and publish only a reviewed recovery release.
+`release:publish:next` packs every package with pnpm so `workspace:` dependencies become publishable version references, then publishes those tarballs with npm in dependency order. The command is hard-coded to the `next` dist-tag and creates package Git tags only after every npm publish succeeds. Use `pnpm release:publish:next:dry-run` to exercise the exact packing path without changing npm. npm automatically created `latest` during the first publication; that tag is intentionally retained, while future prereleases continue targeting `next`. If publication stops partway through, do not bump or reuse versions blindly: inspect the registry, let `release:check` report exact versions that already exist, and publish only a reviewed recovery release.
 
 The registry verifier creates a clean temporary consumer and:
 
@@ -43,6 +43,8 @@ The registry verifier creates a clean temporary consumer and:
 - launches the installed local Editor in Chrome and verifies file save, installed themes, conflicts, diagnostics, and shutdown.
 
 ## Trusted publishing after bootstrap
+
+Trusted publishing is configured for all eleven packages with GitHub repository `ziyu/mds`, workflow `publish.yml`, environment `npm`, and publish permission.
 
 After every package exists on npm:
 

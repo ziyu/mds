@@ -34,7 +34,7 @@ The recommended first public milestone is `0.1.0-beta.1`, not an immediate stabl
 - [ ] Make the GitHub repository public before the external beta.
 - [x] Add Changesets lockstep versioning and release pull-request automation.
 - [x] Add GitHub Actions for type checks, tests, builds, tarball auditing, and visual smoke tests.
-- [ ] Add trusted npm publishing after the package bootstrap release.
+- [x] Add trusted npm publishing after the package bootstrap release.
 - [x] Add the clean Editor consumer fixture alongside the Node.js, Vite, CLI, and Theme tarball consumers.
 
 ## M1A Progress
