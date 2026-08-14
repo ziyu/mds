@@ -155,7 +155,7 @@ async function captureScreenshot(
   height: number
 ): Promise<LayoutMetrics> {
   const profileDirectory = `${screenshotPath}.chrome-profile`;
-  await rm(profileDirectory, { recursive: true, force: true });
+  await rm(profileDirectory, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   const child = spawn(
     chrome,
     [
@@ -175,7 +175,7 @@ async function captureScreenshot(
   let client: CdpClient | undefined;
 
   try {
-    client = await CdpClient.connect(await waitForDevToolsUrl(child, 12_000));
+    client = await CdpClient.connect(await waitForDevToolsUrl(child, 30_000));
     const target = await client.send<{ targetId: string }>("Target.createTarget", { url: "about:blank" });
     const attached = await client.send<{ sessionId: string }>("Target.attachToTarget", {
       targetId: target.targetId,
@@ -237,13 +237,30 @@ async function captureScreenshot(
     return layout;
   } finally {
     client?.close();
-    child.kill("SIGTERM");
-    await Promise.race([new Promise<void>((resolveExit) => child.once("exit", () => resolveExit())), delay(1_000)]);
-    if (child.exitCode === null && child.signalCode === null) {
-      child.kill("SIGKILL");
-    }
-    await rm(profileDirectory, { recursive: true, force: true });
+    await stopProcess(child);
+    await rm(profileDirectory, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   }
+}
+
+async function stopProcess(child: ReturnType<typeof spawn>): Promise<void> {
+  if (child.exitCode !== null || child.signalCode !== null) {
+    return;
+  }
+
+  child.kill("SIGTERM");
+  const exited = await Promise.race([
+    new Promise<boolean>((resolveExit) => child.once("exit", () => resolveExit(true))),
+    delay(1_000).then(() => false)
+  ]);
+  if (exited || child.exitCode !== null || child.signalCode !== null) {
+    return;
+  }
+
+  child.kill("SIGKILL");
+  await Promise.race([
+    new Promise<void>((resolveExit) => child.once("exit", () => resolveExit())),
+    delay(2_000)
+  ]);
 }
 
 async function waitForDevToolsUrl(

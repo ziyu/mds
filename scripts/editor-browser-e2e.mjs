@@ -44,7 +44,7 @@ try {
     ],
     { stdio: ["ignore", "ignore", "pipe"] }
   );
-  client = await CdpClient.connect(await waitForDevToolsUrl(chromeChild, 12_000));
+  client = await CdpClient.connect(await waitForDevToolsUrl(chromeChild, 30_000));
   const target = await client.send("Target.createTarget", { url: "about:blank" });
   const attached = await client.send("Target.attachToTarget", {
     targetId: target.targetId,
@@ -96,9 +96,15 @@ try {
   console.log("Packed Editor browser E2E passed: open, installed theme, save, conflict, reload, diagnostics, shutdown.");
 } finally {
   client?.close();
-  chromeChild?.kill("SIGKILL");
-  editorChild?.kill("SIGKILL");
-  await rm(project, { recursive: true, force: true });
+  if (chromeChild !== undefined) {
+    chromeChild.kill("SIGKILL");
+    await waitForExit(chromeChild, 2_000, true);
+  }
+  if (editorChild !== undefined) {
+    editorChild.kill("SIGKILL");
+    await waitForExit(editorChild, 2_000, true);
+  }
+  await rm(project, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 }
 }
 
@@ -289,7 +295,12 @@ async function waitForDevToolsUrl(child, timeoutMs) {
     }
     const timeout = setTimeout(() => {
       cleanup();
-      rejectUrl(new Error(`Chrome did not expose a DevTools URL within ${timeoutMs}ms.`));
+      const details = output.trim();
+      rejectUrl(
+        new Error(
+          `Chrome did not expose a DevTools URL within ${timeoutMs}ms.${details.length === 0 ? "" : ` ${details}`}`
+        )
+      );
     }, timeoutMs);
     let output = "";
     const onData = (chunk) => {
