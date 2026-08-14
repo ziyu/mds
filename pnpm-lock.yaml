@@ -303,6 +303,10 @@ importers:
       '@mds-crate/blocks':
         specifier: workspace:*
         version: link:../../packages/blocks
+    devDependencies:
+      '@mds-crate/theme-builder':
+        specifier: workspace:*
+        version: link:../../packages/theme-builder
 
   themes/canvas:
     dependencies:
@@ -313,6 +317,9 @@ importers:
         specifier: ^19.1.0
         version: 19.2.7
     devDependencies:
+      '@mds-crate/theme-builder':
+        specifier: workspace:*
+        version: link:../../packages/theme-builder
       '@types/react':
         specifier: ^19.1.0
         version: 19.2.17
@@ -320,7 +327,11 @@ importers:
         specifier: ^5.8.0
         version: 5.9.3
 
-  themes/clarity: {}
+  themes/clarity:
+    devDependencies:
+      '@mds-crate/theme-builder':
+        specifier: workspace:*
+        version: link:../../packages/theme-builder
 
   themes/default:
     dependencies:
@@ -334,12 +345,19 @@ importers:
       '@mds-crate/blocks':
         specifier: workspace:*
         version: link:../../packages/blocks
+      '@mds-crate/theme-builder':
+        specifier: workspace:*
+        version: link:../../packages/theme-builder
 
   themes/folio:
     dependencies:
       '@mds-crate/blocks':
         specifier: workspace:*
         version: link:../../packages/blocks
+    devDependencies:
+      '@mds-crate/theme-builder':
+        specifier: workspace:*
+        version: link:../../packages/theme-builder
 
 packages:
 

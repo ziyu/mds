@@ -25,6 +25,7 @@
     "react": "^19.1.0"
   },
   "devDependencies": {
+    "@mds-crate/theme-builder": "workspace:*",
     "@types/react": "^19.1.0",
     "typescript": "^5.8.0"
   }

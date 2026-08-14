@@ -15,5 +15,8 @@
   },
   "scripts": {
     "build": "pnpm --dir ../.. build:theme themes/clarity"
+  },
+  "devDependencies": {
+    "@mds-crate/theme-builder": "workspace:*"
   }
 }

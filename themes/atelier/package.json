@@ -19,5 +19,8 @@
   },
   "dependencies": {
     "@mds-crate/blocks": "workspace:*"
+  },
+  "devDependencies": {
+    "@mds-crate/theme-builder": "workspace:*"
   }
 }
