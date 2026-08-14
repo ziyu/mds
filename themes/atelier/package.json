@@ -6,7 +6,9 @@
   "mdsTheme": {
     "source": "./src/theme.tsx",
     "dist": "./dist/theme",
-    "blockPacks": ["@mds-crate/blocks/standard"],
+    "blockPacks": [
+      "@mds-crate/blocks/standard"
+    ],
     "assets": {
       "css": "./src/style.css",
       "js": "./src/script.js",

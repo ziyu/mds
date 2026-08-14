@@ -1,8 +1,13 @@
 {
   "name": "@mds-crate/theme-loader",
-  "version": "0.1.0-beta.0",
+  "version": "0.1.0-beta.1",
   "description": "Load, validate, compose, and resolve MDS theme artifacts.",
-  "keywords": ["mds", "markdown", "theme", "loader"],
+  "keywords": [
+    "mds",
+    "markdown",
+    "theme",
+    "loader"
+  ],
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -10,11 +15,19 @@
     "directory": "packages/theme-loader"
   },
   "homepage": "https://github.com/ziyu/mds#readme",
-  "bugs": { "url": "https://github.com/ziyu/mds/issues" },
+  "bugs": {
+    "url": "https://github.com/ziyu/mds/issues"
+  },
   "type": "module",
-  "files": ["dist"],
-  "engines": { "node": ">=20.19.0" },
-  "publishConfig": { "access": "public" },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {

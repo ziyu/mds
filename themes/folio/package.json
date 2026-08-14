@@ -6,7 +6,9 @@
   "mdsTheme": {
     "source": "./src/theme.json",
     "dist": "./dist/theme",
-    "blockPacks": ["@mds-crate/blocks/standard"],
+    "blockPacks": [
+      "@mds-crate/blocks/standard"
+    ],
     "blockOverrides": [
       "blocks/card.html",
       "blocks/dialog.html",

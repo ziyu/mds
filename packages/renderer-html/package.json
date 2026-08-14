@@ -1,8 +1,13 @@
 {
   "name": "@mds-crate/renderer-html",
-  "version": "0.1.0-beta.0",
+  "version": "0.1.0-beta.1",
   "description": "Render MDS documents to standalone or embeddable HTML.",
-  "keywords": ["mds", "markdown", "html", "renderer"],
+  "keywords": [
+    "mds",
+    "markdown",
+    "html",
+    "renderer"
+  ],
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -10,11 +15,19 @@
     "directory": "packages/renderer-html"
   },
   "homepage": "https://github.com/ziyu/mds#readme",
-  "bugs": { "url": "https://github.com/ziyu/mds/issues" },
+  "bugs": {
+    "url": "https://github.com/ziyu/mds/issues"
+  },
   "type": "module",
-  "files": ["dist"],
-  "engines": { "node": ">=20.19.0" },
-  "publishConfig": { "access": "public" },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
