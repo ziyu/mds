@@ -12,9 +12,12 @@
     "dev:editor": "pnpm --filter @mds/editor dev",
     "build:editor": "pnpm --filter @mds/editor build",
     "build:theme": "tsx packages/theme-builder/src/cli.ts build",
+    "build:theme:default": "pnpm build:theme themes/default",
+    "build:theme:folio": "pnpm build:theme themes/folio",
     "build:theme:atelier": "pnpm build:theme themes/atelier",
     "build:theme:clarity": "pnpm build:theme themes/clarity",
-    "build:theme:canvas": "pnpm build:theme themes/canvas"
+    "build:theme:canvas": "pnpm build:theme themes/canvas",
+    "test:visual": "tsx scripts/visual-smoke.ts"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

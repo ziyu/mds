@@ -44,6 +44,8 @@ export interface ThemeInspectionProviderResult {
   assets: ThemeArtifactAssets;
   blocks: string[];
   actions: string[];
+  blockPacks: ThemeArtifactInspection["blockPacks"];
+  templateSources: ThemeArtifactInspection["templateSources"];
   diagnostics: ThemeDiagnostic[];
   metadata?: ThemeBuildMetadata;
 }
@@ -65,6 +67,7 @@ const themeBuildStages = [
   "read-package",
   "read-config",
   "load-source",
+  "compose-blocks",
   "merge-assets",
   "resolve-artifact",
   "read-artifact",
@@ -102,6 +105,8 @@ export function serializeThemeInspectionResult(result: ThemeArtifactInspection):
     assets: result.assets,
     blocks: result.blocks,
     actions: result.actions,
+    blockPacks: result.blockPacks,
+    templateSources: result.templateSources,
     diagnostics: result.diagnostics,
     ...(result.metadata === undefined ? {} : { metadata: result.metadata })
   };
@@ -175,6 +180,8 @@ export function isThemeInspectionProviderResult(value: unknown): value is ThemeI
     isThemeArtifactAssets(value.assets) &&
     isStringArray(value.blocks) &&
     isStringArray(value.actions) &&
+    isThemeBlockPackMetadataArray(value.blockPacks) &&
+    isThemeTemplateSourceMetadataArray(value.templateSources) &&
     Array.isArray(value.diagnostics) &&
     value.diagnostics.every(isThemeDiagnostic) &&
     hasOptionalBuildMetadata(value, "metadata")
@@ -240,12 +247,34 @@ function isThemeBuildMetadata(value: unknown): value is ThemeBuildMetadata {
     isStringArray(value.inputFiles) &&
     isStringArray(value.artifactFiles) &&
     Array.isArray(value.templates) &&
-    value.templates.every(isThemeTemplateMetadata)
+    value.templates.every(isThemeTemplateMetadata) &&
+    (!("blockPacks" in value) || isThemeBlockPackMetadataArray(value.blockPacks)) &&
+    (!("templateSources" in value) || isThemeTemplateSourceMetadataArray(value.templateSources))
   );
 }
 
 function isThemeTemplateMetadata(value: unknown): value is ThemeBuildMetadata["templates"][number] {
   return isRecord(value) && typeof value.file === "string" && isStringArray(value.blocks);
+}
+
+function isThemeBlockPackMetadataArray(value: unknown): value is ThemeArtifactInspection["blockPacks"] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item) =>
+        isRecord(item) &&
+        typeof item.name === "string" &&
+        isStringArray(item.profiles) &&
+        isStringArray(item.supportedBlocks)
+    )
+  );
+}
+
+function isThemeTemplateSourceMetadataArray(value: unknown): value is ThemeArtifactInspection["templateSources"] {
+  return (
+    Array.isArray(value) &&
+    value.every((item) => isRecord(item) && typeof item.block === "string" && typeof item.source === "string")
+  );
 }
 
 function hasOptionalThemeBuildStage(value: Record<string, unknown>, key: string): boolean {

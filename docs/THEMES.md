@@ -15,6 +15,7 @@ blocks/
 
 For the full architecture, artifact contract, diagnostics model, and roadmap, see [THEME_DESIGN.md](./THEME_DESIGN.md).
 For the block extension model, optional block attributes, and motion-as-block design, see [BLOCKS_AND_MOTION.md](./BLOCKS_AND_MOTION.md).
+For the shared blocks layer that lets multiple themes reuse common block templates and override them, see [BLOCK_LAYER.md](./BLOCK_LAYER.md).
 For the shared component vocabulary and Canvas component roadmap, see [COMPONENTS.md](./COMPONENTS.md).
 
 ## Use A Theme
@@ -95,6 +96,7 @@ Rules:
 - `actions` and `supportedBlocks` should be unique. Duplicates produce warnings and the first entry wins.
 - Generated HTML should use normal class names such as `page`, `hero`, and `card`. Themes should not add an `mds-` prefix unless they intentionally want one.
 - Theme-owned components are ordinary block templates. A custom component such as `pricing-plan` or a motion primitive such as `motion` is registered the same way as `hero` or `card`.
+- Shared block packs compose before theme-owned block templates. A theme can reuse common blocks while overriding selected templates with its own `blocks` source.
 
 ## Block Templates
 
@@ -262,6 +264,24 @@ CSS and JavaScript are embedded into the generated HTML, so the final output can
 
 Package-style themes are for developers who want TypeScript, JSX, local components, npm dependencies, CSS imports, or script bundling. The package is a development container; MDS still consumes the built artifact.
 
+Package themes may compose shared block packs before their own templates:
+
+```json
+{
+  "mdsTheme": {
+    "source": "./src/theme.json",
+    "dist": "./dist/theme",
+    "blockPacks": ["@mds/blocks/standard"],
+    "blockOverrides": [
+      "blocks/hero.html",
+      "blocks/card.html"
+    ]
+  }
+}
+```
+
+`blockPacks` accepts named `@mds/blocks/*` profiles or `@mds/blocks/standard`. These packs contain reusable structural implementations, not just type declarations. A theme normally keeps only templates whose DOM, slots, accessibility behavior, or interaction model must differ from the pack. `blockOverrides` lists that theme-owned subset relative to the source manifest; the builder composes packs first and overrides second, then writes the complete runtime artifact to `dist/theme`. Build metadata records selected packs and final template provenance, and `mds theme inspect` reports both.
+
 ```txt
 my-theme/
   package.json
@@ -393,7 +413,8 @@ Use `Root` for the block root element. Use `Content`, `Slots`, and `Slot` for bo
 
 Repository examples:
 
-- `themes/atelier`: in-place JSX-authored artifact. Run `pnpm build:theme:atelier`.
+- `themes/default` and `themes/folio`: file-authored package themes with source under `src/`, shared block packs, and artifacts under `dist/theme`.
+- `themes/atelier`: JSX-authored package theme with source under `src/`, shared block packs, and an artifact under `dist/theme`. Run `pnpm build:theme:atelier`.
 - `themes/clarity`: package-style theme with source under `src/` and artifact under `dist/theme`. Run `pnpm build:theme:clarity`.
 - `themes/canvas`: React SDK package theme with Tailwind v4 pipeline and shadcn-style local components. Run `pnpm build:theme:canvas`.
 

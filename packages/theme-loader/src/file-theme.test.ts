@@ -8,7 +8,7 @@ import { createFileThemeRegistry, createThemeFromSources, loadThemeDirectory, re
 
 describe("loadThemeDirectory", () => {
   it("loads a file-based theme and renders block templates", async () => {
-    const theme = await loadThemeDirectory(resolve("../..", "themes/default"));
+    const theme = await loadThemeDirectory(resolve("../..", "themes/default/src"));
     const hero = theme.blockRenderers?.hero;
     const html = hero?.(
       {
@@ -53,7 +53,7 @@ describe("loadThemeDirectory", () => {
   });
 
   it("keeps theme.json out of theme source files", async () => {
-    const source = await readThemeDirectory(resolve("../..", "themes/default"));
+    const source = await readThemeDirectory(resolve("../..", "themes/default/src"));
 
     expect(source.manifest.name).toBe("default");
     expect(source.files["theme.json"]).toBeUndefined();
@@ -61,7 +61,7 @@ describe("loadThemeDirectory", () => {
   });
 
   it("renders named slots in block templates", async () => {
-    const theme = await loadThemeDirectory(resolve("../..", "themes/default"));
+    const theme = await loadThemeDirectory(resolve("../..", "themes/default/src"));
     const hero = theme.blockRenderers?.hero;
     const html = hero?.(
       {
@@ -101,33 +101,14 @@ describe("loadThemeDirectory", () => {
     expect(html).toContain('<div class="hero-title"><h1>Slot Title</h1></div>');
   });
 
-  it("loads block templates from a directory and template data-block aliases", async () => {
-    const theme = await loadThemeDirectory(resolve("../..", "themes/default"));
+  it("loads only theme-owned overrides from a separated source directory", async () => {
+    const theme = await loadThemeDirectory(resolve("../..", "themes/default/src"));
 
-    expect(theme.blockRenderers?.note).toBeDefined();
-    expect(theme.blockRenderers?.warning).toBeDefined();
-    expect(theme.blockRenderers?.["grid-3"]).toBeDefined();
-    expect(theme.blockRenderers?.reveal).toBeDefined();
-
-    const warningHtml = theme.blockRenderers?.warning?.(
-      {
-        type: "block",
-        blockType: "warning",
-        children: []
-      },
-      createTestRenderContext()
-    );
-    const gridHtml = theme.blockRenderers?.["grid-3"]?.(
-      {
-        type: "block",
-        blockType: "grid-3",
-        children: []
-      },
-      createTestRenderContext()
-    );
-
-    expect(warningHtml).toContain('class="callout warning"');
-    expect(gridHtml).toContain('class="grid grid-3"');
+    expect(theme.blockRenderers?.hero).toBeDefined();
+    expect(theme.blockRenderers?.dialog).toBeDefined();
+    expect(theme.blockRenderers?.sticky).toBeDefined();
+    expect(theme.blockRenderers?.note).toBeUndefined();
+    expect(theme.blockRenderers?.["grid-3"]).toBeUndefined();
   });
 
   it("supports single-file block sources and automatic blocks directory discovery", () => {

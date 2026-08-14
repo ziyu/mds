@@ -34,6 +34,33 @@ describe("HTML theme SDK", () => {
     expect(createThemeFromSources(source).blockRenderers?.hero).toBeDefined();
   });
 
+  it("composes block packs into HTML theme sources", () => {
+    const source = createThemeSourceFromHtmlTheme(
+      defineHtmlTheme({
+        name: "html-packed",
+        blockPacks: [
+          {
+            name: "starter",
+            supportedBlocks: ["hero", "note"],
+            blocks: "blocks",
+            files: {
+              "blocks/hero.html": '<section{{ attrs }} class="pack-hero">{{ children }}</section>',
+              "blocks/note.html": '<aside{{ attrs }} class="pack-note">{{ children }}</aside>'
+            }
+          }
+        ],
+        blocks: {
+          hero: (block) => html`<section${block.attrs} class="theme-hero">${block.children}</section>`
+        }
+      })
+    );
+
+    expect(source.manifest.supportedBlocks).toEqual(["hero", "note"]);
+    expect(source.files["blocks/hero.html"]).toContain("theme-hero");
+    expect(source.files["blocks/note.html"]).toContain("pack-note");
+    expect(createThemeFromSources(source).blockRenderers?.note).toBeDefined();
+  });
+
   it("lets package themes compose local component functions", () => {
     function Surface(block: HtmlThemeBlock, className: string) {
       return html`<article${block.attrs} class=${unsafeHtml(`"${className}"`)}>${block.children}</article>`;

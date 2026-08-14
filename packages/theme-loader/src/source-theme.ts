@@ -30,12 +30,43 @@ export interface ThemeSourceInput {
   manifest: ThemeManifest;
   files: Record<string, string>;
   rootName?: string;
+  composition?: ThemeSourceComposition;
 }
 
 export interface ThemeSource {
   manifest: ThemeManifest;
   files: Record<string, string>;
   rootName?: string;
+  composition?: ThemeSourceComposition;
+}
+
+export interface ThemeBlockPackSource {
+  name: string;
+  profiles?: string[];
+  supportedBlocks?: string[];
+  actions?: string[];
+  files: Record<string, string>;
+  blocks?: ThemeBlockReference;
+}
+
+export interface ThemeBlockPackMetadata {
+  name: string;
+  profiles: string[];
+  supportedBlocks: string[];
+}
+
+export interface ThemeTemplateSourceMetadata {
+  block: string;
+  source: string;
+}
+
+export interface ThemeSourceComposition {
+  blockPacks: ThemeBlockPackMetadata[];
+  templateSources: ThemeTemplateSourceMetadata[];
+}
+
+export interface ComposeThemeSourceOptions {
+  blockPacks?: readonly ThemeBlockPackSource[];
 }
 
 export type ThemeAssetReference = string | string[];
@@ -55,8 +86,110 @@ export function isThemeSourceInput(value: unknown): value is ThemeSourceInput {
     isRecord(value) &&
     isRecord(value.manifest) &&
     isStringRecord(value.files) &&
-    (!("rootName" in value) || typeof value.rootName === "string")
+    (!("rootName" in value) || typeof value.rootName === "string") &&
+    (!("composition" in value) || isThemeSourceComposition(value.composition))
   );
+}
+
+export function composeThemeSource(input: ThemeSourceInput, options: ComposeThemeSourceOptions = {}): ThemeSourceInput {
+  const blockPacks = options.blockPacks ?? [];
+  if (blockPacks.length === 0) {
+    return input;
+  }
+
+  const normalizedInput = normalizeThemeSourceInput(input);
+  const templates: Record<string, string> = {};
+  const templateSources = new Map<string, string>();
+  const supportedBlocks: string[] = [];
+  const actions: string[] = [];
+
+  for (const pack of blockPacks) {
+    const normalizedPack = normalizeThemeSourceInput({
+      manifest: {
+        ...(pack.blocks === undefined ? {} : { blocks: pack.blocks })
+      },
+      files: pack.files,
+      rootName: pack.name
+    });
+    for (const [blockType, template] of Object.entries(
+      collectBlockTemplates(normalizedPack.files, normalizedPack.manifest.blocks)
+    )) {
+      templates[blockType] = template;
+      templateSources.set(blockType, pack.name);
+    }
+    supportedBlocks.push(...(pack.supportedBlocks ?? []));
+    actions.push(...(pack.actions ?? []));
+  }
+
+  const previousTemplateSources = new Map(
+    normalizedInput.composition?.templateSources.map((entry) => [entry.block, entry.source]) ?? []
+  );
+  for (const [blockType, template] of Object.entries(
+    collectBlockTemplates(normalizedInput.files, normalizedInput.manifest.blocks)
+  )) {
+    templates[blockType] = template;
+    templateSources.set(blockType, previousTemplateSources.get(blockType) ?? "theme");
+  }
+  supportedBlocks.push(...(normalizedInput.manifest.supportedBlocks ?? []));
+  actions.push(...(normalizedInput.manifest.actions ?? []));
+
+  const files = removeComposedBlockFiles(normalizedInput.files);
+  Object.assign(files, writeComposedBlockTemplates(templates));
+
+  return {
+    ...normalizedInput,
+    manifest: {
+      ...normalizedInput.manifest,
+      blocks: "blocks",
+      ...(supportedBlocks.length === 0 ? {} : { supportedBlocks: uniqueStrings(supportedBlocks) }),
+      ...(actions.length === 0 ? {} : { actions: uniqueStrings(actions) })
+    },
+    files,
+    composition: {
+      blockPacks: uniqueBlockPackMetadata([
+        ...blockPacks.map((pack) => ({
+          name: pack.name,
+          profiles: [...(pack.profiles ?? [])],
+          supportedBlocks: [...(pack.supportedBlocks ?? [])]
+        })),
+        ...(normalizedInput.composition?.blockPacks ?? [])
+      ]),
+      templateSources: [...templateSources]
+        .map(([block, source]) => ({ block, source }))
+        .sort((left, right) => left.block.localeCompare(right.block))
+    }
+  };
+}
+
+function isThemeSourceComposition(value: unknown): value is ThemeSourceComposition {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.blockPacks) &&
+    value.blockPacks.every(
+      (pack) =>
+        isRecord(pack) &&
+        typeof pack.name === "string" &&
+        Array.isArray(pack.profiles) &&
+        pack.profiles.every((profile) => typeof profile === "string") &&
+        Array.isArray(pack.supportedBlocks) &&
+        pack.supportedBlocks.every((block) => typeof block === "string")
+    ) &&
+    Array.isArray(value.templateSources) &&
+    value.templateSources.every(
+      (entry) => isRecord(entry) && typeof entry.block === "string" && typeof entry.source === "string"
+    )
+  );
+}
+
+function uniqueBlockPackMetadata(blockPacks: ThemeBlockPackMetadata[]): ThemeBlockPackMetadata[] {
+  const seen = new Set<string>();
+  return blockPacks.filter((pack) => {
+    if (seen.has(pack.name)) {
+      return false;
+    }
+    seen.add(pack.name);
+    return true;
+  });
 }
 
 export function createThemeResultFromSources(input: ThemeSourceInput): ThemeCreationResult {
@@ -169,6 +302,36 @@ function collectTemplatesFromFile(template: string, fallbackBlockType: string): 
 function hasBlockDirectory(files: Record<string, string>, directory: string): boolean {
   const prefix = directory.endsWith("/") ? directory : `${directory}/`;
   return Object.keys(files).some((path) => path.startsWith(prefix) && path.endsWith(".html"));
+}
+
+function removeComposedBlockFiles(files: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(files).filter(([path]) => !(path.startsWith("blocks/") && path.endsWith(".html")))
+  );
+}
+
+function writeComposedBlockTemplates(templates: Record<string, string>): Record<string, string> {
+  const usedFileNames = new Set<string>();
+  return Object.fromEntries(
+    Object.entries(templates).map(([blockType, template]) => [
+      `blocks/${createBlockTemplateFileName(blockType, usedFileNames)}.html`,
+      `<template data-block="${blockType}">${template}</template>`
+    ])
+  );
+}
+
+function createBlockTemplateFileName(blockType: string, usedFileNames: Set<string>): string {
+  const baseName = blockType.replace(/[^A-Za-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "block";
+  let fileName = baseName;
+  let suffix = 2;
+
+  while (usedFileNames.has(fileName)) {
+    fileName = `${baseName}-${suffix}`;
+    suffix += 1;
+  }
+
+  usedFileNames.add(fileName);
+  return fileName;
 }
 
 function readAssets(files: Record<string, string>, reference: ThemeAssetReference | undefined): string | undefined {

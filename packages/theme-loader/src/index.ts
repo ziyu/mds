@@ -40,7 +40,13 @@ export {
   resolveThemeRef,
   tryResolveThemeArtifactDirectory
 } from "./resolution.js";
-export { createThemeFromSources, createThemeResultFromSources, getThemeFilePaths, isThemeSourceInput } from "./source-theme.js";
+export {
+  composeThemeSource,
+  createThemeFromSources,
+  createThemeResultFromSources,
+  getThemeFilePaths,
+  isThemeSourceInput
+} from "./source-theme.js";
 export {
   assertValidThemeSource,
   formatThemeDiagnostic,
@@ -61,10 +67,15 @@ export type {
 } from "./resolution.js";
 export type {
   ThemeAssetReference,
+  ThemeBlockPackMetadata,
+  ThemeBlockPackSource,
   ThemeBlockReference,
+  ComposeThemeSourceOptions,
   ThemeCreationResult,
   ThemeManifest,
   ThemeSource,
+  ThemeSourceComposition,
+  ThemeTemplateSourceMetadata,
   ThemeSourceInput
 } from "./source-theme.js";
 export type { ThemeDiagnostic, ThemeDiagnosticSeverity } from "./validation.js";

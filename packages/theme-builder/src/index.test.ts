@@ -325,6 +325,114 @@ export default defineJsxTheme({
     });
   });
 
+  it("composes configured block packs with file-theme overrides and records provenance", async () => {
+    const root = await mkdtemp(join(tmpdir(), "mds-theme-packed-artifact-"));
+    await mkdir(join(root, "blocks"), { recursive: true });
+    await writeFile(
+      join(root, "package.json"),
+      JSON.stringify(
+        {
+          type: "module",
+          mdsTheme: {
+            source: "./theme.json",
+            dist: "./dist/theme",
+            blockPacks: ["@mds/blocks/standard"],
+            blockOverrides: ["blocks/hero.html", "blocks/custom.html"]
+          }
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
+    await writeFile(
+      join(root, "theme.json"),
+      JSON.stringify(
+        {
+          name: "packed-artifact",
+          css: "style.css",
+          supportedBlocks: ["hero", "custom"],
+          blocks: "blocks"
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
+    await writeFile(join(root, "style.css"), ".hero{color:tomato}", "utf8");
+    await writeFile(
+      join(root, "blocks/hero.html"),
+      '<section{{ attrs }} class="local-hero">{{ children }}</section>',
+      "utf8"
+    );
+    await writeFile(
+      join(root, "blocks/custom.html"),
+      '<section{{ attrs }} class="custom">{{ children }}</section>',
+      "utf8"
+    );
+
+    const result = await buildPackageTheme(root);
+    const manifest = (await readJson(join(root, "dist/theme/theme.json"))) as {
+      name: string;
+      blocks: string;
+      supportedBlocks: string[];
+    };
+    const metadata = (await readJson(join(root, "dist/theme/.mds-theme-build.json"))) as {
+      blockPacks: Array<{ name: string }>;
+      templateSources: Array<{ block: string; source: string }>;
+    };
+    const inspection = await inspectThemeArtifact(join(root, "dist/theme"));
+
+    expect(manifest).toMatchObject({
+      name: "packed-artifact",
+      blocks: "blocks"
+    });
+    expect(manifest.supportedBlocks).toEqual(
+      expect.arrayContaining(["hero", "pricing-plan", "terminal", "custom"])
+    );
+    await expect(readFile(join(root, "dist/theme/blocks/hero.html"), "utf8")).resolves.toContain("local-hero");
+    await expect(readFile(join(root, "dist/theme/blocks/pricing-plan.html"), "utf8")).resolves.toContain(
+      "pricing-plan"
+    );
+    expect(metadata.blockPacks).toHaveLength(9);
+    expect(metadata.templateSources).toEqual(
+      expect.arrayContaining([
+        { block: "hero", source: "theme" },
+        { block: "custom", source: "theme" },
+        { block: "pricing-plan", source: "@mds/blocks/marketing" }
+      ])
+    );
+    expect(inspection.blockPacks.map((pack) => pack.name)).toContain("@mds/blocks/core");
+    expect(inspection.templateSources).toContainEqual({
+      block: "pricing-plan",
+      source: "@mds/blocks/marketing"
+    });
+    expect(result.diagnostics).toEqual([]);
+    expect(inspection.diagnostics).toEqual([]);
+  });
+
+  it("reports unknown configured block packs during the compose stage", async () => {
+    const root = await mkdtemp(join(tmpdir(), "mds-theme-unknown-pack-"));
+    await writeFile(
+      join(root, "package.json"),
+      JSON.stringify({
+        type: "module",
+        mdsTheme: {
+          source: "./theme.json",
+          blockPacks: ["@example/missing-pack"]
+        }
+      }),
+      "utf8"
+    );
+    await writeFile(join(root, "theme.json"), JSON.stringify({ name: "unknown-pack" }), "utf8");
+
+    await expect(buildPackageTheme(root)).rejects.toMatchObject({
+      name: "ThemeBuildError",
+      stage: "compose-blocks",
+      field: "mdsTheme.blockPacks"
+    });
+  });
+
   it("loads TSX theme sources with local component imports", async () => {
     const root = await mkdtemp(join(tmpdir(), "mds-theme-components-"));
     const jsxImport = join(process.cwd(), "../theme-loader/src/jsx.js");

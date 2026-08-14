@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { build as buildWithEsbuild } from "esbuild";
 import type { AcceptedPlugin, Message } from "postcss";
 import { tsImport } from "tsx/esm/api";
+import { blockPacksByName, standardBlocks } from "@mds/blocks";
 import {
   createThemeSourceFromJsxTheme,
   isJsxThemeDefinition,
@@ -19,6 +20,7 @@ import {
   isThemeSourceInput,
   blockTypeFromPath,
   collectTemplateEntries,
+  composeThemeSource,
   normalizeThemeResolutionOptions,
   normalizeThemePackagePath,
   readThemeDirectory,
@@ -33,9 +35,13 @@ import {
   ThemeValidationError,
   uniqueThemeStrings,
   validateThemeSource,
+  type ThemeBlockPackMetadata,
+  type ThemeBlockPackSource,
+  type ThemeBlockReference,
   type ThemeDiagnostic,
   type ThemeManifest,
   type ThemeResolutionOptions,
+  type ThemeTemplateSourceMetadata,
   type ThemeSourceInput
 } from "@mds/theme-loader";
 
@@ -46,6 +52,7 @@ export type ThemeBuildStage =
   | "read-package"
   | "read-config"
   | "load-source"
+  | "compose-blocks"
   | "merge-assets"
   | "resolve-artifact"
   | "read-artifact"
@@ -55,6 +62,8 @@ export type ThemeBuildStage =
 export interface PackageThemeConfig {
   source?: string;
   dist?: string;
+  blockPacks?: string[];
+  blockOverrides?: ThemeBlockReference;
   assets?: PackageThemeAssets;
   pipeline?: PackageThemePipeline;
 }
@@ -109,6 +118,8 @@ export interface ThemeArtifactInspection {
   assets: ThemeArtifactAssets;
   blocks: string[];
   actions: string[];
+  blockPacks: ThemeBlockPackMetadata[];
+  templateSources: ThemeTemplateSourceMetadata[];
   diagnostics: ThemeDiagnostic[];
   metadata?: ThemeBuildMetadata;
 }
@@ -122,6 +133,11 @@ export interface ThemeArtifactAssets {
 
 interface PackageThemeSourceLoadResult {
   source: ThemeSourceInput;
+  inputFiles: string[];
+}
+
+interface PackageThemeBlockPackLoadResult {
+  blockPacks: ThemeBlockPackSource[];
   inputFiles: string[];
 }
 
@@ -142,6 +158,8 @@ export interface ThemeBuildMetadata {
   inputFiles: string[];
   artifactFiles: string[];
   templates: ThemeTemplateMetadata[];
+  blockPacks?: ThemeBlockPackMetadata[];
+  templateSources?: ThemeTemplateSourceMetadata[];
 }
 
 export interface ThemeTemplateMetadata {
@@ -310,11 +328,26 @@ export async function buildPackageTheme(packageDirectory: string): Promise<Packa
       filePath: packageJsonPath
     }
   );
-  const sourceLoad = await runBuildStep("load-source", () => loadPackageThemeSourceWithInputs(root, sourcePath), {
+  const sourceLoad = await runBuildStep(
+    "load-source",
+    () => loadPackageThemeSourceWithInputs(root, sourcePath, config.blockOverrides),
+    {
     field: "mdsTheme.source",
     filePath: sourcePath
-  });
-  const source = sourceLoad.source;
+    }
+  );
+  const blockPackLoad = await runBuildStep(
+    "compose-blocks",
+    () => resolvePackageBlockPacks(config.blockPacks ?? []),
+    {
+      field: "mdsTheme.blockPacks",
+      filePath: packageJsonPath
+    }
+  );
+  const source = composeThemeSource(
+    sourceLoad.source,
+    blockPackLoad.blockPacks.length === 0 ? {} : { blockPacks: blockPackLoad.blockPacks }
+  );
   const assetMerge = await runBuildStep("merge-assets", () => mergePackageAssets(root, source, config.assets ?? {}, config.pipeline), {
     field: "package.json#mdsTheme.assets",
     filePath: packageJsonPath
@@ -324,7 +357,11 @@ export async function buildPackageTheme(packageDirectory: string): Promise<Packa
     field: "generated theme artifact",
     filePath: sourcePath
   });
-  const inputFiles = collectPackageInputFiles(root, sourceLoad.inputFiles, assetMerge.inputFiles);
+  const inputFiles = collectPackageInputFiles(
+    root,
+    [...sourceLoad.inputFiles, ...blockPackLoad.inputFiles],
+    assetMerge.inputFiles
+  );
   const outputSource = addBuildMetadata(
     mergedSource,
     createBuildMetadata(root, sourcePath, outputDirectory, inputFiles, mergedSource)
@@ -364,12 +401,22 @@ export async function inspectThemeArtifact(
     field: "theme artifact",
     filePath: artifactDirectory
   });
+  const artifactSource = selectArtifactRuntimeSource(source);
   const metadataResult = readBuildMetadata(source.files[buildMetadataPath]);
   const metadataDiagnostics =
-    metadataResult.metadata === undefined ? [] : validateBuildMetadataAgainstArtifact(metadataResult.metadata, source);
-  const validationDiagnostics = ensureThemeNameDiagnostics(validateThemeSource(source), source.manifest);
-  const fileLists = getThemeArtifactFileLists(source.files);
-  const manifest = normalizeThemeManifestReferences(source.manifest);
+    metadataResult.metadata === undefined
+      ? []
+      : validateBuildMetadataAgainstArtifact(metadataResult.metadata, artifactSource);
+  const validationDiagnostics = ensureThemeNameDiagnostics(
+    validatePackageThemeDiagnostics(artifactSource),
+    artifactSource.manifest
+  );
+  const inspectedFiles = {
+    ...artifactSource.files,
+    ...(source.files[buildMetadataPath] === undefined ? {} : { [buildMetadataPath]: source.files[buildMetadataPath] })
+  };
+  const fileLists = getThemeArtifactFileLists(inspectedFiles);
+  const manifest = normalizeThemeManifestReferences(artifactSource.manifest);
 
   return {
     ref,
@@ -386,8 +433,10 @@ export async function inspectThemeArtifact(
     runtimeFiles: fileLists.runtimeFiles,
     developmentFiles: fileLists.developmentFiles,
     assets: collectThemeAssets(manifest),
-    blocks: collectThemeBlocks(source.files),
+    blocks: collectThemeBlocks(artifactSource.files),
     actions: uniqueThemeStrings(manifest.actions) ?? [],
+    blockPacks: metadataResult.metadata?.blockPacks ?? [],
+    templateSources: metadataResult.metadata?.templateSources ?? [],
     diagnostics: [...validationDiagnostics, ...metadataResult.diagnostics, ...metadataDiagnostics],
     ...(metadataResult.metadata === undefined ? {} : { metadata: metadataResult.metadata })
   };
@@ -411,7 +460,8 @@ export async function packThemeArtifact(
     field: "theme artifact",
     filePath: artifactDirectory
   });
-  const diagnostics = await runBuildStep("validate-artifact", () => validatePackageThemeSource(source), {
+  const artifactSource = selectArtifactRuntimeSource(source);
+  const diagnostics = await runBuildStep("validate-artifact", () => validatePackageThemeSource(artifactSource), {
     field: "theme artifact",
     filePath: artifactDirectory
   });
@@ -420,7 +470,7 @@ export async function packThemeArtifact(
     () =>
       writeThemeSource(
         resolvedOutputDirectory,
-        getThemeRuntimeSourceInput(source),
+        artifactSource,
         {
           clean: "output"
         }
@@ -438,6 +488,14 @@ export async function packThemeArtifact(
     name: resolveThemeName(source.manifest, source.rootName, basename(artifactDirectory)),
     filesWritten,
     diagnostics
+  };
+}
+
+function selectArtifactRuntimeSource(source: ThemeSourceInput): ThemeSourceInput {
+  const normalized = normalizeThemeSourceInput(source);
+  return {
+    ...normalized,
+    files: selectArtifactThemeSourceFiles(normalized.files, normalized.manifest)
   };
 }
 
@@ -570,8 +628,13 @@ export async function loadPackageThemeSource(sourcePath: string): Promise<ThemeS
 
 async function loadPackageThemeSourceWithInputs(
   packageDirectory: string,
-  sourcePath: string
+  sourcePath: string,
+  blockOverrides?: ThemeBlockReference
 ): Promise<PackageThemeSourceLoadResult> {
+  if (basename(sourcePath) === THEME_MANIFEST_FILE) {
+    return loadArtifactThemeSource(sourcePath, blockOverrides);
+  }
+
   const inputFiles = new Set([sourcePath]);
   const tsconfigPath = await findNearestTsconfig(sourcePath, packageDirectory);
   if (tsconfigPath !== undefined) {
@@ -599,6 +662,118 @@ async function loadPackageThemeSourceWithInputs(
     source: createThemeSourceFromJsxTheme(themeDefinition),
     inputFiles: [...inputFiles].sort()
   };
+}
+
+async function loadArtifactThemeSource(
+  sourcePath: string,
+  blockOverrides: ThemeBlockReference | undefined
+): Promise<PackageThemeSourceLoadResult> {
+  const root = dirname(sourcePath);
+  const loaded = normalizeThemeSourceInput(await readThemeDirectory(root));
+  const manifest = normalizeThemeManifestReferences({
+    ...loaded.manifest,
+    ...(blockOverrides === undefined ? {} : { blocks: blockOverrides })
+  });
+  const files = selectArtifactThemeSourceFiles(loaded.files, manifest);
+
+  return {
+    source: {
+      manifest,
+      files,
+      ...(loaded.rootName === undefined ? {} : { rootName: loaded.rootName })
+    },
+    inputFiles: [sourcePath, ...Object.keys(files).map((path) => join(root, path))].sort()
+  };
+}
+
+function selectArtifactThemeSourceFiles(
+  files: Record<string, string>,
+  manifest: ThemeManifest
+): Record<string, string> {
+  const selected = new Set<string>([
+    ...assetReferencesToPaths(manifest.css),
+    ...assetReferencesToPaths(manifest.js),
+    ...assetReferencesToPaths(manifest.head),
+    ...(isNonEmptyString(manifest.shell) ? [manifest.shell] : []),
+    ...(isNonEmptyString(manifest.preview) ? [manifest.preview] : []),
+    ...collectBlockSourceFilePaths(files, manifest.blocks)
+  ]);
+
+  return Object.fromEntries(Object.entries(files).filter(([path]) => selected.has(path)));
+}
+
+function collectBlockSourceFilePaths(
+  files: Record<string, string>,
+  blocks: ThemeBlockReference | undefined
+): string[] {
+  if (blocks === undefined) {
+    return collectBlockReferenceFilePaths(files, "blocks");
+  }
+
+  if (typeof blocks === "string") {
+    return collectBlockReferenceFilePaths(files, blocks);
+  }
+
+  if (Array.isArray(blocks)) {
+    return [...new Set(blocks.flatMap((reference) => collectBlockReferenceFilePaths(files, reference)))];
+  }
+
+  return [...new Set(Object.values(blocks).flatMap((reference) => collectBlockReferenceFilePaths(files, reference)))];
+}
+
+function collectBlockReferenceFilePaths(files: Record<string, string>, reference: string): string[] {
+  if (reference.endsWith(".html")) {
+    return reference in files ? [reference] : [];
+  }
+
+  const prefix = reference.endsWith("/") ? reference : `${reference}/`;
+  return Object.keys(files).filter((path) => path.startsWith(prefix) && path.endsWith(".html"));
+}
+
+function resolvePackageBlockPacks(refs: string[]): PackageThemeBlockPackLoadResult {
+  if (refs.length === 0) {
+    return {
+      blockPacks: [],
+      inputFiles: []
+    };
+  }
+
+  const blockPacks = refs.flatMap((ref) => {
+    if (ref === "@mds/blocks/standard") {
+      return [...standardBlocks];
+    }
+
+    const blockPack = blockPacksByName[ref];
+    if (blockPack === undefined) {
+      throw new Error(
+        `Unknown MDS block pack: ${ref}. Available packs: ${[
+          ...Object.keys(blockPacksByName),
+          "@mds/blocks/standard"
+        ].join(", ")}.`
+      );
+    }
+
+    return [blockPack];
+  });
+  const modulePath = resolveImportMetaPath("@mds/blocks");
+
+  return {
+    blockPacks,
+    inputFiles: modulePath === undefined ? [] : [modulePath]
+  };
+}
+
+function resolveImportMetaPath(specifier: string): string | undefined {
+  const resolveImport = (import.meta as ImportMeta & { resolve?: (value: string) => string }).resolve;
+  if (typeof resolveImport !== "function") {
+    return undefined;
+  }
+
+  try {
+    return fileUrlToPathIfLocal(resolveImport(specifier));
+  } catch {
+    return undefined;
+  }
 }
 
 async function importThemeSourceModule(
@@ -642,11 +817,51 @@ async function findNearestTsconfig(sourcePath: string, packageDirectory: string)
 }
 
 function validatePackageThemeSource(source: ThemeSourceInput): ThemeDiagnostic[] {
-  const diagnostics = validateThemeSource(source);
+  const diagnostics = validatePackageThemeDiagnostics(source);
   const errors = diagnostics.filter((diagnostic) => diagnostic.severity === "error");
 
   if (errors.length > 0) {
     throw new ThemeValidationError(errors, resolveThemeName(source.manifest, source.rootName));
+  }
+
+  return diagnostics;
+}
+
+function validatePackageThemeDiagnostics(source: ThemeSourceInput): ThemeDiagnostic[] {
+  return [...validateThemeSource(source), ...validateThemeSupportedBlockCoverage(source)];
+}
+
+function validateThemeSupportedBlockCoverage(source: ThemeSourceInput): ThemeDiagnostic[] {
+  if (source.manifest.supportedBlocks === undefined) {
+    return [];
+  }
+
+  const supportedBlocks = new Set(uniqueThemeStrings(source.manifest.supportedBlocks) ?? []);
+  const templateBlocks = new Set(collectThemeBlocks(source.files));
+  const diagnostics: ThemeDiagnostic[] = [];
+
+  for (const block of supportedBlocks) {
+    if (!templateBlocks.has(block)) {
+      diagnostics.push({
+        severity: "warning",
+        code: "missing-supported-block-template",
+        message: `Theme declares support for block "${block}" but does not provide a template.`,
+        field: "supportedBlocks",
+        block
+      });
+    }
+  }
+
+  for (const block of templateBlocks) {
+    if (!supportedBlocks.has(block)) {
+      diagnostics.push({
+        severity: "warning",
+        code: "undeclared-theme-block-template",
+        message: `Theme provides a template for block "${block}" but does not declare it in supportedBlocks.`,
+        field: "supportedBlocks",
+        block
+      });
+    }
   }
 
   return diagnostics;
@@ -798,6 +1013,32 @@ function validateBuildMetadata(metadata: Record<string, unknown>): string | unde
     }
   }
 
+  if (metadata.blockPacks !== undefined) {
+    if (!Array.isArray(metadata.blockPacks) || !metadata.blockPacks.every(isBlockPackMetadataRecord)) {
+      return "Theme build metadata blockPacks must be an array of block pack metadata.";
+    }
+
+    const duplicateBlockPack = firstDuplicateString(metadata.blockPacks.map((pack) => pack.name));
+    if (duplicateBlockPack !== undefined) {
+      return `Theme build metadata blockPacks must not contain duplicate packs: ${duplicateBlockPack}.`;
+    }
+  }
+
+  if (metadata.templateSources !== undefined) {
+    if (!Array.isArray(metadata.templateSources) || !metadata.templateSources.every(isTemplateSourceMetadataRecord)) {
+      return "Theme build metadata templateSources must be an array of template source metadata.";
+    }
+
+    const sourceBlocks = metadata.templateSources.map((entry) => entry.block);
+    const duplicateSourceBlock = firstDuplicateString(sourceBlocks);
+    if (duplicateSourceBlock !== undefined) {
+      return `Theme build metadata templateSources must not contain duplicate blocks: ${duplicateSourceBlock}.`;
+    }
+    if (!stringArraysEqual(sourceBlocks, sortedStrings(sourceBlocks))) {
+      return "Theme build metadata templateSources must be sorted by block.";
+    }
+  }
+
   return undefined;
 }
 
@@ -865,6 +1106,26 @@ function isTemplateMetadataRecord(value: unknown): value is ThemeTemplateMetadat
   return isRecord(value) && typeof value.file === "string" && isStringArray(value.blocks);
 }
 
+function isBlockPackMetadataRecord(value: unknown): value is ThemeBlockPackMetadata {
+  return (
+    isRecord(value) &&
+    typeof value.name === "string" &&
+    value.name.length > 0 &&
+    isStringArray(value.profiles) &&
+    isStringArray(value.supportedBlocks)
+  );
+}
+
+function isTemplateSourceMetadataRecord(value: unknown): value is ThemeTemplateSourceMetadata {
+  return (
+    isRecord(value) &&
+    typeof value.block === "string" &&
+    value.block.length > 0 &&
+    typeof value.source === "string" &&
+    value.source.length > 0
+  );
+}
+
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
@@ -913,6 +1174,18 @@ function validateBuildMetadataAgainstArtifact(
     );
   }
 
+  if (
+    metadata.templateSources !== undefined &&
+    !stringArraysEqual(
+      metadata.templateSources.map((entry) => entry.block),
+      collectThemeBlocks(source.files)
+    )
+  ) {
+    diagnostics.push(
+      staleBuildMetadataDiagnostic("Theme build metadata templateSources do not match the current block templates.")
+    );
+  }
+
   return diagnostics;
 }
 
@@ -950,9 +1223,18 @@ function createBuildMetadata(
     version: 1,
     source: relativeOutputPath(packageDirectory, sourcePath),
     output: relativeOutputPath(packageDirectory, outputDirectory),
-    inputFiles: inputFiles.map((path) => relativeOutputPath(packageDirectory, path)).sort(),
+    inputFiles: inputFiles
+      .filter((path) => isPathInside(path, packageDirectory))
+      .map((path) => relativeOutputPath(packageDirectory, path))
+      .sort(),
     artifactFiles: getThemeArtifactFileLists(source.files).runtimeFiles,
-    templates: collectTemplateMetadata(source.files)
+    templates: collectTemplateMetadata(source.files),
+    ...(source.composition === undefined
+      ? {}
+      : {
+          blockPacks: source.composition.blockPacks,
+          templateSources: source.composition.templateSources
+        })
   };
 }
 
@@ -1429,15 +1711,56 @@ function readPackageThemeConfig(packageJson: Record<string, unknown>): PackageTh
 
   const source = readOptionalStringConfig(value.source, "mdsTheme.source");
   const dist = readOptionalStringConfig(value.dist, "mdsTheme.dist");
+  const blockPacks = readOptionalStringArrayConfig(value.blockPacks, "mdsTheme.blockPacks");
+  const blockOverrides = readOptionalBlockReferenceConfig(value.blockOverrides, "mdsTheme.blockOverrides");
   const assets = readOptionalAssetsConfig(value.assets);
   const pipeline = readOptionalPipelineConfig(value.pipeline);
 
   return {
     ...(source === undefined ? {} : { source }),
     ...(dist === undefined ? {} : { dist }),
+    ...(blockPacks === undefined ? {} : { blockPacks }),
+    ...(blockOverrides === undefined ? {} : { blockOverrides }),
     ...(assets === undefined ? {} : { assets }),
     ...(pipeline === undefined ? {} : { pipeline })
   };
+}
+
+function readOptionalStringArrayConfig(value: unknown, field: string): string[] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (!Array.isArray(value) || !value.every((item) => typeof item === "string" && item.length > 0)) {
+    invalidPackageConfig(field, `${field} must be an array of non-empty strings.`);
+  }
+
+  const duplicate = firstDuplicateString(value);
+  if (duplicate !== undefined) {
+    invalidPackageConfig(field, `${field} must not contain duplicate entries: ${duplicate}.`);
+  }
+
+  return value;
+}
+
+function readOptionalBlockReferenceConfig(value: unknown, field: string): ThemeBlockReference | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (Array.isArray(value) && value.every((item) => typeof item === "string")) {
+    return value;
+  }
+
+  if (isRecord(value) && Object.values(value).every((item) => typeof item === "string")) {
+    return value as Record<string, string>;
+  }
+
+  invalidPackageConfig(field, `${field} must be a string, string array, or block-to-file map.`);
 }
 
 function readOptionalPipelineConfig(value: unknown): PackageThemePipeline | undefined {

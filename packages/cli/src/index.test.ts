@@ -1,6 +1,5 @@
 import { spawn } from "node:child_process";
 import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
-import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -87,6 +86,52 @@ describe("mds cli", () => {
       "WARNING duplicate-theme-supported-block: Theme supported block is declared more than once.: hero. (field=supportedBlocks, block=hero)"
     );
     expect(result.stdout).toContain('<section class="hero"><h1>Diagnostic Theme</h1></section>');
+  });
+
+  it("prints check diagnostics as JSON", async () => {
+    const project = await mkdtemp(join(tmpdir(), "mds-cli-check-json-"));
+    const input = join(project, "index.mds");
+    await writeFile(input, "::: note\ncontent\n", "utf8");
+
+    const result = await runCli(["check", input, "--json"]);
+    const payload = JSON.parse(result.stdout) as {
+      ok: boolean;
+      diagnostics: Array<{ code: string; severity: string }>;
+    };
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(payload.ok).toBe(false);
+    expect(payload.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "unclosed-block",
+        severity: "error"
+      })
+    );
+  });
+
+  it("prints build output and diagnostics as JSON", async () => {
+    const project = await mkdtemp(join(tmpdir(), "mds-cli-build-json-"));
+    const input = join(project, "index.mds");
+    await writeFile(input, "::: custom-widget\n# Generated\n:::\n", "utf8");
+
+    const result = await runCli(["build", input, "--json"]);
+    const payload = JSON.parse(result.stdout) as {
+      ok: boolean;
+      html: string;
+      diagnostics: Array<{ code: string; severity: string }>;
+    };
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(payload.ok).toBe(true);
+    expect(payload.html).toContain('data-block="custom-widget"');
+    expect(payload.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "missing-block-renderer",
+        severity: "warning"
+      })
+    );
   });
 
   it("delegates theme inspect JSON output to the theme builder CLI", async () => {
@@ -212,13 +257,15 @@ export default defineJsxTheme({
 });
 
 async function runCli(args: string[]): Promise<{ exitCode: number; stdout: string; stderr: string }> {
-  const require = createRequire(import.meta.url);
-  const tsxCli = require.resolve("tsx/cli");
   const cliSource = resolve("../..", "packages/cli/src/index.ts");
 
   return new Promise((resolveRun, reject) => {
-    const child = spawn(process.execPath, [tsxCli, cliSource, ...args], {
+    const child = spawn(process.execPath, ["--import", "tsx", cliSource, ...args], {
       cwd: resolve("../.."),
+      env: {
+        ...process.env,
+        TMPDIR: process.platform === "darwin" ? "/private/tmp" : tmpdir()
+      },
       stdio: ["ignore", "pipe", "pipe"]
     });
     let stdout = "";

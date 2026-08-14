@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-label="Folio theme preview">
+  <!-- Folio theme preview source. -->
+  <rect width="1200" height="720" fill="#f3f0e7"/>
+  <rect x="86" y="72" width="1028" height="576" rx="24" fill="#fbfaf5" stroke="#d1c7b8"/>
+  <text x="132" y="154" fill="#6b5b46" font-family="Georgia, serif" font-size="38">Folio</text>
+  <text x="132" y="248" fill="#181512" font-family="Georgia, serif" font-size="80" font-weight="700">Editorial calm</text>
+  <rect x="132" y="312" width="520" height="14" rx="7" fill="#cfc4b2"/>
+  <rect x="132" y="350" width="620" height="14" rx="7" fill="#ded5c7"/>
+  <rect x="132" y="444" width="360" height="118" rx="10" fill="#efe8dc"/>
+  <rect x="536" y="444" width="360" height="118" rx="10" fill="#e6ddd0"/>
+</svg>

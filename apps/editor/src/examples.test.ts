@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { parseMds } from "@mds/parser";
 import { renderHtmlResult } from "@mds/renderer-html";
+import { buildPackageTheme, inspectThemeArtifact } from "@mds/theme-builder";
+import { loadThemeDirectory } from "@mds/theme-loader";
+import { fileURLToPath } from "node:url";
 import { examples } from "./examples.js";
 
 const previewTheme = {
@@ -53,5 +56,36 @@ describe("editor examples", () => {
     expect(landingResult.html).toContain('<span class="nav-target">#contact</span>');
     expect(actionsResult.html).toContain('data-nav-target="actionDetails"');
     expect(actionsResult.html).toContain('<span class="nav-target">#actionContact</span>');
+  });
+
+  it("renders the Components example through shared-pack themes without diagnostics", async () => {
+    const components = examples.find((item) => item.id === "components");
+    expect(components).toBeDefined();
+    const themePackages = [
+      { name: "default", themeOwnedBlocks: 6 },
+      { name: "folio", themeOwnedBlocks: 10 },
+      { name: "atelier", themeOwnedBlocks: 6 }
+    ];
+
+    for (const themePackage of themePackages) {
+      const themeDirectory = fileURLToPath(new URL(`../../../themes/${themePackage.name}`, import.meta.url));
+      const build = await buildPackageTheme(themeDirectory);
+      const inspection = await inspectThemeArtifact(build.outputDirectory);
+      const theme = await loadThemeDirectory(build.outputDirectory);
+      const result = renderHtmlResult(parseMds(components!.source), { theme });
+
+      expect(result.diagnostics, theme.name).toEqual([]);
+      expect(inspection.diagnostics, theme.name).toEqual([]);
+      expect(inspection.blocks, theme.name).toHaveLength(72);
+      expect(inspection.blockPacks, theme.name).toHaveLength(9);
+      expect(
+        inspection.templateSources.filter((entry) => entry.source === "theme"),
+        theme.name
+      ).toHaveLength(themePackage.themeOwnedBlocks);
+      expect(result.html, theme.name).toContain('class="pricing-plan"');
+      expect(result.html, theme.name).toContain('class="terminal"');
+      expect(result.html, theme.name).toContain('class="popover"');
+      expect(result.html, theme.name).not.toContain('data-fallback="true"');
+    }
   });
 });

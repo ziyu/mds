@@ -8,6 +8,7 @@ The most important rule:
 
 MDS should let simple authors drop a folder into `themes/`, while letting developers use modern package workflows to build sophisticated themes quickly.
 
+For the shared blocks layer that composes common block packs with theme overrides, see [BLOCK_LAYER.md](./BLOCK_LAYER.md).
 For the shared block/component vocabulary and Canvas component roadmap, see [COMPONENTS.md](./COMPONENTS.md).
 
 ## Goals
@@ -117,6 +118,10 @@ Authoring helpers such as JSX utilities, future React/Preact adapters, and typed
 8. **Block is the extension boundary**
 
    MDS should not grow separate extension systems for components, animation, layout variants, and visual effects. Custom components are blocks. Motion primitives are blocks. Advanced configuration is carried by optional block attributes and interpreted by the selected theme.
+
+9. **Shared blocks compose before theme overrides**
+
+   Common block packs should be merged into a theme source before rendering or writing a built artifact. Themes keep ownership of visual styling and may override any shared block template, while runtime tools still consume a plain theme artifact.
 
 ## File Responsibilities
 
@@ -570,7 +575,7 @@ Workflow:
 2. Use `data-block` aliases for related block types.
 3. Add separate files only when a block becomes large enough to deserve isolation.
 
-### 3. JSX-Authored Directory Theme
+### 3. JSX-Authored Package Theme
 
 Best for checked-in themes in this repository and small developer-authored themes.
 
@@ -578,18 +583,24 @@ Source:
 
 ```txt
 themes/atelier/
-  theme.tsx
-  style.css
-  script.js
-  shell.html
+  package.json
+  src/
+    theme.tsx
+    style.css
+    script.js
+    shell.html
 ```
 
 Generated artifact:
 
 ```txt
 themes/atelier/
-  theme.json
-  blocks/*.html
+  dist/theme/
+    theme.json
+    style.css
+    script.js
+    shell.html
+    blocks/*.html
 ```
 
 Command:
@@ -598,14 +609,14 @@ Command:
 pnpm build:theme:atelier
 ```
 
-The generated blocks are committed so editor and CLI can load the theme without executing TSX.
+Editor and CLI resolve the package to `package.json#mdsTheme.dist` and load only the generated artifact; they do not execute TSX.
 
 Workflow:
 
-1. Author templates in `theme.tsx`.
-2. Keep CSS, JS, and shell as normal artifact files.
+1. Author templates in `src/theme.tsx`.
+2. Keep CSS, JS, and shell under `src/` and declare them in package metadata.
 3. Run the theme builder.
-4. Commit generated `theme.json` and `blocks/*.html`.
+4. Test or package the generated `dist/theme` artifact.
 
 ### 4. Package Theme
 
@@ -662,9 +673,14 @@ pnpm build:theme path/to/theme-package
 Repository example:
 
 ```sh
+pnpm build:theme:default
+pnpm build:theme:folio
+pnpm build:theme:atelier
 pnpm build:theme:clarity
 mds-theme inspect ./themes/clarity
 ```
+
+`themes/default`, `themes/folio`, and `themes/atelier` all separate authoring source under `src/` from the complete generated artifact under `dist/theme`. They compose `@mds/blocks/standard` and own only the block templates that need theme-specific structure or behavior.
 
 `themes/clarity` keeps source files under `src/`, imports a local component module, bundles CSS imports, bundles `src/script.ts` to artifact JavaScript, and commits the built `dist/theme` artifact. Runtime loading resolves the package directory to `package.json#mdsTheme.dist`.
 
@@ -998,9 +1014,9 @@ Compatibility policy:
 
 Status: completed.
 
-- Keep `themes/default` and `themes/folio` as simple artifact themes.
-- Keep `themes/atelier` as JSX-authored package-style example.
-- Keep generated `blocks/*.html` committed.
+- Keep `themes/default` and `themes/folio` as simple file-authored package themes.
+- Keep `themes/atelier` as the JSX-authored package example.
+- Keep source and generated artifacts separate so shared-pack output is never mistaken for theme-owned implementation.
 - Keep editor and CLI loading artifact directories.
 
 Acceptance:
@@ -1045,7 +1061,7 @@ Tasks:
 
 - Support `mds-theme build`. Done.
 - Support `mds-theme watch`. Done. CLI watch stays alive until SIGINT/SIGTERM, while the controller still exposes `ready` for the initial build.
-- Support output cleanup rules. Done for generated dist output; in-place themes still clean generated `blocks/` only.
+- Support output cleanup rules. Done for generated dist output and retained for legacy in-place packages.
 - Support asset copying with nested paths. Done.
 - Support TS/TSX source loading from the built `mds-theme` CLI. Done.
 - Support local component imports in TSX theme source. Done, including `themes/clarity`.

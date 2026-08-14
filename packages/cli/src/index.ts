@@ -25,13 +25,22 @@ if (process.argv[2] === "theme") {
     .option("-o, --output <path>", "Output HTML path")
     .option("--theme <path>", "Theme directory path")
     .option("--no-css", "Do not embed default CSS")
-    .action(async (input: string, options: { output?: string; theme?: string; css?: boolean }) => {
+    .option("--json", "Print machine-readable build result and diagnostics")
+    .action(async (input: string, options: { output?: string; theme?: string; css?: boolean; json?: boolean }) => {
       const source = await readFile(input, "utf8");
       const document = parseMds(source, {
         filePath: input
       });
       const themeResult = await resolveTheme(input, options.theme, document.frontmatter.theme).catch((error: unknown) => {
-        printDiagnostics(diagnosticsFromThemeError(error));
+        const diagnostics = diagnosticsFromThemeError(error);
+        if (options.json === true) {
+          printJson({
+            ok: false,
+            diagnostics
+          });
+        } else {
+          printDiagnostics(diagnostics);
+        }
         process.exitCode = 1;
         return undefined;
       });
@@ -48,10 +57,31 @@ if (process.argv[2] === "theme") {
       );
       const html = result.html;
       const diagnostics = [...(themeResult?.diagnostics ?? []), ...result.diagnostics];
+      const hasErrorDiagnostics = hasErrors({ diagnostics });
+
+      if (options.json === true) {
+        if (!hasErrorDiagnostics && options.output !== undefined) {
+          await mkdir(dirname(options.output), {
+            recursive: true
+          });
+          await writeFile(options.output, html, "utf8");
+        }
+
+        printJson({
+          ok: !hasErrorDiagnostics,
+          diagnostics,
+          ...(options.output === undefined ? { html } : { output: options.output })
+        });
+
+        if (hasErrorDiagnostics) {
+          process.exitCode = 1;
+        }
+        return;
+      }
 
       printDiagnostics(diagnostics);
 
-      if (hasErrors({ diagnostics })) {
+      if (hasErrorDiagnostics) {
         process.exitCode = 1;
         return;
       }
@@ -76,11 +106,22 @@ if (process.argv[2] === "theme") {
     console.log(JSON.stringify(document, null, 2));
   });
 
-  cli.command("check <input>", "Check an MDS file").action(async (input: string) => {
+  cli.command("check <input>", "Check an MDS file").option("--json", "Print machine-readable diagnostics").action(async (input: string, options: { json?: boolean }) => {
     const source = await readFile(input, "utf8");
     const document = parseMds(source, {
       filePath: input
     });
+
+    if (options.json === true) {
+      printJson({
+        ok: !hasErrors(document),
+        diagnostics: document.diagnostics
+      });
+      if (hasErrors(document)) {
+        process.exitCode = 1;
+      }
+      return;
+    }
 
     printDiagnostics(document.diagnostics);
 
@@ -100,6 +141,10 @@ function printDiagnostics(diagnostics: Array<{ code: string; message: string; se
   for (const diagnostic of diagnostics) {
     console.error(isThemeDiagnostic(diagnostic) ? formatThemeDiagnostic(diagnostic) : formatGenericDiagnostic(diagnostic));
   }
+}
+
+function printJson(value: unknown): void {
+  console.log(JSON.stringify(value, null, 2));
 }
 
 function hasErrors(document: { diagnostics: Array<{ severity: string }> }): boolean {
@@ -166,7 +211,7 @@ async function resolveThemeCliCommand(): Promise<{ command: string; args: string
   if (currentFile.endsWith("/src/index.ts")) {
     return {
       command: process.execPath,
-      args: [fileURLToPath(await import.meta.resolve("tsx/cli")), resolve(dirname(currentFile), "../../theme-builder/src/cli.ts")]
+      args: ["--import", "tsx", resolve(dirname(currentFile), "../../theme-builder/src/cli.ts")]
     };
   }
 

@@ -46,6 +46,34 @@ describe("react theme sdk", () => {
     expect(source.files["blocks/hero.html"]).toContain("{{ slot:actions }}");
   });
 
+  it("composes block packs into React theme sources", () => {
+    const source = createThemeSourceFromReactTheme({
+      name: "react-packed",
+      blockPacks: [
+        {
+          name: "starter",
+          supportedBlocks: ["hero", "note"],
+          blocks: "blocks",
+          files: {
+            "blocks/hero.html": '<section{{ attrs }} class="pack-hero">{{ children }}</section>',
+            "blocks/note.html": '<aside{{ attrs }} class="pack-note">{{ children }}</aside>'
+          }
+        }
+      ],
+      blocks: {
+        hero: (block) => (
+          <Root block={block} className="theme-hero">
+            <Content block={block} />
+          </Root>
+        )
+      }
+    });
+
+    expect(source.manifest.supportedBlocks).toEqual(["hero", "note"]);
+    expect(source.files["blocks/hero.html"]).toContain("theme-hero");
+    expect(source.files["blocks/note.html"]).toContain("pack-note");
+  });
+
   it("exposes block attribute placeholders", () => {
     const source = createThemeSourceFromReactTheme({
       name: "react-attrs",

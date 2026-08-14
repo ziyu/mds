@@ -1,6 +1,7 @@
 import type { HtmlRenderContext } from "@mds/html-types";
 import { describe, expect, it } from "vitest";
 import {
+  composeThemeSource,
   createThemeFromSources,
   getThemeFilePaths,
   isThemeSourceInput,
@@ -147,6 +148,89 @@ describe("theme source normalization", () => {
         }
       })
     ).toThrow(ThemeValidationError);
+  });
+
+  it("composes shared block packs before theme block templates", () => {
+    const source = composeThemeSource(
+      {
+        manifest: {
+          name: "composed",
+          supportedBlocks: ["custom"],
+          actions: ["theme.action"],
+          blocks: "blocks"
+        },
+        files: {
+          "blocks/hero.html": '<section{{ attrs }} class="theme-hero">{{ children }}</section>'
+        }
+      },
+      {
+        blockPacks: [
+          {
+            name: "starter",
+            supportedBlocks: ["hero", "note"],
+            actions: ["pack.action"],
+            blocks: "blocks",
+            files: {
+              "blocks/hero.html": '<section{{ attrs }} class="pack-hero">{{ children }}</section>',
+              "blocks/note.html": '<aside{{ attrs }} class="pack-note">{{ children }}</aside>'
+            }
+          }
+        ]
+      }
+    );
+
+    expect(source.manifest).toMatchObject({
+      blocks: "blocks",
+      supportedBlocks: ["hero", "note", "custom"],
+      actions: ["pack.action", "theme.action"]
+    });
+    expect(source.files["blocks/hero.html"]).toContain("theme-hero");
+    expect(source.files["blocks/note.html"]).toContain("pack-note");
+    expect(source.composition).toEqual({
+      blockPacks: [
+        {
+          name: "starter",
+          profiles: [],
+          supportedBlocks: ["hero", "note"]
+        }
+      ],
+      templateSources: [
+        { block: "hero", source: "theme" },
+        { block: "note", source: "starter" }
+      ]
+    });
+
+    const theme = createThemeFromSources(source);
+    expect(theme.blockRenderers?.hero).toBeDefined();
+    expect(theme.blockRenderers?.note).toBeDefined();
+  });
+
+  it("turns grouped pack templates into final block files", () => {
+    const source = composeThemeSource(
+      {
+        manifest: {
+          name: "grouped"
+        },
+        files: {}
+      },
+      {
+        blockPacks: [
+          {
+            name: "callouts",
+            supportedBlocks: ["note", "warning"],
+            blocks: "blocks",
+            files: {
+              "blocks/callout.html":
+                '<template data-block="note warning"><aside{{ attrs }} class="callout {{ type }}">{{ children }}</aside></template>'
+            }
+          }
+        ]
+      }
+    );
+
+    expect(source.files["blocks/note.html"]).toContain('data-block="note"');
+    expect(source.files["blocks/warning.html"]).toContain('data-block="warning"');
+    expect(createThemeFromSources(source).blockRenderers?.warning).toBeDefined();
   });
 
   it("renders resolved ids and block attributes in templates", () => {

@@ -53,6 +53,8 @@ describe("theme build status", () => {
       },
       blocks: ["hero"],
       actions: [],
+      blockPacks: [],
+      templateSources: [{ block: "hero", source: "theme" }],
       diagnostics: []
     });
 

@@ -1,0 +1,12 @@
+{
+  "name": "default",
+  "label": "Default",
+  "description": "A balanced starter theme for readable standalone MDS pages.",
+  "author": "MDS",
+  "preview": "preview.svg",
+  "tags": ["starter", "docs", "responsive"],
+  "supportedBlocks": ["float", "sticky"],
+  "css": "style.css",
+  "js": "script.js",
+  "shell": "shell.html"
+}

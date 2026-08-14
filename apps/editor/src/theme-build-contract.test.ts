@@ -83,6 +83,14 @@ describe("theme build contract", () => {
       },
       blocks: ["hero"],
       actions: ["toggle"],
+      blockPacks: [
+        {
+          name: "@mds/blocks/core",
+          profiles: ["core"],
+          supportedBlocks: ["hero"]
+        }
+      ],
+      templateSources: [{ block: "hero", source: "theme" }],
       diagnostics: [],
       metadata: {
         version: 1,

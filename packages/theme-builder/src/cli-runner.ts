@@ -207,6 +207,18 @@ function printInspectionResult(
   printList("Development files", result.developmentFiles, stdout);
   printList("Blocks", result.blocks, stdout);
   printList("Supported blocks", result.supportedBlocks, stdout);
+  printList(
+    "Block packs",
+    result.blockPacks.map((pack) =>
+      pack.profiles.length === 0 ? pack.name : `${pack.name} (${pack.profiles.join("+")})`
+    ),
+    stdout
+  );
+  printList(
+    "Template sources",
+    result.templateSources.map((entry) => `${entry.block}=${entry.source}`),
+    stdout
+  );
   printList("Actions", result.actions, stdout);
   printList("Tags", result.tags, stdout);
   printList("CSS", result.assets.css, stdout);

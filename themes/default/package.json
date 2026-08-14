@@ -1,0 +1,25 @@
+{
+  "name": "@mds/theme-default",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "mdsTheme": {
+    "source": "./src/theme.json",
+    "dist": "./dist/theme",
+    "blockPacks": ["@mds/blocks/standard"],
+    "blockOverrides": [
+      "blocks/dialog.html",
+      "blocks/drawer.html",
+      "blocks/hero.html",
+      "blocks/float.html",
+      "blocks/sticky.html",
+      "blocks/tabs.html"
+    ]
+  },
+  "scripts": {
+    "build": "pnpm --dir ../.. build:theme themes/default"
+  },
+  "dependencies": {
+    "@mds/blocks": "workspace:*"
+  }
+}

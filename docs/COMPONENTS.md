@@ -4,6 +4,8 @@ This document plans the component block system for MDS themes.
 
 MDS components are semantic blocks. They are not runtime components, JSX tags, or HTML shortcuts. A theme decides how each block looks and behaves, and the final output remains standalone HTML.
 
+For the shared blocks layer that turns this vocabulary into reusable block packs and theme overrides, see [BLOCK_LAYER.md](./BLOCK_LAYER.md).
+
 ## Goals
 
 - Cover most common content scenarios: marketing pages, documentation, reports, portfolios, courses, product pages, and AI-generated interactive explanations.
@@ -626,6 +628,8 @@ Component expansion should be verified at three levels:
 3. **Editor visual smoke tests**
 
    - Components example renders without diagnostics.
+   - `pnpm test:visual` renders default, folio, and atelier at mobile and desktop viewports.
+   - The smoke runner captures PNG artifacts and rejects horizontal viewport overflow.
    - Canvas desktop/tablet/mobile previews are readable.
    - Interactive blocks do not hide content accidentally.
    - Theme JavaScript does not emit console errors.
@@ -634,6 +638,7 @@ Component expansion should be verified at three levels:
 
 - Themes are not required to implement every block in this document.
 - A theme can declare supported blocks through `theme.json#supportedBlocks`.
+- Shared block packs may provide reusable templates for subsets of this vocabulary. Themes can opt into those packs and override selected block templates.
 - MDS documents may use custom block names outside this list.
 - Core should not special-case most component names. The list is a shared vocabulary and Canvas roadmap, not a closed grammar.
 - Block names should stay lowercase and hyphenated when they contain multiple words, such as `pricing-plan` and `code-group`.

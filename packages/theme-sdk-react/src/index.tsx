@@ -1,7 +1,9 @@
 import type { HtmlTheme } from "@mds/html-types";
 import {
+  composeThemeSource,
   createThemeFromSources,
   isThemeSourceInput,
+  type ThemeBlockPackSource,
   type ThemeManifest,
   type ThemeSourceInput
 } from "@mds/theme-loader";
@@ -45,6 +47,7 @@ export interface ReactThemeDefinition {
   shell?: string;
   head?: string;
   actions?: string[];
+  blockPacks?: readonly ThemeBlockPackSource[];
   blocks: Record<string, ReactThemeBlockComponent>;
 }
 
@@ -177,11 +180,13 @@ export function createThemeSourceFromReactTheme(theme: ReactThemeDefinition): Th
         : template;
   }
 
-  return {
+  const source: ThemeSourceInput = {
     manifest,
     files,
     rootName: theme.name
   };
+
+  return composeThemeSource(source, theme.blockPacks === undefined ? {} : { blockPacks: theme.blockPacks });
 }
 
 export function createThemeFromReactSource(source: ThemeSourceInput): HtmlTheme {

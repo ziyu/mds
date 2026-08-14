@@ -29,7 +29,13 @@ export type {
   ThemeArtifactPathValidationResult
 } from "./artifact.js";
 export type { ThemeArtifactFileLists } from "./artifact.js";
-export { createThemeFromSources, createThemeResultFromSources, getThemeFilePaths, isThemeSourceInput } from "./source-theme.js";
+export {
+  composeThemeSource,
+  createThemeFromSources,
+  createThemeResultFromSources,
+  getThemeFilePaths,
+  isThemeSourceInput
+} from "./source-theme.js";
 export {
   assertValidThemeSource,
   formatThemeDiagnostic,
@@ -41,10 +47,15 @@ export {
 export type { ThemeRegistry, ThemeSummary } from "./registry.js";
 export type {
   ThemeAssetReference,
+  ThemeBlockPackMetadata,
+  ThemeBlockPackSource,
   ThemeBlockReference,
+  ComposeThemeSourceOptions,
   ThemeCreationResult,
   ThemeManifest,
   ThemeSource,
+  ThemeSourceComposition,
+  ThemeTemplateSourceMetadata,
   ThemeSourceInput
 } from "./source-theme.js";
 export type { ThemeDiagnostic, ThemeDiagnosticSeverity } from "./validation.js";

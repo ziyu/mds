@@ -1,0 +1,12 @@
+{
+  "name": "folio",
+  "label": "Folio",
+  "description": "A quieter editorial theme for essays, portfolios, and long-form pages.",
+  "author": "MDS",
+  "preview": "preview.svg",
+  "tags": ["editorial", "portfolio", "docs"],
+  "supportedBlocks": ["float", "sticky"],
+  "css": "style.css",
+  "js": "script.js",
+  "shell": "shell.html"
+}

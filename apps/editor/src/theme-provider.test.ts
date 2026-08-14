@@ -137,6 +137,8 @@ describe("theme provider", () => {
       },
       blocks: ["hero"],
       actions: [],
+      blockPacks: [],
+      templateSources: [{ block: "hero", source: "theme" }],
       diagnostics: []
     };
     const fetch = vi.fn(async () => new Response(JSON.stringify(result), {

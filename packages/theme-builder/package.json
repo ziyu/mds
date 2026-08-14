@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.0.0",
+    "@mds/blocks": "workspace:*",
     "@mds/theme-loader": "workspace:*",
     "esbuild": "^0.27.0",
     "postcss": "^8.5.0",

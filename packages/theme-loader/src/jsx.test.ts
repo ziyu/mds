@@ -112,6 +112,38 @@ describe("JSX themes", () => {
     )).toContain('class="callout warning"');
   });
 
+  it("composes block packs into JSX theme sources", () => {
+    const source = createThemeSourceFromJsxTheme(
+      defineJsxTheme({
+        name: "jsx-packed",
+        blockPacks: [
+          {
+            name: "starter",
+            supportedBlocks: ["hero", "note"],
+            blocks: "blocks",
+            files: {
+              "blocks/hero.html": '<section{{ attrs }} class="pack-hero">{{ children }}</section>',
+              "blocks/note.html": '<aside{{ attrs }} class="pack-note">{{ children }}</aside>'
+            }
+          }
+        ],
+        blocks: {
+          hero: ({ attrs, children }: ThemeTemplateProps) =>
+            jsx("section", {
+              rawAttrs: attrs,
+              className: "theme-hero",
+              children
+            })
+        }
+      })
+    );
+
+    expect(source.manifest.supportedBlocks).toEqual(["hero", "note"]);
+    expect(source.files["blocks/hero.html"]).toContain("theme-hero");
+    expect(source.files["blocks/note.html"]).toContain("pack-note");
+    expect(createThemeFromSources(source).blockRenderers?.note).toBeDefined();
+  });
+
   it("can create an HtmlTheme directly from JSX definitions", () => {
     const htmlTheme = createThemeFromJsxTheme(
       defineJsxTheme({

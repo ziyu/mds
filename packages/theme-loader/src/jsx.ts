@@ -1,5 +1,11 @@
 import type { HtmlTheme } from "@mds/html-types";
-import { createThemeFromSources, type ThemeManifest, type ThemeSourceInput } from "./source-theme.js";
+import {
+  composeThemeSource,
+  createThemeFromSources,
+  type ThemeBlockPackSource,
+  type ThemeManifest,
+  type ThemeSourceInput
+} from "./source-theme.js";
 import { jsx as createElement, raw, renderJsxNode, type JsxChild, type RawHtml } from "./jsx-runtime.js";
 import { isRecord } from "./shape.js";
 
@@ -33,6 +39,7 @@ export interface JsxThemeDefinition {
   shell?: string;
   head?: string;
   actions?: string[];
+  blockPacks?: readonly ThemeBlockPackSource[];
   blocks: Record<string, ThemeBlockComponent>;
 }
 
@@ -166,11 +173,13 @@ export function createThemeSourceFromJsxTheme(theme: JsxThemeDefinition): ThemeS
         : template;
   }
 
-  return {
+  const source: ThemeSourceInput = {
     manifest,
     files,
     rootName: theme.name
   };
+
+  return composeThemeSource(source, theme.blockPacks === undefined ? {} : { blockPacks: theme.blockPacks });
 }
 
 function copyOptionalManifestString(

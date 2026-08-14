@@ -1,0 +1,29 @@
+{
+  "name": "@mds/theme-folio",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "mdsTheme": {
+    "source": "./src/theme.json",
+    "dist": "./dist/theme",
+    "blockPacks": ["@mds/blocks/standard"],
+    "blockOverrides": [
+      "blocks/card.html",
+      "blocks/dialog.html",
+      "blocks/drawer.html",
+      "blocks/hero.html",
+      "blocks/page.html",
+      "blocks/scene.html",
+      "blocks/section.html",
+      "blocks/float.html",
+      "blocks/sticky.html",
+      "blocks/tabs.html"
+    ]
+  },
+  "scripts": {
+    "build": "pnpm --dir ../.. build:theme themes/folio"
+  },
+  "dependencies": {
+    "@mds/blocks": "workspace:*"
+  }
+}
