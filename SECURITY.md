@@ -2,9 +2,12 @@
 
 ## Supported Versions
 
-MDS is preparing its first public beta. Until a version is published, security fixes are made on the latest `main` branch only.
+MDS is in public beta. Security fixes are applied to the latest published beta and the `main` branch.
 
-After `0.1.0` is released, this section will list the actively supported release lines.
+| Version | Supported |
+| --- | --- |
+| `0.1.0-beta.1` | Yes |
+| Earlier versions | No |
 
 ## Reporting A Vulnerability
 
@@ -14,7 +17,7 @@ Use the repository's private GitHub security advisory flow when it is available:
 
 <https://github.com/ziyu/mds/security/advisories/new>
 
-If the repository is not yet public or the advisory form is unavailable, contact the repository owner privately and include:
+If the advisory form is unavailable, contact the repository owner privately and include:
 
 - the affected package and version or commit;
 - a minimal reproduction;

@@ -1,16 +1,16 @@
 # MDS Release Plan
 
-Status: in progress
+Status: `0.1.0-beta.1` published; external feedback in progress
 
 Last updated: 2026-08-14
 
-This document defines the product, development, packaging, and release work required before MDS is published for external users. It covers three release goals:
+This document records the product, development, packaging, and release work behind the MDS public beta and the remaining path to `0.1.0`. It covers three release goals:
 
 1. External theme authors can define, build, publish, and consume custom MDS themes as packages.
 2. External users can open, inspect, edit, preview, and save `.mds` files with the MDS Editor.
 3. Other developers can integrate the MDS HTML renderer into Node.js, browser, and framework projects without depending on monorepo internals.
 
-The recommended first public milestone is `0.1.0-beta.1`, not an immediate stable `0.1.0` release.
+The first public milestone is `0.1.0-beta.1`, not an immediate stable `0.1.0` release.
 
 ## Confirmed Release Decisions
 
@@ -31,7 +31,7 @@ The recommended first public milestone is `0.1.0-beta.1`, not an immediate stabl
 - [x] Add sequential tarball auditing, including packed-manifest checks for leaked `workspace:` dependencies.
 - [x] Verify the planned npm package names are not already published under `@mds-crate`.
 - [x] Install all packed packages in a clean temporary consumer, import the library entry points, and execute the packed CLI.
-- [ ] Make the GitHub repository public before the external beta.
+- [x] Make the GitHub repository public for the external beta.
 - [x] Add Changesets lockstep versioning and release pull-request automation.
 - [x] Add GitHub Actions for type checks, tests, builds, tarball auditing, and visual smoke tests.
 - [x] Add trusted npm publishing after the package bootstrap release.
@@ -55,7 +55,7 @@ The recommended first public milestone is `0.1.0-beta.1`, not an immediate stabl
 - [x] Build `@mds-crate/theme-default` as both a browser-safe module and a Node-resolvable artifact package.
 - [x] Exclude theme source and development build metadata from published theme packages.
 - [x] Test init, dependency installation, build, inspect, pack, package-name resolution, rendering, and Vite bundling from tarballs.
-- [ ] Bootstrap the packages on npm and run the same acceptance flow against registry versions.
+- [x] Bootstrap the packages on npm and run the same acceptance flow against registry versions.
 
 ## M2 Progress
 
@@ -67,7 +67,7 @@ The recommended first public milestone is `0.1.0-beta.1`, not an immediate stabl
 - [x] Protect the loopback service with a session token, Host/Origin checks, body limits, and a project-root file jail.
 - [x] Reject traversal, absolute paths, symbolic-link files, and symlink escapes.
 - [x] Add service integration tests and a packed-CLI browser E2E covering save, conflict, reload, installed themes, diagnostics, and shutdown.
-- [ ] Run the Editor acceptance flow against registry-published packages after npm bootstrap.
+- [x] Run the Editor acceptance flow against registry-published packages after npm bootstrap.
 
 ## Release Principles
 
@@ -81,11 +81,11 @@ The recommended first public milestone is `0.1.0-beta.1`, not an immediate stabl
 
 ## Current Readiness Assessment
 
-| Release Goal | Recommended Product | Current State | Release Blockers |
+| Release Goal | Recommended Product | Current State | Next Work |
 | --- | --- | --- | --- |
-| External package-defined themes | `@mds-crate/theme-builder`, theme SDKs, `@mds-crate/blocks`, `@mds-crate/theme-default`, and `mds theme` commands | HTML/JSX/React scaffolds, build/watch/inspect/pack, artifact validation, shared block composition, a portable default theme, package-name resolution, and tarball lifecycle tests exist. | Packages are not yet bootstrapped on npm, and registry-version acceptance has not run. |
-| External `.mds` file editing | `mds edit <file-or-directory>` backed by the built Editor app | The CLI bundles a production local server and static app with real open/create/save, dirty/conflict UI, atomic writes, project/package themes, a root-jailed API, a restrictive preview sandbox, and packed browser E2E coverage. | Registry-version acceptance remains after the npm bootstrap publication. |
-| Renderer integration | `@mds-crate/renderer-html` plus `@mds-crate/theme-default` and advanced `@mds-crate/theme-loader` APIs | Source and AST rendering, document/fragment output, separate theme assets, a portable default theme, deterministic diagnostics, URL neutralization, and clean Node/Vite consumers exist. | Registry-version acceptance remains. |
+| External package-defined themes | `@mds-crate/theme-builder`, theme SDKs, `@mds-crate/blocks`, `@mds-crate/theme-default`, and `mds theme` commands | The registry lifecycle passes for HTML/JSX/React scaffolds, build/watch/inspect/pack, artifact validation, shared block composition, package-name resolution, and the portable default theme. | Collect third-party authoring and package-manager compatibility feedback. |
+| External `.mds` file editing | `mds edit <file-or-directory>` backed by the built Editor app | The registry-installed CLI passes browser acceptance for real open/create/save, dirty/conflict UI, atomic writes, installed themes, diagnostics, the root-jailed API, and shutdown. | Collect operating-system, browser, and real-project feedback. |
+| Renderer integration | `@mds-crate/renderer-html` plus `@mds-crate/theme-default` and advanced `@mds-crate/theme-loader` APIs | Registry-installed packages pass clean Node.js and Vite consumers for source/AST rendering, document/fragment output, separate assets, diagnostics, and URL neutralization. | Collect framework and bundler compatibility feedback. |
 
 Current evidence:
 
@@ -93,10 +93,10 @@ Current evidence:
 - [`@mds-crate/editor`](../apps/editor/package.json) remains private; its production assets are built into the public CLI distribution.
 - The [Editor app](../apps/editor/src/app.tsx) keeps the example playground for development and switches to real file sessions under `mds edit`.
 - The CLI [production server](../packages/cli/src/editor-server.ts) owns theme/file APIs, security checks, persistence, and packaged static assets; the Vite plugin remains the development adapter.
-- [`@mds-crate/theme-default`](../themes/default/package.json) is public-ready and exports both a browser-safe module and `dist/theme` artifact.
-- Public package manifests now use the `0.1.0-beta.0` baseline and include publishing metadata and `dist` file allowlists.
+- [`@mds-crate/theme-default`](../themes/default/package.json) is published and exports both a browser-safe module and `dist/theme` artifact.
+- All eleven public packages are available at `0.1.0-beta.1`; `next` resolves to that version and registry acceptance passes.
 - Sequential package audits now verify clean tarball contents and packed manifests without leaked `workspace:` dependency ranges.
-- The GitHub repository is currently private; the working tree now contains the Apache-2.0 license and release documentation that must land before it becomes public.
+- GitHub Actions uses npm trusted publishing for subsequent releases; the public repository makes provenance available to future OIDC publications.
 
 ## Recommended Public Package Topology
 
@@ -135,15 +135,15 @@ These tasks block all three public user journeys.
 
 ### 1. Complete identity, visibility, and license setup
 
-- The npm `@mds-crate` scope is confirmed. Verify each individual package name before its first publication.
-- Decide whether `ziyu/mds` will become a public repository.
+- The npm `@mds-crate` scope and all eleven package names are confirmed and published.
+- The `ziyu/mds` repository is public for source, documentation, issues, and release notes.
 - Keep Apache-2.0 license metadata and the root license text aligned across public packages.
 - Add a root `README.md` that leads with three quick starts: render MDS, edit an MDS file, and create a theme.
 - Add `SECURITY.md` and a minimal contribution/release policy.
 - Add `repository`, `bugs`, `homepage`, `license`, `description`, and `keywords` metadata to publishable packages.
 - Make each package's `repository.url` match the GitHub repository used for trusted publishing.
 
-The repository can publish public npm packages while remaining private, but automatic public provenance requires a public repository. See npm's [Trusted Publishing documentation](https://docs.npmjs.com/trusted-publishers/).
+The bootstrap release was published before the repository became public. Subsequent OIDC releases can provide public provenance now that both repository and packages are public. See npm's [Trusted Publishing documentation](https://docs.npmjs.com/trusted-publishers/).
 
 ### 2. Make npm packages intentional
 
@@ -487,11 +487,7 @@ For repeatable releases:
 
 Trusted publishing generally requires the package to exist before the trust relationship is configured. The first publication is therefore a bootstrap operation and should use an explicitly reviewed manual or short-lived-token workflow. Subsequent releases should use OIDC.
 
-Automatic public provenance requires a public source repository and public package. If the repository remains private, document that provenance will not be available even if OIDC publishing is used.
-
-### One-time local environment issue
-
-The current development machine reports root-owned files inside `~/.npm`, which prevents local `npm pack --dry-run`. This is not a repository defect and does not affect clean CI, but it must be repaired before using the local machine for the bootstrap npm publication.
+Automatic public provenance requires a public source repository and public package. Those visibility requirements are satisfied for releases after the bootstrap; the publishing workflow still verifies registry acceptance before pushing tags.
 
 ## Package Publication Order
 
@@ -505,7 +501,7 @@ The release tool should calculate dependency order, but the expected first-relea
 6. `@mds-crate/theme-default`
 7. `@mds-crate/cli` with packaged Editor assets
 
-No stable dist-tag should be moved until every package in the release set has been published and the clean-consumer smoke suite passes against the registry versions.
+The bootstrap publication caused npm to create `latest` at `0.1.0-beta.1`; that tag is intentionally retained. Prerelease automation continues to target `next`, and no future tag movement should occur until every package in the release set passes registry acceptance.
 
 ## Milestones
 
@@ -662,24 +658,19 @@ Acceptance:
 - unsafe input fixtures do not create executable URLs or raw script injection;
 - custom themes and block renderer overrides work through documented APIs.
 
-## Open Decisions
+## Resolved Release Decisions
 
-These decisions should be made during M0 because they materially affect package names, automation, and documentation:
-
-1. Will the GitHub repository become public before the beta?
-2. Resolved: the stable Editor command is `mds edit`; no alias is required for the first beta.
-3. Resolved: hosted Editor is deferred until after the local Editor beta.
-
-Resolved: `@mds-crate/theme-default` exports both `theme` and `themeSource`, and npm theme packages are artifact-first.
+1. The GitHub repository is public for the external beta.
+2. The stable Editor command is `mds edit`; no alias is required for the first beta.
+3. Hosted and native desktop Editors are deferred until after the local Editor beta.
+4. `@mds-crate/theme-default` exports both `theme` and `themeSource`, and npm theme packages are artifact-first.
 
 ## Recommended Next Work Order
 
-1. Complete M0 release foundation.
-2. Implement Renderer source/fragment APIs and security hardening.
-3. Implement `mds theme init` and publishable default-theme output. Completed locally.
-4. Add tarball consumer tests for Renderer and Theme. Completed locally.
-5. Build the production local Editor server and file workflows using those released package contracts. Completed locally.
-6. Run the first `next` publication and repeat all three journeys against registry packages. This is the next active release step.
-7. Collect external feedback before moving to `latest`.
+1. Publish `0.1.0-beta.1` and verify all three journeys against registry packages. Completed.
+2. Publish source, installation documentation, release notes, and structured feedback forms. Completed for the beta launch.
+3. Collect real external feedback across operating systems, browsers, package managers, and framework integrations. In progress.
+4. Publish `0.1.0-beta.2` only if the first feedback cycle requires compatibility fixes.
+5. Declare `0.1.0` after the three journeys have no blocking compatibility or security issues.
 
-All three product journeys now pass locally and from tarballs. The remaining release work is npm bootstrap, registry-version acceptance, repository visibility/provenance, and external feedback.
+All three product journeys pass locally, from tarballs, and from registry packages. The remaining release work is real-user feedback and the stable-release decision.

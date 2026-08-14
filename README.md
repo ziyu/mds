@@ -2,17 +2,63 @@
 
 MDS is a Markdown-based semantic authoring language. Authors write normal Markdown plus a small set of semantic blocks; MDS parses that source and renders standalone or embeddable HTML through reusable themes.
 
-The project is preparing its first external beta under the `@mds-crate` npm organization. Packages are not yet published for general use.
+## Public Beta
 
-## Release Goals
+`0.1.0-beta.1` is available from the public [`@mds-crate`](https://www.npmjs.com/org/mds-crate) npm organization. The beta requires Node.js 20.19 or newer and publishes ESM packages. Prerelease installation examples use the `next` tag.
 
-The `0.1` release is organized around three user journeys:
+The Editor is currently a local browser application launched by the `mds` CLI, not a native `.dmg` or `.exe` application. See the [beta testing guide](./docs/BETA.md) for supported journeys, known limitations, and feedback links.
+
+## Quick Starts
+
+### Edit an MDS file
+
+```sh
+npm install --global @mds-crate/cli@next
+mds edit ./page.mds
+```
+
+The command opens the packaged Editor in your browser and reads and saves real files inside the selected project root. See the [Editor guide](./docs/EDITOR.md) for directory mode, themes, conflict handling, and the local security boundary.
+
+### Render MDS in an application
+
+```sh
+npm install @mds-crate/renderer-html@next @mds-crate/theme-default@next
+```
+
+```ts
+import { renderMdsResult } from "@mds-crate/renderer-html";
+import { theme } from "@mds-crate/theme-default";
+
+const result = renderMdsResult("# Hello from MDS", {
+  mode: "fragment",
+  theme
+});
+
+console.log(result.body, result.diagnostics);
+```
+
+### Create a package-defined theme
+
+```sh
+npm install --global @mds-crate/cli@next
+mds theme init ./my-theme
+cd ./my-theme
+npm install
+npm run build
+npm run inspect
+```
+
+The scaffold publishes a plain `dist/theme` artifact. HTML is the default authoring mode; pass `--template jsx` or `--template react` for those build-time authoring options.
+
+## Product Surfaces
+
+The `0.1` line is organized around three user journeys:
 
 1. Theme authors can initialize, build, inspect, pack, and publish package-defined themes.
 2. Document authors can open, edit, preview, and save real `.mds` files in a local Editor.
 3. Application developers can render MDS source in Node.js and browser projects through stable package APIs.
 
-See [the release plan](./docs/RELEASE_PLAN.md) for the implementation sequence and acceptance criteria.
+All three journeys pass against the published registry packages. See [the release plan](./docs/RELEASE_PLAN.md) for acceptance evidence and the path from beta feedback to `0.1.0`.
 
 ## Repository Quick Start
 
@@ -98,7 +144,7 @@ The runtime consumes plain theme artifacts. TypeScript, JSX, React, Tailwind, an
 
 ## Packages
 
-Primary planned public packages:
+Primary public packages:
 
 - `@mds-crate/renderer-html`
 - `@mds-crate/theme-default`

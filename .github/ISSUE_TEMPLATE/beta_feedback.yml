@@ -1,0 +1,56 @@
+name: Beta feedback
+description: Share an external installation result, compatibility result, or usability observation.
+title: "[Beta]: "
+labels:
+  - beta-feedback
+body:
+  - type: dropdown
+    id: journey
+    attributes:
+      label: Tested journey
+      options:
+        - Install and edit an MDS file
+        - Integrate the HTML renderer
+        - Create and build a package theme
+        - Multiple journeys
+    validations:
+      required: true
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: Outcome
+      options:
+        - Completed successfully
+        - Completed with friction
+        - Blocked
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Include operating system, Node.js version, browser when relevant, and package manager/version.
+      placeholder: "Windows 11, Node.js 22, Chrome, npm 11"
+    validations:
+      required: true
+  - type: textarea
+    id: commands
+    attributes:
+      label: Packages and commands tested
+      description: Include exact versions or npm tags and the commands you ran.
+    validations:
+      required: true
+  - type: textarea
+    id: worked
+    attributes:
+      label: What worked well?
+  - type: textarea
+    id: friction
+    attributes:
+      label: What was confusing, slow, or missing?
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Additional compatibility notes

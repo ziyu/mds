@@ -1,0 +1,62 @@
+name: Bug report
+description: Report reproducible incorrect behavior in an MDS beta package.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for testing MDS. Do not include secrets or private document contents.
+  - type: dropdown
+    id: journey
+    attributes:
+      label: Product journey
+      options:
+        - Local Editor
+        - Renderer integration
+        - Theme authoring
+        - CLI build or check
+        - Other package API
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: MDS package and exact version
+      placeholder: "@mds-crate/cli 0.1.0-beta.1"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Include operating system, Node.js version, and package manager/version.
+      placeholder: "macOS 15, Node.js 20.19.0, npm 11"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Provide the smallest safe project, source, and exact commands that reproduce the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and diagnostics
+    validations:
+      required: true
+  - type: checkboxes
+    id: security
+    attributes:
+      label: Security check
+      options:
+        - label: This report does not describe a suspected security vulnerability.
+          required: true
