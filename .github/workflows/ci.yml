@@ -42,14 +42,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build workspaces
+        run: pnpm build
+
       - name: Check types
         run: pnpm check
 
       - name: Run tests
         run: pnpm test
-
-      - name: Build workspaces
-        run: pnpm build
 
       - name: Audit packed packages
         if: matrix.node-version == '24.x'

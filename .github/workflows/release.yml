@@ -38,9 +38,9 @@ jobs:
 
       - name: Validate release inputs
         run: |
+          pnpm build
           pnpm check
           pnpm test
-          pnpm build
           pnpm check:packages
 
       - name: Create or update release pull request

@@ -27,7 +27,8 @@
     "build": "node ../../scripts/clean-package-dist.mjs && tsc -p tsconfig.json && node ../../scripts/prune-package-dist.mjs",
     "check": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests",
-    "prepack": "pnpm run build"
+    "prepack": "pnpm run build && node ../../scripts/manage-package-license.mjs add",
+    "postpack": "node ../../scripts/manage-package-license.mjs remove"
   },
   "dependencies": {
     "@mds-crate/html-types": "workspace:*",

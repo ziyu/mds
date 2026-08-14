@@ -40,7 +40,8 @@
   },
   "scripts": {
     "build": "node ../../scripts/clean-package-dist.mjs && pnpm --dir ../.. build:theme themes/default && node ../../scripts/generate-theme-module.mjs .",
-    "prepack": "pnpm run build"
+    "prepack": "pnpm run build && node ../../scripts/manage-package-license.mjs add",
+    "postpack": "node ../../scripts/manage-package-license.mjs remove"
   },
   "dependencies": {
     "@mds-crate/html-types": "workspace:*",

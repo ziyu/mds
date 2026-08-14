@@ -44,9 +44,9 @@ jobs:
 
       - name: Validate release commit
         run: |
+          pnpm build
           pnpm check
           pnpm test
-          pnpm build
           pnpm check:packages
           pnpm release:check -- --skip-auth
 
