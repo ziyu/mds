@@ -48,7 +48,16 @@ jobs:
       - name: Check types
         run: pnpm check
 
-      - name: Run tests
+      - name: Run Node 20 runtime smoke tests
+        if: matrix.node-version == '20.19.0'
+        run: |
+          pnpm --filter @mds-crate/parser test
+          pnpm --filter @mds-crate/renderer-html test
+          pnpm --filter @mds-crate/theme-loader test
+          node packages/cli/dist/index.js --help
+
+      - name: Run full test suite
+        if: matrix.node-version == '24.x'
         run: pnpm test
 
       - name: Audit packed packages

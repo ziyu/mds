@@ -323,6 +323,8 @@ td {
 
 .scene {
   min-width: 0;
+  width: calc(100% + clamp(2rem, 4vw, 4rem));
+  max-width: calc(100% + clamp(2rem, 4vw, 4rem));
   margin-inline: calc(clamp(1rem, 2vw, 2rem) * -1);
   padding: clamp(3rem, 7vw, 6rem) clamp(1.25rem, 5vw, 5rem);
   background: var(--text);
