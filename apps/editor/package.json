@@ -11,6 +11,9 @@
   },
   "dependencies": {
     "@codemirror/lang-markdown": "^6.3.0",
+    "@codemirror/language": "^6.12.3",
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.43.0",
     "@mds-crate/ast": "workspace:*",
     "@mds-crate/parser": "workspace:*",
     "@mds-crate/renderer-html": "workspace:*",

@@ -113,7 +113,7 @@ export function createMdsThemeApi(options: MdsThemeApiOptions): Plugin {
             const ref = decodeURIComponent(url.pathname.slice("/__mds/themes/".length));
             const theme = (await context.themeRegistry.listThemes()).find((availableTheme) => availableTheme.name === ref);
             if (theme !== undefined) {
-              await sendJson(response, await readThemeDirectory(theme.source ?? resolveThemeDirectory(ref, context.themesRoot)));
+              await sendJson(response, await readThemeSourceForListedTheme(ref, theme, context));
               return;
             }
 
@@ -140,6 +140,28 @@ export function createMdsThemeApi(options: MdsThemeApiOptions): Plugin {
       });
     }
   };
+}
+
+async function readThemeSourceForListedTheme(
+  ref: string,
+  theme: { source?: string },
+  context: ThemeApiContext
+) {
+  if (theme.source !== undefined) {
+    try {
+      return await readThemeDirectory(theme.source);
+    } catch {
+      return readThemeRef(ref, {
+        roots: [context.themesRoot],
+        baseDirectory: context.workspaceRoot
+      });
+    }
+  }
+
+  return readThemeRef(ref, {
+    roots: [context.themesRoot],
+    baseDirectory: context.workspaceRoot
+  });
 }
 
 async function rebuildWatchedTheme(

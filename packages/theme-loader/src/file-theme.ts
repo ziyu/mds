@@ -11,6 +11,7 @@ import {
 } from "./source-theme.js";
 import { createThemeSummary, type ThemeRegistry, type ThemeSummary } from "./registry.js";
 import { THEME_MANIFEST_FILE } from "./artifact.js";
+import { isRecord } from "./shape.js";
 import { ThemeValidationError, validateThemeManifest, type ThemeDiagnostic } from "./validation.js";
 import {
   normalizeThemeResolutionOptions,
@@ -208,16 +209,17 @@ async function listThemeRoot(root: string): Promise<ThemeSummary[]> {
           try {
             const artifactDirectory = await tryResolveThemeArtifactDirectory(directory);
             if (artifactDirectory === undefined) {
-              return undefined;
+              return createBuildablePackageThemeSummary(directory, entry.name);
             }
 
             const manifest = await readThemeManifest(artifactDirectory);
             return createThemeSummary(manifest, {
               fallbackName: entry.name,
               source: artifactDirectory,
+              ...(await isPackageThemeDirectory(directory) ? { buildable: true } : {}),
             });
-          } catch {
-            return undefined;
+          } catch (error) {
+            return createBuildablePackageThemeSummary(directory, entry.name, error);
           }
         })
     );
@@ -226,4 +228,66 @@ async function listThemeRoot(root: string): Promise<ThemeSummary[]> {
   } catch {
     return [];
   }
+}
+
+async function createBuildablePackageThemeSummary(
+  directory: string,
+  fallbackName: string,
+  error?: unknown
+): Promise<ThemeSummary | undefined> {
+  if (error !== undefined && !isMissingManifestError(error)) {
+    return undefined;
+  }
+
+  const packageJson = await tryReadPackageJson(directory);
+  if (packageJson === undefined || !isRecord(packageJson.mdsTheme)) {
+    return undefined;
+  }
+
+  return {
+    name: fallbackName,
+    label: titleCaseThemeName(fallbackName),
+    source: directory,
+    buildable: true,
+    ...packageThemeSummaryMetadata(packageJson)
+  };
+}
+
+async function isPackageThemeDirectory(directory: string): Promise<boolean> {
+  const packageJson = await tryReadPackageJson(directory);
+  return packageJson !== undefined && isRecord(packageJson.mdsTheme);
+}
+
+async function tryReadPackageJson(directory: string): Promise<Record<string, unknown> | undefined> {
+  try {
+    const packageJson = JSON.parse(await readFile(join(directory, "package.json"), "utf8")) as unknown;
+    return isRecord(packageJson) ? packageJson : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function packageThemeSummaryMetadata(packageJson: Record<string, unknown>): Omit<ThemeSummary, "name" | "label" | "source"> {
+  return {
+    ...(typeof packageJson.description === "string" ? { description: packageJson.description } : {}),
+    ...(typeof packageJson.author === "string" ? { author: packageJson.author } : {}),
+    ...(typeof packageJson.homepage === "string" ? { homepage: packageJson.homepage } : {}),
+    ...(isStringArray(packageJson.keywords) ? { tags: packageJson.keywords } : {})
+  };
+}
+
+function isMissingManifestError(error: unknown): boolean {
+  return isNodeError(error) && error.code === "ENOENT" && typeof error.path === "string" && error.path.endsWith(THEME_MANIFEST_FILE);
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function titleCaseThemeName(value: string): string {
+  return value
+    .split(/[-_\s]+/)
+    .filter((part) => part.length > 0)
+    .map((part) => `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`)
+    .join(" ");
 }
