@@ -12,7 +12,7 @@ export function PreviewPane({ html, size }: PreviewPaneProps) {
     <div className={`preview-frame preview-frame-${size}`}>
       <iframe
         title="MDS preview"
-        sandbox="allow-scripts allow-forms allow-popups allow-same-origin"
+        sandbox="allow-scripts allow-forms"
         referrerPolicy="no-referrer"
         srcDoc={previewHtml}
       />

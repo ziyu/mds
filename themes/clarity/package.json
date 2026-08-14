@@ -1,5 +1,5 @@
 {
-  "name": "@mds/theme-clarity",
+  "name": "@mds-crate/theme-clarity",
   "version": "0.0.0",
   "private": true,
   "type": "module",

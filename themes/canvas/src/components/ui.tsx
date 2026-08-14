@@ -1,5 +1,5 @@
 import React from "react";
-import { Content, Root, Slots, type ReactThemeBlock } from "@mds/theme-sdk-react";
+import { Content, Root, Slots, type ReactThemeBlock } from "@mds-crate/theme-sdk-react";
 import { cn } from "../lib/cn.js";
 
 export function Surface(props: {

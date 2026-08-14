@@ -1,7 +1,20 @@
 {
-  "name": "@mds/cli",
-  "version": "0.0.0",
+  "name": "@mds-crate/cli",
+  "version": "0.1.0-beta.0",
+  "description": "Command-line tools and the local Editor for MDS documents and themes.",
+  "keywords": ["mds", "markdown", "cli", "editor", "html"],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ziyu/mds.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/ziyu/mds#readme",
+  "bugs": { "url": "https://github.com/ziyu/mds/issues" },
   "type": "module",
+  "files": ["dist"],
+  "engines": { "node": ">=20.19.0" },
+  "publishConfig": { "access": "public" },
   "bin": {
     "mds": "./dist/index.js"
   },
@@ -14,15 +27,17 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "node ../../scripts/clean-package-dist.mjs && tsc -p tsconfig.json && node ../../scripts/build-cli-editor.mjs && node ../../scripts/prune-package-dist.mjs",
     "check": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@mds/parser": "workspace:*",
-    "@mds/renderer-html": "workspace:*",
-    "@mds/theme-builder": "workspace:*",
-    "@mds/theme-loader": "workspace:*",
+    "@mds-crate/parser": "workspace:*",
+    "@mds-crate/renderer-html": "workspace:*",
+    "@mds-crate/theme-default": "workspace:*",
+    "@mds-crate/theme-builder": "workspace:*",
+    "@mds-crate/theme-loader": "workspace:*",
     "cac": "^6.7.14"
   },
   "devDependencies": {

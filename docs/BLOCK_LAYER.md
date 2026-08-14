@@ -91,12 +91,12 @@ The loader or builder owns block pack composition because it already owns artifa
 
 The first implementation is source-level composition:
 
-- `@mds/theme-loader` exports `composeThemeSource()`.
-- `@mds/theme-loader` exports the `ThemeBlockPackSource` and `ComposeThemeSourceOptions` types.
-- `@mds/blocks` exports `coreBlocks`, `marketingBlocks`, and `standardBlocks`.
+- `@mds-crate/theme-loader` exports `composeThemeSource()`.
+- `@mds-crate/theme-loader` exports the `ThemeBlockPackSource` and `ComposeThemeSourceOptions` types.
+- `@mds-crate/blocks` exports `coreBlocks`, `marketingBlocks`, and `standardBlocks`.
 - JSX, HTML, and React theme SDK definitions accept optional `blockPacks`.
 
-This first version intentionally does not resolve string references such as `"@mds/blocks/core"` from `theme.json`. Package and SDK authors pass pack objects directly, and the generated `ThemeSourceInput` is a normal artifact-shaped source.
+This first version intentionally does not resolve string references such as `"@mds-crate/blocks/core"` from `theme.json`. Package and SDK authors pass pack objects directly, and the generated `ThemeSourceInput` is a normal artifact-shaped source.
 
 ## Composition Model
 
@@ -113,8 +113,8 @@ interface ThemeSourceInput {
 The composition helper merges packs and themes before `createThemeFromSources()`:
 
 ```ts
-import { composeThemeSource } from "@mds/theme-loader";
-import { coreBlocks, marketingBlocks } from "@mds/blocks";
+import { composeThemeSource } from "@mds-crate/theme-loader";
+import { coreBlocks, marketingBlocks } from "@mds-crate/blocks";
 
 composeThemeSource({
   manifest: {
@@ -143,7 +143,7 @@ File-based themes may eventually declare block packs in `theme.json`:
 ```json
 {
   "name": "clean",
-  "blockPacks": ["@mds/blocks/core", "@mds/blocks/marketing"],
+  "blockPacks": ["@mds-crate/blocks/core", "@mds-crate/blocks/marketing"],
   "blocks": "blocks",
   "css": "style.css"
 }
@@ -152,8 +152,8 @@ File-based themes may eventually declare block packs in `theme.json`:
 Package themes can already use SDK helpers:
 
 ```ts
-import { coreBlocks, marketingBlocks } from "@mds/blocks";
-import { defineReactTheme } from "@mds/theme-sdk-react";
+import { coreBlocks, marketingBlocks } from "@mds-crate/blocks";
+import { defineReactTheme } from "@mds-crate/theme-sdk-react";
 
 export default defineReactTheme({
   name: "clean",
@@ -284,11 +284,11 @@ For editor development mode, the dev server may compose pack sources before send
 
 3. **Add source composition helpers**
 
-   Status: implemented through `composeThemeSource()` and the initial `@mds/blocks` package.
+   Status: implemented through `composeThemeSource()` and the initial `@mds-crate/blocks` package.
 
 4. **Move existing themes gradually**
 
-   Status: implemented for `default`, `folio`, and `atelier`. They opt into `@mds/blocks/standard`, keep source under `src/`, and materialize complete plain runtime artifacts under `dist/theme`. The override audit reduced theme-owned templates from 31 each to 6 for `default`, 10 for `folio`, and 6 for `atelier`; all three artifacts still expose the same 72-block vocabulary.
+   Status: implemented for `default`, `folio`, and `atelier`. They opt into `@mds-crate/blocks/standard`, keep source under `src/`, and materialize complete plain runtime artifacts under `dist/theme`. The override audit reduced theme-owned templates from 31 each to 6 for `default`, 10 for `folio`, and 6 for `atelier`; all three artifacts still expose the same 72-block vocabulary.
 
 5. **Update package SDKs**
 

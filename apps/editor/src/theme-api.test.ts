@@ -1,8 +1,8 @@
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { ThemeBuildError } from "@mds/theme-builder";
-import { createUnknownThemeError, ThemeValidationError } from "@mds/theme-loader";
+import { ThemeBuildError } from "@mds-crate/theme-builder";
+import { createUnknownThemeError, ThemeValidationError } from "@mds-crate/theme-loader";
 import { describe, expect, it, vi } from "vitest";
 import {
   createMdsThemeApi,
@@ -11,7 +11,7 @@ import {
   themeApiErrorResponse,
   themeApiErrorStatusCode
 } from "../theme-api.js";
-import type { PackageThemeBuildResult } from "@mds/theme-builder";
+import type { PackageThemeBuildResult } from "@mds-crate/theme-builder";
 
 describe("editor theme API helpers", () => {
   it("filters generated output files out of watched package inputs", () => {

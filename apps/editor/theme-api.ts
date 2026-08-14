@@ -6,7 +6,7 @@ import {
   ThemeBuildError,
   themeBuildErrorToDiagnostics,
   type PackageThemeBuildResult
-} from "@mds/theme-builder";
+} from "@mds-crate/theme-builder";
 import {
   createFileThemeRegistry,
   createUnknownThemeError,
@@ -15,7 +15,7 @@ import {
   readThemeRef,
   ThemeValidationError,
   type ThemeRegistry
-} from "@mds/theme-loader";
+} from "@mds-crate/theme-loader";
 import {
   serializeThemeBuildErrorBody,
   serializeThemeBuildErrorHmrPayload,

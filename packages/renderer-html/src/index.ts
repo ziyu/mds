@@ -1,8 +1,20 @@
-import type { ActionLinkNode, Diagnostic, DocumentNode, MdsBlockNode, MdsNode, SlotNode } from "@mds/ast";
-import type { HtmlBlockRenderer, HtmlBlockRenderers, HtmlRenderContext, HtmlTheme } from "@mds/html-types";
+import type {
+  ActionLinkNode,
+  Diagnostic,
+  DocumentNode,
+  MarkdownNode,
+  MdsBlockNode,
+  MdsNode,
+  MediaDirectiveNode,
+  Position,
+  SlotNode
+} from "@mds-crate/ast";
+import type { HtmlBlockRenderer, HtmlBlockRenderers, HtmlRenderContext, HtmlTheme } from "@mds-crate/html-types";
+import { parseMds, type ParseOptions } from "@mds-crate/parser";
 import {
   baseBlockRenderers,
   getContentChildren,
+  getMediaUrlPurpose,
   getSlots,
   renderActionLink,
   renderDataNode,
@@ -13,8 +25,14 @@ import {
   renderSlottedContainer
 } from "./base-renderers.js";
 import { escapeAttribute, escapeHtml } from "./escape.js";
-import { renderMarkdown } from "./markdown.js";
-import { getDocumentMetadata, renderDocumentShell } from "./shell.js";
+import { renderMarkdownResult } from "./markdown.js";
+import {
+  getDocumentMetadata,
+  renderDocumentHead,
+  renderDocumentShell,
+  renderThemeScripts
+} from "./shell.js";
+import { sanitizeUrl, type UrlPurpose } from "./url.js";
 
 export interface RenderHtmlOptions {
   title?: string;
@@ -30,7 +48,22 @@ export interface RenderHtmlResult {
   diagnostics: Diagnostic[];
 }
 
-export type { HtmlBlockRenderer, HtmlBlockRenderers, HtmlRenderContext, HtmlTheme } from "@mds/html-types";
+export type RenderMdsMode = "document" | "fragment";
+
+export interface RenderMdsOptions extends RenderHtmlOptions {
+  mode?: RenderMdsMode;
+  parseOptions?: ParseOptions;
+}
+
+export interface RenderMdsResult extends RenderHtmlResult {
+  document: DocumentNode;
+  body: string;
+  head: string;
+  css?: string;
+  js?: string;
+}
+
+export type { HtmlBlockRenderer, HtmlBlockRenderers, HtmlRenderContext, HtmlTheme } from "@mds-crate/html-types";
 
 const baseTheme: HtmlTheme = {
   name: "base"
@@ -51,6 +84,41 @@ export function renderHtml(document: DocumentNode, options: RenderHtmlOptions = 
 }
 
 export function renderHtmlResult(document: DocumentNode, options: RenderHtmlOptions = {}): RenderHtmlResult {
+  const rendered = renderHtmlParts(document, options);
+  return {
+    html: rendered.html,
+    diagnostics: rendered.diagnostics
+  };
+}
+
+export function renderMds(source: string, options: RenderMdsOptions = {}): string {
+  return renderMdsResult(source, options).html;
+}
+
+export function renderMdsResult(source: string, options: RenderMdsOptions = {}): RenderMdsResult {
+  const { mode = "document", parseOptions, ...renderOptions } = options;
+  const document = parseMds(source, parseOptions);
+  const rendered = renderHtmlParts(document, renderOptions);
+
+  return {
+    document,
+    html: mode === "fragment" ? rendered.body : rendered.html,
+    body: rendered.body,
+    head: rendered.head,
+    diagnostics: rendered.diagnostics,
+    ...(rendered.css === undefined ? {} : { css: rendered.css }),
+    ...(rendered.js === undefined ? {} : { js: rendered.js })
+  };
+}
+
+interface RenderedHtmlParts extends RenderHtmlResult {
+  body: string;
+  head: string;
+  css?: string;
+  js?: string;
+}
+
+function renderHtmlParts(document: DocumentNode, options: RenderHtmlOptions): RenderedHtmlParts {
   const theme = options.theme ?? baseTheme;
   const metadata = getDocumentMetadata(document.frontmatter, options.title);
   const diagnostics = [...document.diagnostics];
@@ -64,16 +132,23 @@ export function renderHtmlResult(document: DocumentNode, options: RenderHtmlOpti
     navigationContext: false
   });
   const body = renderDocumentBody(document.children, context);
+  const head = renderDocumentHead(metadata, theme, options.includeCss !== false);
+  const scripts = renderThemeScripts(theme);
   const html = renderDocumentShell({
     metadata,
     theme,
     body,
-    includeCss: options.includeCss !== false
+    head,
+    scripts
   });
 
   return {
     html,
-    diagnostics
+    body,
+    head,
+    diagnostics,
+    ...(theme.css === undefined ? {} : { css: theme.css }),
+    ...(theme.js === undefined ? {} : { js: theme.js })
   };
 }
 
@@ -139,7 +214,7 @@ function renderNode(node: MdsNode, context: RenderContext): string {
     case "text":
       return escapeHtml(node.value);
     case "markdown":
-      return renderMarkdown(interpolate(node.value, context));
+      return renderMarkdownNode(node, context);
     case "block":
       return renderBlock(node, context);
     case "conditionBlock":
@@ -153,7 +228,7 @@ function renderNode(node: MdsNode, context: RenderContext): string {
     case "actionLink":
       return renderCommandActionLink(node, context);
     case "mediaDirective":
-      return renderMediaDirective(node.mediaType, node.target);
+      return renderMediaNode(node, context);
     case "formField":
       return renderFormField(node);
     case "stateDeclaration":
@@ -166,7 +241,12 @@ function renderNode(node: MdsNode, context: RenderContext): string {
 
 function renderCommandActionLink(node: ActionLinkNode, context: RenderContext): string {
   if (node.kind !== "command") {
-    return renderActionLink(node, {
+    const target = node.target ?? "#";
+    const safeTarget = sanitizeUrl(target, "navigation");
+    if (safeTarget === undefined) {
+      reportUnsafeUrl(context, target, "navigation", node.position);
+    }
+    return renderActionLink({ ...node, target: safeTarget ?? "#" }, {
       navigationContext: context.navigationContext
     });
   }
@@ -184,6 +264,36 @@ function renderCommandActionLink(node: ActionLinkNode, context: RenderContext): 
 
   return renderActionLink(node, {
     missingHandler
+  });
+}
+
+function renderMarkdownNode(node: MarkdownNode, context: RenderContext): string {
+  const rendered = renderMarkdownResult(interpolate(node.value, context));
+  for (const unsafeUrl of rendered.unsafeUrls) {
+    reportUnsafeUrl(context, unsafeUrl.value, unsafeUrl.purpose, node.position);
+  }
+  return rendered.html;
+}
+
+function renderMediaNode(node: MediaDirectiveNode, context: RenderContext): string {
+  const purpose = getMediaUrlPurpose(node.mediaType);
+  if (purpose !== undefined && sanitizeUrl(node.target, purpose) === undefined) {
+    reportUnsafeUrl(context, node.target, purpose, node.position);
+  }
+  return renderMediaDirective(node.mediaType, node.target);
+}
+
+function reportUnsafeUrl(
+  context: RenderContext,
+  value: string,
+  purpose: UrlPurpose,
+  position: Position | undefined
+): void {
+  context.diagnostics.push({
+    code: "unsafe-url",
+    message: `Blocked unsafe ${purpose} URL: ${value}.`,
+    severity: "warning",
+    ...(position === undefined ? {} : { position })
   });
 }
 

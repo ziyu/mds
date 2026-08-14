@@ -1,0 +1,30 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.1.10/schema.json",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "fixed": [
+    [
+      "@mds-crate/ast",
+      "@mds-crate/html-types",
+      "@mds-crate/parser",
+      "@mds-crate/renderer-html",
+      "@mds-crate/theme-loader",
+      "@mds-crate/blocks",
+      "@mds-crate/theme-sdk-html",
+      "@mds-crate/theme-sdk-react",
+      "@mds-crate/theme-builder",
+      "@mds-crate/theme-default",
+      "@mds-crate/cli"
+    ]
+  ],
+  "linked": [],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": [],
+  "bumpVersionsWithWorkspaceProtocolOnly": false,
+  "privatePackages": {
+    "version": false,
+    "tag": false
+  }
+}

@@ -1,12 +1,12 @@
 {
-  "name": "@mds/theme-atelier",
+  "name": "@mds-crate/theme-atelier",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "mdsTheme": {
     "source": "./src/theme.tsx",
     "dist": "./dist/theme",
-    "blockPacks": ["@mds/blocks/standard"],
+    "blockPacks": ["@mds-crate/blocks/standard"],
     "assets": {
       "css": "./src/style.css",
       "js": "./src/script.js",
@@ -18,6 +18,6 @@
     "build": "pnpm --dir ../.. build:theme themes/atelier"
   },
   "dependencies": {
-    "@mds/blocks": "workspace:*"
+    "@mds-crate/blocks": "workspace:*"
   }
 }

@@ -1,4 +1,4 @@
-import type { ThemeBlockPackSource } from "@mds/theme-loader";
+import type { ThemeBlockPackSource } from "@mds-crate/theme-loader";
 
 export type BlockProfile =
   | "core"
@@ -431,7 +431,7 @@ export const blockVocabularyByName: Readonly<Record<string, BlockVocabularyEntry
 );
 
 export const coreBlocks: ThemeBlockPackSource = {
-  name: "@mds/blocks/core",
+  name: "@mds-crate/blocks/core",
   profiles: ["core"],
   supportedBlocks: [
     "page",
@@ -524,7 +524,7 @@ export const coreBlocks: ThemeBlockPackSource = {
 };
 
 export const marketingBlocks: ThemeBlockPackSource = {
-  name: "@mds/blocks/marketing",
+  name: "@mds-crate/blocks/marketing",
   profiles: ["marketing"],
   supportedBlocks: [
     "cta",
@@ -595,7 +595,7 @@ export const marketingBlocks: ThemeBlockPackSource = {
 };
 
 export const guidanceBlocks: ThemeBlockPackSource = {
-  name: "@mds/blocks/guidance",
+  name: "@mds-crate/blocks/guidance",
   profiles: ["guidance"],
   supportedBlocks: ["steps", "step", "timeline", "faq"],
   blocks: "blocks",
@@ -622,7 +622,7 @@ export const guidanceBlocks: ThemeBlockPackSource = {
 };
 
 export const dataBlocks: ThemeBlockPackSource = {
-  name: "@mds/blocks/data",
+  name: "@mds-crate/blocks/data",
   profiles: ["data"],
   supportedBlocks: ["comparison", "metric", "progress", "badge", "tag"],
   blocks: "blocks",
@@ -653,7 +653,7 @@ export const dataBlocks: ThemeBlockPackSource = {
 };
 
 export const mediaBlocks: ThemeBlockPackSource = {
-  name: "@mds/blocks/media",
+  name: "@mds-crate/blocks/media",
   profiles: ["media"],
   supportedBlocks: ["media", "image", "video", "figure", "caption", "gallery"],
   blocks: "blocks",
@@ -690,7 +690,7 @@ export const mediaBlocks: ThemeBlockPackSource = {
 };
 
 export const docsBlocks: ThemeBlockPackSource = {
-  name: "@mds/blocks/docs",
+  name: "@mds-crate/blocks/docs",
   profiles: ["docs"],
   supportedBlocks: ["terminal", "code-group", "file-tree", "api", "endpoint"],
   blocks: "blocks",
@@ -724,7 +724,7 @@ export const docsBlocks: ThemeBlockPackSource = {
 };
 
 export const formsBlocks: ThemeBlockPackSource = {
-  name: "@mds/blocks/forms",
+  name: "@mds-crate/blocks/forms",
   profiles: ["forms"],
   supportedBlocks: ["form", "fieldset", "button-group", "input", "select", "textarea", "checkbox", "radio", "switch"],
   blocks: "blocks",
@@ -764,7 +764,7 @@ export const formsBlocks: ThemeBlockPackSource = {
 };
 
 export const interactiveBlocks: ThemeBlockPackSource = {
-  name: "@mds/blocks/interactive",
+  name: "@mds-crate/blocks/interactive",
   profiles: ["interactive"],
   supportedBlocks: ["tabs", "accordion", "carousel", "dialog", "drawer", "popover", "tooltip"],
   blocks: "blocks",
@@ -802,7 +802,7 @@ export const interactiveBlocks: ThemeBlockPackSource = {
 };
 
 export const motionBlocks: ThemeBlockPackSource = {
-  name: "@mds/blocks/motion",
+  name: "@mds-crate/blocks/motion",
   profiles: ["motion"],
   supportedBlocks: ["motion", "reveal", "scene"],
   blocks: "blocks",

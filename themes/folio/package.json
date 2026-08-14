@@ -1,12 +1,12 @@
 {
-  "name": "@mds/theme-folio",
+  "name": "@mds-crate/theme-folio",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "mdsTheme": {
     "source": "./src/theme.json",
     "dist": "./dist/theme",
-    "blockPacks": ["@mds/blocks/standard"],
+    "blockPacks": ["@mds-crate/blocks/standard"],
     "blockOverrides": [
       "blocks/card.html",
       "blocks/dialog.html",
@@ -24,6 +24,6 @@
     "build": "pnpm --dir ../.. build:theme themes/folio"
   },
   "dependencies": {
-    "@mds/blocks": "workspace:*"
+    "@mds-crate/blocks": "workspace:*"
   }
 }

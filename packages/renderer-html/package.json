@@ -1,7 +1,20 @@
 {
-  "name": "@mds/renderer-html",
-  "version": "0.0.0",
+  "name": "@mds-crate/renderer-html",
+  "version": "0.1.0-beta.0",
+  "description": "Render MDS documents to standalone or embeddable HTML.",
+  "keywords": ["mds", "markdown", "html", "renderer"],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ziyu/mds.git",
+    "directory": "packages/renderer-html"
+  },
+  "homepage": "https://github.com/ziyu/mds#readme",
+  "bugs": { "url": "https://github.com/ziyu/mds/issues" },
   "type": "module",
+  "files": ["dist"],
+  "engines": { "node": ">=20.19.0" },
+  "publishConfig": { "access": "public" },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -11,14 +24,15 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "node ../../scripts/clean-package-dist.mjs && tsc -p tsconfig.json && node ../../scripts/prune-package-dist.mjs",
     "check": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@mds/ast": "workspace:*",
-    "@mds/html-types": "workspace:*",
-    "@mds/parser": "workspace:*",
+    "@mds-crate/ast": "workspace:*",
+    "@mds-crate/html-types": "workspace:*",
+    "@mds-crate/parser": "workspace:*",
     "hast-util-to-html": "^9.0.5",
     "mdast-util-to-hast": "^13.2.0",
     "remark-gfm": "^4.0.1",

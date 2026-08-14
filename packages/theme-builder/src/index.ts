@@ -5,12 +5,12 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { build as buildWithEsbuild } from "esbuild";
 import type { AcceptedPlugin, Message } from "postcss";
 import { tsImport } from "tsx/esm/api";
-import { blockPacksByName, standardBlocks } from "@mds/blocks";
+import { blockPacksByName, standardBlocks } from "@mds-crate/blocks";
 import {
   createThemeSourceFromJsxTheme,
   isJsxThemeDefinition,
   JsxThemeBlockRenderError,
-} from "@mds/theme-loader/jsx";
+} from "@mds-crate/theme-loader/jsx";
 import {
   getThemeRuntimeFiles,
   getThemeRuntimeSourceInput,
@@ -43,7 +43,14 @@ import {
   type ThemeResolutionOptions,
   type ThemeTemplateSourceMetadata,
   type ThemeSourceInput
-} from "@mds/theme-loader";
+} from "@mds-crate/theme-loader";
+
+export {
+  initializeThemePackage,
+  type ThemeInitOptions,
+  type ThemeInitResult,
+  type ThemeInitTemplate
+} from "./init.js";
 
 type ThemeAssetReference = string | string[];
 const buildMetadataPath = THEME_BUILD_METADATA_FILE;
@@ -739,7 +746,7 @@ function resolvePackageBlockPacks(refs: string[]): PackageThemeBlockPackLoadResu
   }
 
   const blockPacks = refs.flatMap((ref) => {
-    if (ref === "@mds/blocks/standard") {
+    if (ref === "@mds-crate/blocks/standard") {
       return [...standardBlocks];
     }
 
@@ -748,14 +755,14 @@ function resolvePackageBlockPacks(refs: string[]): PackageThemeBlockPackLoadResu
       throw new Error(
         `Unknown MDS block pack: ${ref}. Available packs: ${[
           ...Object.keys(blockPacksByName),
-          "@mds/blocks/standard"
+          "@mds-crate/blocks/standard"
         ].join(", ")}.`
       );
     }
 
     return [blockPack];
   });
-  const modulePath = resolveImportMetaPath("@mds/blocks");
+  const modulePath = resolveImportMetaPath("@mds-crate/blocks");
 
   return {
     blockPacks,

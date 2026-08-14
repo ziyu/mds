@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { parseMds } from "@mds/parser";
-import { renderHtmlResult, type HtmlTheme } from "@mds/renderer-html";
-import { ThemeValidationError, type ThemeSummary } from "@mds/theme-loader/browser";
+import { parseMds } from "@mds-crate/parser";
+import { renderHtmlResult, type HtmlTheme } from "@mds-crate/renderer-html";
+import { ThemeValidationError, type ThemeSummary } from "@mds-crate/theme-loader/browser";
 import { DiagnosticsPane } from "./diagnostics-pane.js";
 import {
   splitRenderDiagnostics,
@@ -37,6 +37,15 @@ import {
   themeBuildErrorToEditorDiagnostics,
   themeBuildProviderDiagnosticsToEditorDiagnostics
 } from "./theme-build-diagnostics.js";
+import {
+  createEditorFile,
+  EditorSessionError,
+  loadEditorFile,
+  loadEditorSession,
+  saveEditorFile,
+  type EditorFileRecord,
+  type EditorSessionPayload
+} from "./editor-session.js";
 
 const initialExample = examples[0]!;
 
@@ -61,11 +70,62 @@ export function App() {
   const [themeInspectionState, setThemeInspectionState] = useState<"idle" | "inspecting">("idle");
   const [themeInspectionSummary, setThemeInspectionSummary] = useState<ThemeInspectionSummary | undefined>();
   const [previewNotice, setPreviewNotice] = useState<string | undefined>();
+  const [editorSession, setEditorSession] = useState<EditorSessionPayload | null>(null);
+  const [activeFile, setActiveFile] = useState<EditorFileRecord | null>(null);
+  const [savedSource, setSavedSource] = useState(initialExample.source);
+  const [fileOperation, setFileOperation] = useState<"idle" | "opening" | "saving" | "creating">("idle");
+  const [fileError, setFileError] = useState<string | undefined>();
+  const [fileConflict, setFileConflict] = useState<EditorFileRecord | null | undefined>();
+  const [newFilePath, setNewFilePath] = useState("");
+  const [showCreateFile, setShowCreateFile] = useState(false);
+
+  const documentMode = editorSession?.mode === "document";
+  const isDirty = documentMode && activeFile !== null && source !== savedSource;
 
   const frontmatterThemeRef = useMemo(() => readThemeRef(source), [source]);
   const effectiveThemeRef = frontmatterThemeRef ?? previewThemeRef;
   const hasThemeList = themes.length > 0;
   const knownThemeRefs = useMemo(() => new Set(themes.map((availableTheme) => availableTheme.name)), [themes]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadEditorSession()
+      .then((session) => {
+        if (cancelled || session === null) {
+          return;
+        }
+        setEditorSession(session);
+        setActiveFile(session.activeFile);
+        if (session.activeFile !== null) {
+          setSource(session.activeFile.content);
+          setSavedSource(session.activeFile.content);
+        } else {
+          setSource("");
+          setSavedSource("");
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setFileError(error instanceof Error ? error.message : String(error));
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isDirty) {
+      return;
+    }
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [isDirty]);
 
   useEffect(() => {
     let cancelled = false;
@@ -220,6 +280,110 @@ export function App() {
 
   const selectedExample = examples.find((example) => example.id === exampleId) ?? initialExample;
 
+  const applyOpenedFile = useCallback((file: EditorFileRecord, files?: string[]) => {
+    setActiveFile(file);
+    setSource(file.content);
+    setSavedSource(file.content);
+    setFileConflict(undefined);
+    setFileError(undefined);
+    setEditorSession((session) => session === null ? null : {
+      ...session,
+      activeFile: file,
+      ...(files === undefined ? {} : { files })
+    });
+  }, []);
+
+  const handleFileChange = useCallback(async (path: string) => {
+    if (activeFile?.path === path) {
+      return;
+    }
+    if (isDirty && !window.confirm("Discard unsaved changes and open another file?")) {
+      return;
+    }
+
+    setFileOperation("opening");
+    setFileError(undefined);
+    try {
+      applyOpenedFile(await loadEditorFile(path));
+    } catch (error) {
+      setFileError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setFileOperation("idle");
+    }
+  }, [activeFile?.path, applyOpenedFile, isDirty]);
+
+  const handleSaveFile = useCallback(async (overwrite = false) => {
+    if (activeFile === null) {
+      return;
+    }
+    setFileOperation("saving");
+    setFileError(undefined);
+    try {
+      const result = await saveEditorFile({
+        path: activeFile.path,
+        revision: activeFile.revision,
+        content: source
+      }, { overwrite });
+      applyOpenedFile(result.file, result.files);
+      setPreviewNotice(`Saved ${result.file.path}`);
+    } catch (error) {
+      if (error instanceof EditorSessionError && error.code === "file-conflict") {
+        setFileConflict(error.file);
+        setFileError(error.message);
+      } else {
+        setFileError(error instanceof Error ? error.message : String(error));
+      }
+    } finally {
+      setFileOperation("idle");
+    }
+  }, [activeFile, applyOpenedFile, source]);
+
+  const handleReloadConflict = useCallback(() => {
+    if (fileConflict === null || fileConflict === undefined) {
+      return;
+    }
+    applyOpenedFile(fileConflict);
+    setPreviewNotice(`Reloaded ${fileConflict.path} from disk`);
+  }, [applyOpenedFile, fileConflict]);
+
+  const handleCreateFile = useCallback(async () => {
+    const path = newFilePath.trim();
+    if (path.length === 0) {
+      return;
+    }
+    if (isDirty && !window.confirm("Discard unsaved changes and create a new file?")) {
+      return;
+    }
+
+    setFileOperation("creating");
+    setFileError(undefined);
+    try {
+      const result = await createEditorFile(path);
+      applyOpenedFile(result.file, result.files);
+      setNewFilePath("");
+      setShowCreateFile(false);
+      setPreviewNotice(`Created ${result.file.path}`);
+    } catch (error) {
+      setFileError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setFileOperation("idle");
+    }
+  }, [applyOpenedFile, isDirty, newFilePath]);
+
+  useEffect(() => {
+    if (!documentMode) {
+      return;
+    }
+    const saveShortcut = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        void handleSaveFile();
+      }
+    };
+    window.addEventListener("keydown", saveShortcut);
+    return () => window.removeEventListener("keydown", saveShortcut);
+  }, [documentMode, handleSaveFile]);
+
   const handleExampleChange = useCallback((nextId: string) => {
     const nextExample = examples.find((example) => example.id === nextId);
     if (nextExample === undefined) {
@@ -285,10 +449,11 @@ export function App() {
   const handleDownloadHtml = useCallback(() => {
     const blob = new Blob([renderState.html], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const link = documentCreateDownloadLink(url, `${selectedExample.id}.html`);
+    const filename = activeFile === null ? `${selectedExample.id}.html` : `${activeFile.path.replace(/\.mds$/i, "")}.html`;
+    const link = documentCreateDownloadLink(url, filename);
     link.click();
     URL.revokeObjectURL(url);
-  }, [renderState.html, selectedExample.id]);
+  }, [activeFile, renderState.html, selectedExample.id]);
 
   return (
     <main className="app-shell">
@@ -297,16 +462,38 @@ export function App() {
           <span>MDS</span>
           <strong>Editor</strong>
         </div>
-        <label className="toolbar-field">
-          <span>Example</span>
-          <select value={exampleId} onChange={(event) => handleExampleChange(event.target.value)}>
-            {examples.map((example) => (
-              <option key={example.id} value={example.id}>
-                {example.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        {documentMode ? (
+          <>
+            <label className="toolbar-field file-picker" title={editorSession.projectRoot}>
+              <span>File</span>
+              <select
+                value={activeFile?.path ?? ""}
+                onChange={(event) => void handleFileChange(event.target.value)}
+                disabled={fileOperation !== "idle" || editorSession.files.length === 0}
+              >
+                {editorSession.files.length === 0 ? <option value="">No .mds files</option> : null}
+                {editorSession.files.map((path) => <option key={path} value={path}>{path}</option>)}
+              </select>
+            </label>
+            <span className={`file-state ${isDirty ? "file-state-dirty" : ""}`}>
+              {fileOperation === "opening" ? "Opening" : isDirty ? "Unsaved" : "Saved"}
+            </span>
+            <button type="button" onClick={() => setShowCreateFile((visible) => !visible)}>
+              New file
+            </button>
+          </>
+        ) : (
+          <label className="toolbar-field">
+            <span>Example</span>
+            <select value={exampleId} onChange={(event) => handleExampleChange(event.target.value)}>
+              {examples.map((example) => (
+                <option key={example.id} value={example.id}>
+                  {example.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="toolbar-field">
           <span>Theme</span>
           <select value={previewThemeRef} onChange={(event) => handleThemeChange(event.target.value)}>
@@ -330,12 +517,27 @@ export function App() {
           ))}
         </div>
         <div className="toolbar-actions">
-          <button type="button" onClick={handleBuildTheme} disabled={themeBuildState === "building"}>
-            {themeBuildState === "building" ? "Building..." : "Build Theme"}
-          </button>
-          <button type="button" onClick={handleInspectTheme} disabled={themeInspectionState === "inspecting"}>
-            {themeInspectionState === "inspecting" ? "Inspecting..." : "Inspect Theme"}
-          </button>
+          {documentMode ? (
+            <button
+              type="button"
+              className="primary-action"
+              onClick={() => void handleSaveFile()}
+              disabled={!isDirty || fileOperation !== "idle"}
+              title="Save (Cmd/Ctrl+S)"
+            >
+              {fileOperation === "saving" ? "Saving..." : "Save"}
+            </button>
+          ) : null}
+          {!documentMode || editorSession.themeDevelopment ? (
+            <>
+              <button type="button" onClick={handleBuildTheme} disabled={themeBuildState === "building"}>
+                {themeBuildState === "building" ? "Building..." : "Build Theme"}
+              </button>
+              <button type="button" onClick={handleInspectTheme} disabled={themeInspectionState === "inspecting"}>
+                {themeInspectionState === "inspecting" ? "Inspecting..." : "Inspect Theme"}
+              </button>
+            </>
+          ) : null}
           <button type="button" onClick={handleCopyHtml}>
             Copy HTML
           </button>
@@ -345,29 +547,60 @@ export function App() {
         </div>
       </header>
 
-      {themeBuildSummary?.ref === effectiveThemeRef ? (
-        <div className="theme-build-status" role="status">
-          <strong>Last build</strong>
-          <span>{formatThemeBuildSummary(themeBuildSummary)}</span>
-          <code>{formatThemeBuildOutput(themeBuildSummary)}</code>
-        </div>
-      ) : null}
+      <div className="status-stack">
+        {documentMode && showCreateFile ? (
+          <form className="create-file-bar" onSubmit={(event) => { event.preventDefault(); void handleCreateFile(); }}>
+            <strong>New document</strong>
+            <input
+              autoFocus
+              value={newFilePath}
+              onChange={(event) => setNewFilePath(event.target.value)}
+              placeholder="notes/new-page.mds"
+              aria-label="New MDS file path"
+            />
+            <span>inside {editorSession.projectRoot}</span>
+            <button type="submit" className="primary-action" disabled={fileOperation !== "idle" || newFilePath.trim().length === 0}>
+              {fileOperation === "creating" ? "Creating..." : "Create"}
+            </button>
+            <button type="button" onClick={() => setShowCreateFile(false)}>Cancel</button>
+          </form>
+        ) : null}
 
-      {themeInspectionSummary?.ref === effectiveThemeRef ? (
-        <div className="theme-build-status" role="status">
-          <strong>Last inspect</strong>
-          <span>{formatThemeInspectionSummary(themeInspectionSummary)}</span>
-          <code>{formatThemeInspectionOutput(themeInspectionSummary)}</code>
-        </div>
-      ) : null}
+        {fileConflict !== undefined ? (
+          <div className="file-conflict" role="alert">
+            <strong>Save conflict</strong>
+            <span>{fileError ?? "The file changed on disk after it was opened."}</span>
+            <div>
+              {fileConflict === null ? null : <button type="button" onClick={handleReloadConflict}>Reload disk version</button>}
+              <button type="button" className="danger-action" onClick={() => void handleSaveFile(true)}>Overwrite disk</button>
+            </div>
+          </div>
+        ) : fileError === undefined ? null : <div className="theme-error" role="alert">{fileError}</div>}
 
-      {themeError === undefined ? null : <div className="theme-error">{themeError}</div>}
-      {renderState.error === undefined ? null : <div className="theme-error">{renderState.error}</div>}
+        {themeBuildSummary?.ref === effectiveThemeRef ? (
+          <div className="theme-build-status" role="status">
+            <strong>Last build</strong>
+            <span>{formatThemeBuildSummary(themeBuildSummary)}</span>
+            <code>{formatThemeBuildOutput(themeBuildSummary)}</code>
+          </div>
+        ) : null}
+
+        {themeInspectionSummary?.ref === effectiveThemeRef ? (
+          <div className="theme-build-status" role="status">
+            <strong>Last inspect</strong>
+            <span>{formatThemeInspectionSummary(themeInspectionSummary)}</span>
+            <code>{formatThemeInspectionOutput(themeInspectionSummary)}</code>
+          </div>
+        ) : null}
+
+        {themeError === undefined ? null : <div className="theme-error">{themeError}</div>}
+        {renderState.error === undefined ? null : <div className="theme-error">{renderState.error}</div>}
+      </div>
 
       <section className="workspace">
         <div className="panel editor-panel">
           <div className="panel-title">
-            <span>Source</span>
+            <span>{activeFile?.path ?? "Source"}</span>
             <code>{source.length.toLocaleString()} chars</code>
           </div>
           <EditorPane value={source} onChange={setSource} />

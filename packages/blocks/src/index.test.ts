@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { composeThemeSource, createThemeFromSources } from "@mds/theme-loader";
+import { composeThemeSource, createThemeFromSources } from "@mds-crate/theme-loader";
 import {
   blockVocabulary,
   blockVocabularyByName,
@@ -120,6 +120,6 @@ describe("MDS block packs", () => {
     expect(mediaBlocks.supportedBlocks).toEqual(["media", "image", "video", "figure", "caption", "gallery"]);
     expect(formsBlocks.supportedBlocks).toContain("button-group");
     expect(interactiveBlocks.actions).toEqual(["open", "close", "show", "hide", "toggle"]);
-    expect(blockPacksByName["@mds/blocks/core"]).toBe(coreBlocks);
+    expect(blockPacksByName["@mds-crate/blocks/core"]).toBe(coreBlocks);
   });
 });

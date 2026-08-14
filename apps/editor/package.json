@@ -1,5 +1,5 @@
 {
-  "name": "@mds/editor",
+  "name": "@mds-crate/editor",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -11,11 +11,11 @@
   },
   "dependencies": {
     "@codemirror/lang-markdown": "^6.3.0",
-    "@mds/ast": "workspace:*",
-    "@mds/parser": "workspace:*",
-    "@mds/renderer-html": "workspace:*",
-    "@mds/theme-builder": "workspace:*",
-    "@mds/theme-loader": "workspace:*",
+    "@mds-crate/ast": "workspace:*",
+    "@mds-crate/parser": "workspace:*",
+    "@mds-crate/renderer-html": "workspace:*",
+    "@mds-crate/theme-builder": "workspace:*",
+    "@mds-crate/theme-loader": "workspace:*",
     "codemirror": "^6.0.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseMds } from "@mds/parser";
-import { renderHtmlResult } from "@mds/renderer-html";
-import { buildPackageTheme, inspectThemeArtifact } from "@mds/theme-builder";
-import { loadThemeDirectory } from "@mds/theme-loader";
+import { parseMds } from "@mds-crate/parser";
+import { renderHtmlResult } from "@mds-crate/renderer-html";
+import { buildPackageTheme, inspectThemeArtifact } from "@mds-crate/theme-builder";
+import { loadThemeDirectory } from "@mds-crate/theme-loader";
 import { fileURLToPath } from "node:url";
 import { examples } from "./examples.js";
 

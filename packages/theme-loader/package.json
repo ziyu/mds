@@ -1,7 +1,20 @@
 {
-  "name": "@mds/theme-loader",
-  "version": "0.0.0",
+  "name": "@mds-crate/theme-loader",
+  "version": "0.1.0-beta.0",
+  "description": "Load, validate, compose, and resolve MDS theme artifacts.",
+  "keywords": ["mds", "markdown", "theme", "loader"],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ziyu/mds.git",
+    "directory": "packages/theme-loader"
+  },
+  "homepage": "https://github.com/ziyu/mds#readme",
+  "bugs": { "url": "https://github.com/ziyu/mds/issues" },
   "type": "module",
+  "files": ["dist"],
+  "engines": { "node": ">=20.19.0" },
+  "publishConfig": { "access": "public" },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -23,13 +36,14 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "node ../../scripts/clean-package-dist.mjs && tsc -p tsconfig.json && node ../../scripts/prune-package-dist.mjs",
     "check": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@mds/ast": "workspace:*",
-    "@mds/html-types": "workspace:*"
+    "@mds-crate/ast": "workspace:*",
+    "@mds-crate/html-types": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

@@ -10,7 +10,7 @@ import {
   serializeThemeBuildResult,
   serializeThemeInspectionResult
 } from "./theme-build-contract.js";
-import type { PackageThemeBuildResult, ThemeArtifactInspection, ThemeBuildDiagnostic } from "@mds/theme-builder";
+import type { PackageThemeBuildResult, ThemeArtifactInspection, ThemeBuildDiagnostic } from "@mds-crate/theme-builder";
 
 describe("theme build contract", () => {
   it("serializes package theme build results into the browser provider contract", () => {
@@ -85,7 +85,7 @@ describe("theme build contract", () => {
       actions: ["toggle"],
       blockPacks: [
         {
-          name: "@mds/blocks/core",
+          name: "@mds-crate/blocks/core",
           profiles: ["core"],
           supportedBlocks: ["hero"]
         }

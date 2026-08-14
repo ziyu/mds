@@ -45,6 +45,44 @@ mds build ./content/index.mds --theme ./themes/my-theme
 
 Named themes are resolved from theme roots such as `themes/`. Path refs such as `./themes/my-theme` load that directory, or the built artifact declared by `package.json#mdsTheme.dist` when the path points to a package-style theme.
 
+## Create A Package Theme
+
+Create the default HTML SDK template:
+
+```sh
+mds theme init ./my-theme
+cd ./my-theme
+pnpm install
+pnpm build
+pnpm inspect
+```
+
+Create a React-authored template and choose the npm package name:
+
+```sh
+mds theme init ./my-react-theme \
+  --template react \
+  --name @acme/mds-theme-react
+```
+
+Use the lightweight custom JSX runtime without React:
+
+```sh
+mds theme init ./my-jsx-theme --template jsx
+```
+
+The target directory must be empty. The scaffold writes a package source, starter CSS, preview, example document, TypeScript configuration, smoke command, and build scripts. HTML authoring is the default because it has the smallest toolchain; JSX and React remain explicit build-time options.
+
+Generated packages are artifact-first:
+
+- `pnpm build` writes the complete runtime artifact to `dist/theme`;
+- `pnpm inspect` validates that artifact without executing source;
+- `pnpm pack:artifact` copies a clean artifact without development metadata;
+- npm `files` only includes `dist/theme`, so TypeScript/React source is not installed by theme consumers;
+- `prepack` rebuilds the artifact before `npm pack` or `npm publish`.
+
+Review the generated name, version, license, repository metadata, and npm access policy before publishing.
+
 ## Simple Theme
 
 A minimal theme only needs `theme.json` and block templates:
@@ -271,7 +309,7 @@ Package themes may compose shared block packs before their own templates:
   "mdsTheme": {
     "source": "./src/theme.json",
     "dist": "./dist/theme",
-    "blockPacks": ["@mds/blocks/standard"],
+    "blockPacks": ["@mds-crate/blocks/standard"],
     "blockOverrides": [
       "blocks/hero.html",
       "blocks/card.html"
@@ -280,7 +318,7 @@ Package themes may compose shared block packs before their own templates:
 }
 ```
 
-`blockPacks` accepts named `@mds/blocks/*` profiles or `@mds/blocks/standard`. These packs contain reusable structural implementations, not just type declarations. A theme normally keeps only templates whose DOM, slots, accessibility behavior, or interaction model must differ from the pack. `blockOverrides` lists that theme-owned subset relative to the source manifest; the builder composes packs first and overrides second, then writes the complete runtime artifact to `dist/theme`. Build metadata records selected packs and final template provenance, and `mds theme inspect` reports both.
+`blockPacks` accepts named `@mds-crate/blocks/*` profiles or `@mds-crate/blocks/standard`. These packs contain reusable structural implementations, not just type declarations. A theme normally keeps only templates whose DOM, slots, accessibility behavior, or interaction model must differ from the pack. `blockOverrides` lists that theme-owned subset relative to the source manifest; the builder composes packs first and overrides second, then writes the complete runtime artifact to `dist/theme`. Build metadata records selected packs and final template provenance, and `mds theme inspect` reports both.
 
 ```txt
 my-theme/
@@ -391,8 +429,8 @@ Tailwind runs only during theme build. The artifact still contains plain CSS ref
 JSX is optional. It is a source-authoring layer that generates the same file-based theme artifact.
 
 ```tsx
-/** @jsxImportSource @mds/theme-loader */
-import { Content, Root, Slot, defineJsxTheme } from "@mds/theme-loader/jsx";
+/** @jsxImportSource @mds-crate/theme-loader */
+import { Content, Root, Slot, defineJsxTheme } from "@mds-crate/theme-loader/jsx";
 
 export default defineJsxTheme({
   name: "jsx-demo",
@@ -420,10 +458,10 @@ Repository examples:
 
 ## HTML SDK Authoring
 
-`@mds/theme-sdk-html` is a lightweight adapter for package themes that prefer tagged HTML templates over JSX. It still produces the same `theme.json` and `blocks/*.html` artifact.
+`@mds-crate/theme-sdk-html` is a lightweight adapter for package themes that prefer tagged HTML templates over JSX. It still produces the same `theme.json` and `blocks/*.html` artifact.
 
 ```ts
-import { defineHtmlTheme, html } from "@mds/theme-sdk-html";
+import { defineHtmlTheme, html } from "@mds-crate/theme-sdk-html";
 
 export default defineHtmlTheme({
   name: "html-demo",
@@ -438,11 +476,11 @@ Primitive interpolations are escaped by default. Use `unsafeHtml(value)` only fo
 
 ## React SDK Authoring
 
-`@mds/theme-sdk-react` is for theme developers who want normal React component composition or shadcn-style local components. React renders at build time to MDS block templates; the final artifact does not ship React unless your own theme JavaScript imports it.
+`@mds-crate/theme-sdk-react` is for theme developers who want normal React component composition or shadcn-style local components. React renders at build time to MDS block templates; the final artifact does not ship React unless your own theme JavaScript imports it.
 
 ```tsx
 import React from "react";
-import { Content, Root, defineReactTheme } from "@mds/theme-sdk-react";
+import { Content, Root, defineReactTheme } from "@mds-crate/theme-sdk-react";
 import { Button } from "./components/Button";
 
 export default defineReactTheme({

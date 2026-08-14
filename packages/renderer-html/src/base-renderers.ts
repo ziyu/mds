@@ -1,6 +1,7 @@
-import type { ActionLinkNode, FormFieldNode, MdsBlockNode, MdsNode, SlotNode } from "@mds/ast";
-import type { HtmlBlockRenderers, HtmlRenderContext } from "@mds/html-types";
+import type { ActionLinkNode, FormFieldNode, MdsBlockNode, MdsNode, SlotNode } from "@mds-crate/ast";
+import type { HtmlBlockRenderers, HtmlRenderContext } from "@mds-crate/html-types";
 import { escapeAttribute, escapeHtml } from "./escape.js";
+import { sanitizeUrl, type UrlPurpose } from "./url.js";
 
 export const baseBlockRenderers: HtmlBlockRenderers = {
   page: (block, context) =>
@@ -80,7 +81,7 @@ export function renderActionLink(link: ActionLinkNode, options: RenderActionLink
     }${form}>${label}</button>`;
   }
 
-  const href = link.target ?? "#";
+  const href = sanitizeUrl(link.target ?? "#", "navigation") ?? "#";
   const rel = link.kind === "external" ? ' rel="noopener noreferrer"' : "";
   const target = link.kind === "external" ? ' target="_blank"' : "";
   const blockTarget = options.navigationContext === true ? getBlockNavigationTarget(href) : undefined;
@@ -97,27 +98,45 @@ export function renderActionLink(link: ActionLinkNode, options: RenderActionLink
 }
 
 export function renderMediaDirective(mediaType: string, target: string): string {
-  const escapedTarget = escapeAttribute(target);
+  const purpose = getMediaUrlPurpose(mediaType);
+  const safeTarget = purpose === undefined ? target.trim() : sanitizeUrl(target, purpose);
+  const escapedTarget = safeTarget === undefined ? undefined : escapeAttribute(safeTarget);
 
   switch (mediaType) {
     case "video":
-      return `<video class="media video" src="${escapedTarget}" controls></video>`;
+      return `<video class="media video"${escapedTarget === undefined ? "" : ` src="${escapedTarget}"`} controls></video>`;
     case "audio":
-      return `<audio class="media audio" src="${escapedTarget}" controls></audio>`;
+      return `<audio class="media audio"${escapedTarget === undefined ? "" : ` src="${escapedTarget}"`} controls></audio>`;
     case "embed":
-      return `<iframe class="media embed" src="${escapedTarget}" loading="lazy"></iframe>`;
+      return `<iframe class="media embed"${escapedTarget === undefined ? "" : ` src="${escapedTarget}"`} loading="lazy"></iframe>`;
     case "model":
-      return `<a class="media model" href="${escapedTarget}">${escapeHtml(target)}</a>`;
+      return `<a class="media model" href="${escapedTarget ?? "#"}">${escapeHtml(target)}</a>`;
     case "chart":
-      return `<figure class="media chart" data-chart="${escapedTarget}"></figure>`;
+      return `<figure class="media chart" data-chart="${escapeAttribute(target)}"></figure>`;
     case "map":
-      return `<figure class="media map" data-map="${escapedTarget}">${escapeHtml(target)}</figure>`;
+      return `<figure class="media map" data-map="${escapeAttribute(target)}">${escapeHtml(target)}</figure>`;
     case "file":
-      return `<a class="media file" href="${escapedTarget}">${escapeHtml(target)}</a>`;
+      return `<a class="media file" href="${escapedTarget ?? "#"}">${escapeHtml(target)}</a>`;
     case "download":
-      return `<a class="media download" href="${escapedTarget}" download>${escapeHtml(target)}</a>`;
+      return `<a class="media download" href="${escapedTarget ?? "#"}" download>${escapeHtml(target)}</a>`;
     default:
       return "";
+  }
+}
+
+export function getMediaUrlPurpose(mediaType: string): UrlPurpose | undefined {
+  switch (mediaType) {
+    case "video":
+    case "audio":
+      return "media";
+    case "embed":
+      return "embed";
+    case "model":
+    case "file":
+    case "download":
+      return "download";
+    default:
+      return undefined;
   }
 }
 

@@ -1,4 +1,4 @@
-import type { ActionLinkNode, Diagnostic, MarkdownInlineNode, Position } from "@mds/ast";
+import type { ActionLinkNode, Diagnostic, MarkdownInlineNode, Position } from "@mds-crate/ast";
 import { actionNamePattern, nativeActions, pathPattern } from "./patterns.js";
 import { lineRange, splitArgs } from "./utils.js";
 

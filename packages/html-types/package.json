@@ -1,7 +1,20 @@
 {
-  "name": "@mds/html-types",
-  "version": "0.0.0",
+  "name": "@mds-crate/html-types",
+  "version": "0.1.0-beta.0",
+  "description": "Shared HTML renderer and theme contracts for MDS.",
+  "keywords": ["mds", "markdown", "html", "typescript"],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ziyu/mds.git",
+    "directory": "packages/html-types"
+  },
+  "homepage": "https://github.com/ziyu/mds#readme",
+  "bugs": { "url": "https://github.com/ziyu/mds/issues" },
   "type": "module",
+  "files": ["dist"],
+  "engines": { "node": ">=20.19.0" },
+  "publishConfig": { "access": "public" },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -11,12 +24,13 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "node ../../scripts/clean-package-dist.mjs && tsc -p tsconfig.json && node ../../scripts/prune-package-dist.mjs",
     "check": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@mds/ast": "workspace:*"
+    "@mds-crate/ast": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.0",

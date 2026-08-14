@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { basename, join, relative, resolve, sep } from "node:path";
-import type { HtmlTheme } from "@mds/html-types";
+import type { HtmlTheme } from "@mds-crate/html-types";
 import {
   createThemeFromSources,
   createThemeResultFromSources,

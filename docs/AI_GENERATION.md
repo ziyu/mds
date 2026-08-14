@@ -60,7 +60,7 @@ The repository needs a compact guide that models can read before generating MDS.
 - short examples;
 - fallback expectations.
 
-This should live in `@mds/blocks` so themes, editor UI, generation tools, and tests can consume the same vocabulary.
+This should live in `@mds-crate/blocks` so themes, editor UI, generation tools, and tests can consume the same vocabulary.
 
 ### 3. Broad Default Block Packs
 
@@ -113,7 +113,7 @@ The goal is not only documentation for humans. These examples are training-shape
 
 - Add this roadmap.
 - Add an operational authoring guide for AI generation.
-- Export a structured block vocabulary from `@mds/blocks`.
+- Export a structured block vocabulary from `@mds-crate/blocks`.
 - Expand shared block packs beyond core and marketing.
 - Add JSON diagnostics to `mds build` and `mds check`.
 - Add tests that prove the vocabulary and JSON output stay stable.
@@ -144,7 +144,7 @@ The goal is not only documentation for humans. These examples are training-shape
 The first slice should be small but compounding:
 
 1. Create the roadmap and authoring docs.
-2. Add structured block vocabulary data to `@mds/blocks`.
+2. Add structured block vocabulary data to `@mds-crate/blocks`.
 3. Add `guidance`, `media`, `docs`, `forms`, and `interactive` packs.
 4. Export all packs through `standardBlocks`.
 5. Add CLI `--json` diagnostics for `build` and `check`.

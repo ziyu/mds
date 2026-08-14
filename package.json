@@ -2,22 +2,39 @@
   "name": "mds-monorepo",
   "version": "0.0.0",
   "private": true,
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ziyu/mds.git"
+  },
+  "homepage": "https://github.com/ziyu/mds#readme",
+  "bugs": {
+    "url": "https://github.com/ziyu/mds/issues"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "type": "module",
   "packageManager": "pnpm@11.1.2",
   "scripts": {
     "build": "pnpm -r --if-present build",
     "check": "pnpm -r --if-present check",
+    "check:packages": "node scripts/audit-package-tarballs.mjs",
     "test": "pnpm -r --if-present test",
     "format": "pnpm -r --if-present format",
-    "dev:editor": "pnpm --filter @mds/editor dev",
-    "build:editor": "pnpm --filter @mds/editor build",
+    "dev:editor": "pnpm --filter @mds-crate/editor dev",
+    "build:editor": "pnpm --filter @mds-crate/editor build",
     "build:theme": "tsx packages/theme-builder/src/cli.ts build",
-    "build:theme:default": "pnpm build:theme themes/default",
+    "build:theme:default": "pnpm --filter @mds-crate/theme-default build",
     "build:theme:folio": "pnpm build:theme themes/folio",
     "build:theme:atelier": "pnpm build:theme themes/atelier",
     "build:theme:clarity": "pnpm build:theme themes/clarity",
     "build:theme:canvas": "pnpm build:theme themes/canvas",
-    "test:visual": "tsx scripts/visual-smoke.ts"
+    "test:visual": "tsx scripts/visual-smoke.ts",
+    "test:editor-e2e": "node scripts/editor-browser-e2e.mjs --cli packages/cli/dist/index.js",
+    "changeset": "changeset",
+    "changeset:status": "changeset status --verbose",
+    "version-packages": "changeset version"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -25,6 +42,7 @@
     ]
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.1",
     "@types/node": "^24.0.0",
     "tsx": "^4.20.0",
     "typescript": "^5.8.0",

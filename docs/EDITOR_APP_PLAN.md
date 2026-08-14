@@ -2,6 +2,8 @@
 
 The editor app exists to make MDS theme and syntax work visible. Its first job is not to become a full CMS; it should let us type MDS, render it through the real parser/renderer/theme pipeline, and preview the resulting standalone HTML.
 
+Status: the preview/theme-development phases and the production local-file phase are implemented. See [Local MDS Editor](./EDITOR.md) for the external workflow and security boundary.
+
 ## Goals
 
 1. Edit `.mds` source with a real code editor.
@@ -42,8 +44,8 @@ Root scripts:
 
 ```json
 {
-  "dev:editor": "pnpm --filter @mds/editor dev",
-  "build:editor": "pnpm --filter @mds/editor build"
+  "dev:editor": "pnpm --filter @mds-crate/editor dev",
+  "build:editor": "pnpm --filter @mds-crate/editor build"
 }
 ```
 
@@ -54,9 +56,9 @@ Use mature, fast libraries:
 - Vite for app dev/build.
 - React for the UI shell.
 - CodeMirror 6 for the MDS editor.
-- `@mds/parser` for AST and diagnostics.
-- `@mds/renderer-html` for preview HTML.
-- `@mds/theme-loader` for shared template/theme loading helpers.
+- `@mds-crate/parser` for AST and diagnostics.
+- `@mds-crate/renderer-html` for preview HTML.
+- `@mds-crate/theme-loader` for shared template/theme loading helpers.
 
 CodeMirror is the right first editor dependency because it is fast, browser-native, extensible, and works well for Markdown-like languages. We can start with Markdown highlighting and later add an MDS language extension.
 
@@ -104,7 +106,7 @@ This keeps the app UI clean and keeps theme source handling inside theme package
 
 ### Source-Based Factory
 
-`@mds/theme-loader` exposes source-based factories internally:
+`@mds-crate/theme-loader` exposes source-based factories internally:
 
 ```ts
 createThemeFromSources({
@@ -191,8 +193,8 @@ MVP can start with a diagnostics list. Editor decorations can come after the pre
 The editor app owns only a tiny adapter:
 
 ```ts
-import type { HtmlTheme } from "@mds/renderer-html";
-import { createThemeFromSources } from "@mds/theme-loader";
+import type { HtmlTheme } from "@mds-crate/renderer-html";
+import { createThemeFromSources } from "@mds-crate/theme-loader";
 
 export const themeProvider = {
   async listThemes() {
@@ -221,7 +223,7 @@ This adapter can later switch to a server-backed registry or a browser directory
 - Theme provider calls.
 - No direct imports of individual theme asset files.
 
-### `@mds/theme-loader`
+### `@mds-crate/theme-loader`
 
 - Template rendering.
 - File-based `ThemeRegistry` for Node tools.
@@ -229,7 +231,7 @@ This adapter can later switch to a server-backed registry or a browser directory
 - `loadThemeDirectory` for CLI/Node.
 - Optional `loadThemeFromFileMap` for future browser custom themes.
 
-### `@mds/renderer-html`
+### `@mds-crate/renderer-html`
 
 - AST to HTML orchestration.
 - Base semantic HTML renderers.
@@ -244,7 +246,7 @@ This adapter can later switch to a server-backed registry or a browser directory
 - Add `apps/editor` with Vite + React + TypeScript.
 - Add CodeMirror editor pane.
 - Add preview iframe using `parseMds` and `renderHtml`.
-- Add a dev-server theme API that reads `themes/` through `@mds/theme-loader`.
+- Add a dev-server theme API that reads `themes/` through `@mds-crate/theme-loader`.
 - Add an editor `themeProvider` that calls `loadTheme("default")`.
 
 Acceptance:
@@ -267,7 +269,27 @@ Acceptance:
 - User can switch examples without restarting app.
 - User can copy/download standalone HTML.
 
-### Phase 3: Editor Polish
+### Phase 3: Production Local Files
+
+- Build the React application into `@mds-crate/cli/dist/editor`.
+- Launch it through `mds edit <file-or-directory>` on a loopback server.
+- Add token-protected document and theme endpoints outside the Vite-only adapter.
+- Add file selection, creation, atomic save, dirty state, before-close warnings, and revision conflicts.
+- Resolve local artifacts, installed package themes, and the bundled default theme relative to the project.
+- Jail file paths to the project root and reject traversal and symlink escapes.
+- Hide theme build/inspect controls during normal document editing.
+- Restrict preview iframe capabilities to scripts and forms without same-origin access.
+- Run browser E2E from an installed CLI tarball.
+
+Acceptance:
+
+- A clean consumer can launch the Editor without Vite or a monorepo checkout.
+- Browser edits persist to disk and external changes require an explicit reload/overwrite choice.
+- Installed package-theme CSS and templates appear in the preview.
+- Parser diagnostics appear while editing.
+- SIGINT/SIGTERM releases the port.
+
+### Phase 4: Editor Polish
 
 - Add MDS-aware highlighting for block markers, slots, actions, media, and forms.
 - Add line decorations for diagnostics.
@@ -279,8 +301,8 @@ Acceptance:
 - Reload keeps the last edited source.
 - Diagnostics are visible in both list and editor gutter.
 
-## First Build Target
+## Original First Build Target
 
 Start with Phase 1 only. It is enough to make theme work visible and gives us a real place to inspect design changes.
 
-The first implementation should avoid server APIs, file pickers, project management, user accounts, and plugin marketplaces. Those can wait until the preview loop is excellent.
+The original preview-only implementation avoided server APIs, file pickers, project management, user accounts, and plugin marketplaces. The production local-file phase now adds a narrow loopback file/theme server; accounts and marketplaces remain deferred.

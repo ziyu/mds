@@ -4,16 +4,17 @@ import { spawn } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseMds } from "@mds/parser";
-import { renderHtmlResult } from "@mds/renderer-html";
+import { parseMds } from "@mds-crate/parser";
+import { renderHtmlResult } from "@mds-crate/renderer-html";
 import {
   createFileThemeRegistry,
   formatThemeDiagnostic,
   isThemeDiagnostic,
   ThemeValidationError,
   type ThemeCreationResult,
-} from "@mds/theme-loader";
+} from "@mds-crate/theme-loader";
 import { cac } from "cac";
+import { startEditorServer, type EditorServer } from "./editor-server.js";
 
 if (process.argv[2] === "theme") {
   process.exitCode = await runThemeCommand(process.argv.slice(3));
@@ -133,8 +134,98 @@ if (process.argv[2] === "theme") {
     console.log("No MDS errors found.");
   });
 
+  cli
+    .command("edit [input]", "Open an MDS file or project directory in the local Editor")
+    .option("--no-open", "Do not open the Editor in a browser")
+    .option("--port <port>", "Local port (defaults to a free port)")
+    .option("--json", "Print machine-readable server details")
+    .action(async (
+      input: string | undefined,
+      options: { open?: boolean; port?: string; json?: boolean }
+    ) => {
+      const port = parseEditorPort(options.port);
+      const editor = await startEditorServer({
+        input: input ?? ".",
+        ...(port === undefined ? {} : { port })
+      });
+
+      if (options.json === true) {
+        printJson({
+          ok: true,
+          url: editor.url,
+          projectRoot: editor.projectRoot,
+          activeFile: editor.activeFile
+        });
+      } else {
+        console.log(`MDS Editor: ${editor.url}`);
+        console.log(`Project: ${editor.projectRoot}`);
+        console.log(`File: ${editor.activeFile ?? "(create a new .mds file in the Editor)"}`);
+        console.log("Press Ctrl+C to stop.");
+      }
+
+      if (options.open !== false) {
+        try {
+          await openEditorInBrowser(editor.url);
+        } catch (error) {
+          console.error(`Could not open the browser: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
+
+      await waitForEditorShutdown(editor);
+    });
+
   cli.help();
   cli.parse();
+}
+
+function parseEditorPort(value: string | undefined): number | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  const port = Number(value);
+  if (!Number.isInteger(port) || port < 0 || port > 65_535) {
+    throw new Error(`Editor port must be an integer from 0 to 65535; received ${value}.`);
+  }
+  return port;
+}
+
+function openEditorInBrowser(url: string): Promise<void> {
+  const command = process.platform === "darwin" ? "open" : process.platform === "win32" ? "cmd" : "xdg-open";
+  const args = process.platform === "win32" ? ["/c", "start", "", url] : [url];
+
+  return new Promise((resolveOpen, reject) => {
+    const child = spawn(command, args, {
+      detached: true,
+      stdio: "ignore"
+    });
+    child.once("error", reject);
+    child.once("spawn", () => {
+      child.unref();
+      resolveOpen();
+    });
+  });
+}
+
+function waitForEditorShutdown(editor: EditorServer): Promise<void> {
+  return new Promise((resolveShutdown, reject) => {
+    let shuttingDown = false;
+    const shutdown = () => {
+      if (shuttingDown) {
+        return;
+      }
+      shuttingDown = true;
+      process.off("SIGINT", shutdown);
+      process.off("SIGTERM", shutdown);
+      editor.close().then(resolveShutdown, reject);
+    };
+    process.once("SIGINT", shutdown);
+    process.once("SIGTERM", shutdown);
+    editor.closed.then(() => {
+      process.off("SIGINT", shutdown);
+      process.off("SIGTERM", shutdown);
+      resolveShutdown();
+    }, reject);
+  });
 }
 
 function printDiagnostics(diagnostics: Array<{ code: string; message: string; severity: string }>): void {
@@ -217,6 +308,6 @@ async function resolveThemeCliCommand(): Promise<{ command: string; args: string
 
   return {
     command: process.execPath,
-    args: [fileURLToPath(await import.meta.resolve("@mds/theme-builder/cli"))]
+    args: [fileURLToPath(await import.meta.resolve("@mds-crate/theme-builder/cli"))]
   };
 }

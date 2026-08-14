@@ -1,4 +1,4 @@
-import { isThemeDiagnostic, type ThemeDiagnostic } from "@mds/theme-loader/browser";
+import { isThemeDiagnostic, type ThemeDiagnostic } from "@mds-crate/theme-loader/browser";
 
 export interface ThemeValidationProviderErrorBody {
   name?: string;

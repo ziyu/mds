@@ -1,4 +1,4 @@
-import { ThemeValidationError } from "@mds/theme-loader/browser";
+import { ThemeValidationError } from "@mds-crate/theme-loader/browser";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildThemePackageWithDiagnostics,

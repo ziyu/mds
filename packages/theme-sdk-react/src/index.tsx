@@ -1,4 +1,4 @@
-import type { HtmlTheme } from "@mds/html-types";
+import type { HtmlTheme } from "@mds-crate/html-types";
 import {
   composeThemeSource,
   createThemeFromSources,
@@ -6,7 +6,7 @@ import {
   type ThemeBlockPackSource,
   type ThemeManifest,
   type ThemeSourceInput
-} from "@mds/theme-loader";
+} from "@mds-crate/theme-loader";
 import { createElement, type ComponentPropsWithoutRef, type ElementType, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 

@@ -1,4 +1,4 @@
-import { ThemeValidationError } from "@mds/theme-loader/browser";
+import { ThemeValidationError } from "@mds-crate/theme-loader/browser";
 import { themeBuildDiagnosticToEditorDiagnostic, type EditorDiagnostic } from "./editor-diagnostics.js";
 import { themeDiagnosticToDiagnostic, themeErrorToDiagnostic } from "./theme-diagnostics.js";
 import { ThemeBuildProviderError } from "./theme-provider.js";

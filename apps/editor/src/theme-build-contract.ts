@@ -1,4 +1,4 @@
-import { isThemeDiagnostic, type ThemeDiagnostic } from "@mds/theme-loader/browser";
+import { isThemeDiagnostic, type ThemeDiagnostic } from "@mds-crate/theme-loader/browser";
 import type {
   PackageThemeBuildResult,
   ThemeArtifactAssets,
@@ -6,7 +6,7 @@ import type {
   ThemeBuildDiagnostic,
   ThemeBuildMetadata,
   ThemeBuildStage
-} from "@mds/theme-builder";
+} from "@mds-crate/theme-builder";
 
 export interface ThemeBuildProviderDiagnostic extends ThemeDiagnostic {
   stage?: ThemeBuildStage;

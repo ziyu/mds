@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createThemeFromSources } from "@mds/theme-loader";
+import { createThemeFromSources } from "@mds-crate/theme-loader";
 import {
   createThemeFromHtmlTheme,
   createThemeSourceFromHtmlTheme,

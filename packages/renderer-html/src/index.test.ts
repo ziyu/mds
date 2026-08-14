@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { parseMds } from "@mds/parser";
-import { renderHtml, renderHtmlResult } from "./index.js";
+import { parseMds } from "@mds-crate/parser";
+import { renderHtml, renderHtmlResult, renderMds, renderMdsResult } from "./index.js";
 
 describe("renderHtml", () => {
   it("renders a complete MDS document to semantic HTML", () => {
@@ -258,5 +258,143 @@ title: Shell
         severity: "warning"
       })
     );
+  });
+});
+
+describe("renderMds", () => {
+  it("parses source and renders a complete document by default", () => {
+    const html = renderMds(`---
+title: Source API
+lang: zh-CN
+---
+
+# Hello
+`);
+
+    expect(html).toContain("<!doctype html>");
+    expect(html).toContain('<html lang="zh-CN">');
+    expect(html).toContain("<title>Source API</title>");
+    expect(html).toContain("<h1>Hello</h1>");
+  });
+
+  it("returns embeddable body and theme assets in fragment mode", () => {
+    const result = renderMdsResult(
+      `---
+title: Fragment
+description: Fragment description
+---
+
+::: hero
+# Embedded
+:::
+`,
+      {
+        mode: "fragment",
+        theme: {
+          name: "fragment-theme",
+          head: '<meta name="theme-color" content="#123456">',
+          css: ".hero{color:rebeccapurple}",
+          js: "window.__fragmentTheme = true;",
+          shell: () => "CUSTOM_SHELL"
+        }
+      }
+    );
+
+    expect(result.document.frontmatter).toMatchObject({ title: "Fragment" });
+    expect(result.html).toBe(result.body);
+    expect(result.body).toContain('<section id="embedded" class="hero">');
+    expect(result.html).not.toContain("<!doctype html>");
+    expect(result.html).not.toContain("CUSTOM_SHELL");
+    expect(result.html).not.toContain("<script>");
+    expect(result.head).toContain('<meta name="description" content="Fragment description">');
+    expect(result.head).toContain('<meta name="theme-color" content="#123456">');
+    expect(result.head).toContain("<style>.hero{color:rebeccapurple}</style>");
+    expect(result.css).toBe(".hero{color:rebeccapurple}");
+    expect(result.js).toBe("window.__fragmentTheme = true;");
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it("returns raw css separately when css embedding is disabled", () => {
+    const result = renderMdsResult("# Fragment", {
+      mode: "fragment",
+      includeCss: false,
+      theme: {
+        name: "assets",
+        css: ".page{max-width:60rem}"
+      }
+    });
+
+    expect(result.head).not.toContain("<style>");
+    expect(result.css).toBe(".page{max-width:60rem}");
+  });
+});
+
+describe("renderer security", () => {
+  it("neutralizes mixed-case, encoded, and disallowed URL schemes", () => {
+    const result = renderMdsResult(`[Markdown danger](JaVaScRiPt:alert(1))
+
+![Image danger](%64ata:text/html,boom)
+
+[Action danger -> %256aavascript%253Aalert(1)]
+
+!embed data:text/html,boom
+!video JaVaScRiPt:alert(1)
+!download file:///tmp/secret
+`);
+
+    expect(result.html).toContain('<a href="#">Markdown danger</a>');
+    expect(result.html).toContain('<img alt="Image danger">');
+    expect(result.html).toContain('<a class="action primary" href="#">Action danger</a>');
+    expect(result.html).toContain('<iframe class="media embed" loading="lazy"></iframe>');
+    expect(result.html).toContain('<video class="media video" controls></video>');
+    expect(result.html).toContain('<a class="media download" href="#" download>file:///tmp/secret</a>');
+    expect(result.html).not.toMatch(/(?:href|src)="(?:javascript|data|file):/i);
+    expect(result.diagnostics.filter((diagnostic) => diagnostic.code === "unsafe-url")).toHaveLength(6);
+  });
+
+  it("keeps relative, fragment, HTTPS, mail, and telephone navigation URLs", () => {
+    const result = renderMdsResult(`[Relative -> /docs]
+[Fragment => #intro]
+[Website >> https://example.com]
+[Email -> mailto:hello@example.com]
+[Phone -> tel:+123456]
+
+!video https://example.com/demo.mp4
+!download /files/guide.pdf
+`);
+
+    expect(result.html).toContain('href="/docs"');
+    expect(result.html).toContain('href="#intro"');
+    expect(result.html).toContain('href="https://example.com"');
+    expect(result.html).toContain('href="mailto:hello@example.com"');
+    expect(result.html).toContain('href="tel:+123456"');
+    expect(result.html).toContain('src="https://example.com/demo.mp4"');
+    expect(result.html).toContain('href="/files/guide.pdf"');
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it("escapes source content and drops raw Markdown HTML", () => {
+    const result = renderMdsResult(`---
+title: "</title><script>alert(1)</script>"
+description: "\"><img src=x onerror=alert(1)>"
+---
+
+<script>alert(1)</script>
+
+[<img src=x onerror=alert(1)> -> /safe]
+
+::: data payload
+{"value":"</script><script>alert(1)</script>"}
+:::
+`);
+
+    expect(result.html).toContain("<title>&lt;/title&gt;&lt;script&gt;alert(1)&lt;/script&gt;</title>");
+    expect(result.html).toContain(
+      '<meta name="description" content="&quot;&gt;&lt;img src=x onerror=alert(1)&gt;">'
+    );
+    expect(result.html).toContain("&lt;img src=x onerror=alert(1)&gt;");
+    expect(result.html).toContain("&lt;/script&gt;&lt;script&gt;alert(1)&lt;/script&gt;");
+    expect(result.html).not.toContain("<script>alert(1)</script>");
+    expect(result.html).not.toContain("<img src=x onerror=alert(1)>");
   });
 });

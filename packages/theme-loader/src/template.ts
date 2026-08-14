@@ -1,5 +1,5 @@
-import type { MdsBlockNode } from "@mds/ast";
-import type { HtmlBlockRenderer, HtmlRenderContext } from "@mds/html-types";
+import type { MdsBlockNode } from "@mds-crate/ast";
+import type { HtmlBlockRenderer, HtmlRenderContext } from "@mds-crate/html-types";
 
 export function createTemplateBlockRenderer(template: string): HtmlBlockRenderer {
   return (block, context) => {

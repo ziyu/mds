@@ -1,4 +1,4 @@
-import type { HtmlBlockRenderers, HtmlTheme } from "@mds/html-types";
+import type { HtmlBlockRenderers, HtmlTheme } from "@mds-crate/html-types";
 import { getThemeRuntimeSourceInput, normalizeThemeManifestReferences, normalizeThemeSourceInput } from "./artifact.js";
 import { blockTypeFromPath, collectTemplateEntries } from "./block-template.js";
 import { isRecord, isStringRecord } from "./shape.js";

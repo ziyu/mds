@@ -1,4 +1,4 @@
-import type { HtmlTheme } from "@mds/html-types";
+import type { HtmlTheme } from "@mds-crate/html-types";
 import {
   createThemeFromJsxTheme,
   createThemeSourceFromJsxTheme,
@@ -8,8 +8,8 @@ import {
   type RawHtml,
   type TemplateBlock,
   type ThemeTemplateProps
-} from "@mds/theme-loader/jsx";
-import type { ThemeSourceInput } from "@mds/theme-loader";
+} from "@mds-crate/theme-loader/jsx";
+import type { ThemeSourceInput } from "@mds-crate/theme-loader";
 
 export type HtmlThemeBlock = TemplateBlock;
 export type HtmlTemplateValue = RawHtml | string | number | boolean | null | undefined;

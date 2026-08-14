@@ -1,7 +1,20 @@
 {
-  "name": "@mds/theme-builder",
-  "version": "0.0.0",
+  "name": "@mds-crate/theme-builder",
+  "version": "0.1.0-beta.0",
+  "description": "Build, watch, inspect, and pack package-defined MDS themes.",
+  "keywords": ["mds", "markdown", "theme", "builder"],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ziyu/mds.git",
+    "directory": "packages/theme-builder"
+  },
+  "homepage": "https://github.com/ziyu/mds#readme",
+  "bugs": { "url": "https://github.com/ziyu/mds/issues" },
   "type": "module",
+  "files": ["dist"],
+  "engines": { "node": ">=20.19.0" },
+  "publishConfig": { "access": "public" },
   "bin": {
     "mds-theme": "./dist/cli.js"
   },
@@ -21,14 +34,15 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "node ../../scripts/clean-package-dist.mjs && tsc -p tsconfig.json && node ../../scripts/prune-package-dist.mjs",
     "check": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "prepack": "pnpm run build"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.0.0",
-    "@mds/blocks": "workspace:*",
-    "@mds/theme-loader": "workspace:*",
+    "@mds-crate/blocks": "workspace:*",
+    "@mds-crate/theme-loader": "workspace:*",
     "esbuild": "^0.27.0",
     "postcss": "^8.5.0",
     "tailwindcss": "^4.0.0",

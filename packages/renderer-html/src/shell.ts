@@ -1,4 +1,4 @@
-import type { HtmlTheme } from "@mds/html-types";
+import type { HtmlTheme } from "@mds-crate/html-types";
 import { escapeAttribute, escapeHtml } from "./escape.js";
 
 export interface HtmlDocumentMetadata {
@@ -22,17 +22,15 @@ export function renderDocumentShell(input: {
   metadata: HtmlDocumentMetadata;
   theme: HtmlTheme;
   body: string;
-  includeCss: boolean;
+  head: string;
+  scripts: string;
 }): string {
-  const head = renderHead(input.metadata, input.theme, input.includeCss);
-  const scripts = renderScripts(input.theme);
-
   if (input.theme.shell !== undefined) {
     return input.theme.shell({
       ...input.metadata,
-      head,
+      head: input.head,
       body: input.body,
-      scripts
+      scripts: input.scripts
     });
   }
 
@@ -43,11 +41,11 @@ export function renderDocumentShell(input: {
     '  <meta charset="utf-8">',
     '  <meta name="viewport" content="width=device-width, initial-scale=1">',
     `  <title>${escapeHtml(input.metadata.title)}</title>`,
-    head,
+    input.head,
     "</head>",
     "<body>",
     input.body,
-    scripts,
+    input.scripts,
     "</body>",
     "</html>"
   ]
@@ -55,7 +53,7 @@ export function renderDocumentShell(input: {
     .join("\n");
 }
 
-function renderHead(metadata: HtmlDocumentMetadata, theme: HtmlTheme, includeCss: boolean): string {
+export function renderDocumentHead(metadata: HtmlDocumentMetadata, theme: HtmlTheme, includeCss: boolean): string {
   return [
     metadata.description === undefined
       ? ""
@@ -67,6 +65,6 @@ function renderHead(metadata: HtmlDocumentMetadata, theme: HtmlTheme, includeCss
     .join("\n");
 }
 
-function renderScripts(theme: HtmlTheme): string {
+export function renderThemeScripts(theme: HtmlTheme): string {
   return theme.js === undefined ? "" : `<script>${theme.js}</script>`;
 }

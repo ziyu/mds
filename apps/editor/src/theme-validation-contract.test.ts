@@ -3,7 +3,7 @@ import {
   isThemeValidationProviderErrorBody,
   serializeThemeValidationErrorBody
 } from "./theme-validation-contract.js";
-import type { ThemeDiagnostic } from "@mds/theme-loader/browser";
+import type { ThemeDiagnostic } from "@mds-crate/theme-loader/browser";
 
 describe("theme validation contract", () => {
   it("serializes theme validation errors for the browser provider", () => {

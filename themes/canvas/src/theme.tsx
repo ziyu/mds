@@ -1,5 +1,5 @@
 import React from "react";
-import { Content, Slot, Slots, defineReactTheme } from "@mds/theme-sdk-react";
+import { Content, Slot, Slots, defineReactTheme } from "@mds-crate/theme-sdk-react";
 import { Badge, Card, Flow, Panel, Surface } from "./components/ui.js";
 
 export default defineReactTheme({

@@ -1,8 +1,8 @@
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import type { MdsBlockNode } from "@mds/ast";
-import type { HtmlRenderContext } from "@mds/html-types";
+import type { MdsBlockNode } from "@mds-crate/ast";
+import type { HtmlRenderContext } from "@mds-crate/html-types";
 import { describe, expect, it } from "vitest";
 import { createFileThemeRegistry, createThemeFromSources, loadThemeDirectory, readThemeDirectory, readThemeRef } from "./index.js";
 

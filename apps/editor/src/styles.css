@@ -58,7 +58,8 @@ body {
 }
 
 button,
-select {
+select,
+input {
   font: inherit;
 }
 
@@ -70,11 +71,34 @@ button {
   color: var(--text);
   cursor: pointer;
   padding: 0.35rem 0.65rem;
+  white-space: nowrap;
 }
 
 button:hover {
   border-color: var(--accent);
   color: var(--accent-strong);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.primary-action {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
+}
+
+.primary-action:hover {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+  color: white;
+}
+
+.danger-action {
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 select {
@@ -88,14 +112,14 @@ select {
 
 .app-shell {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   height: 100%;
 }
 
 .topbar {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.55rem;
   min-height: 3.5rem;
   border-bottom: 1px solid var(--line);
   background: var(--panel);
@@ -107,7 +131,7 @@ select {
   display: flex;
   align-items: baseline;
   gap: 0.4rem;
-  min-width: 8rem;
+  min-width: 7rem;
 }
 
 .brand span {
@@ -127,6 +151,32 @@ select {
   font-size: 0.85rem;
 }
 
+.file-picker select {
+  width: min(16vw, 14rem);
+}
+
+.file-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--success);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.file-state::before {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+}
+
+.file-state-dirty {
+  color: var(--warning);
+}
+
 .segmented {
   display: flex;
   align-items: center;
@@ -142,6 +192,7 @@ select {
   border: 0;
   background: transparent;
   color: var(--muted);
+  padding-inline: 0.5rem;
 }
 
 .segmented button.active {
@@ -150,6 +201,67 @@ select {
 }
 
 .toolbar-actions {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.status-stack {
+  min-height: 0;
+}
+
+.create-file-bar,
+.file-conflict {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  border-bottom: 1px solid var(--line);
+  background: #f7f3eb;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+.create-file-bar strong,
+.file-conflict strong {
+  white-space: nowrap;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+}
+
+.create-file-bar input {
+  width: min(24rem, 35vw);
+  min-height: 2.1rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: var(--panel-strong);
+  color: var(--text);
+  padding: 0.35rem 0.55rem;
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+.create-file-bar span {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-conflict {
+  border-bottom-color: color-mix(in srgb, var(--danger), transparent 35%);
+  background: color-mix(in srgb, var(--danger), transparent 90%);
+}
+
+.file-conflict strong {
+  color: var(--danger);
+}
+
+.file-conflict > span {
+  min-width: 0;
+  flex: 1;
+}
+
+.file-conflict > div {
   display: flex;
   gap: 0.45rem;
 }
@@ -426,6 +538,20 @@ select {
 
   .topbar {
     flex-wrap: wrap;
+  }
+
+  .file-picker select {
+    width: min(65vw, 24rem);
+  }
+
+  .create-file-bar,
+  .file-conflict {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .create-file-bar input {
+    width: min(100%, 30rem);
   }
 
   .segmented {

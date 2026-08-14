@@ -4,8 +4,8 @@ import {
   isThemeSummaryList,
   isThemeSourceInput,
   ThemeValidationError
-} from "@mds/theme-loader/browser";
-import type { ThemeCreationResult, ThemeRegistry, ThemeSource, ThemeSummary } from "@mds/theme-loader/browser";
+} from "@mds-crate/theme-loader/browser";
+import type { ThemeCreationResult, ThemeRegistry, ThemeSource, ThemeSummary } from "@mds-crate/theme-loader/browser";
 import {
   isThemeBuildProviderErrorBody,
   isThemeInspectionProviderResult,
@@ -15,6 +15,7 @@ import {
   type ThemeInspectionProviderResult
 } from "./theme-build-contract.js";
 import { isThemeValidationProviderErrorBody, type ThemeValidationProviderErrorBody } from "./theme-validation-contract.js";
+import { editorRequestHeaders } from "./editor-session.js";
 
 export class ThemeBuildProviderError extends Error {
   readonly diagnostics: ThemeBuildProviderDiagnostic[];
@@ -47,8 +48,10 @@ export async function loadThemeWithDiagnostics(ref: string): Promise<ThemeCreati
 }
 
 export async function buildThemePackageWithDiagnostics(ref: string): Promise<ThemeBuildProviderResult> {
+  const headers = editorRequestHeaders();
   const response = await fetch(`/__mds/theme-build/${encodeURIComponent(ref)}`, {
-    method: "POST"
+    method: "POST",
+    ...(Object.keys(headers).length === 0 ? {} : { headers })
   });
   const body = await response.text();
 
@@ -74,7 +77,8 @@ export async function inspectThemeWithDiagnostics(ref: string): Promise<ThemeIns
 }
 
 async function readJson<T>(url: string, errorMode: "theme" | "build" = "theme"): Promise<T> {
-  const response = await fetch(url);
+  const headers = editorRequestHeaders();
+  const response = Object.keys(headers).length === 0 ? await fetch(url) : await fetch(url, { headers });
   const body = await response.text();
 
   if (!response.ok) {

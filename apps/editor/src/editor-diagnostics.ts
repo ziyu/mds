@@ -1,4 +1,4 @@
-import type { Diagnostic } from "@mds/ast";
+import type { Diagnostic } from "@mds-crate/ast";
 
 export type EditorDiagnosticSource = "builder" | "parser" | "renderer" | "theme";
 

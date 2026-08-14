@@ -1,4 +1,4 @@
-import type { HtmlRenderContext } from "@mds/html-types";
+import type { HtmlRenderContext } from "@mds-crate/html-types";
 import { describe, expect, it } from "vitest";
 import {
   composeThemeSource,

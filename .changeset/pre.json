@@ -1,0 +1,23 @@
+{
+  "mode": "pre",
+  "tag": "beta",
+  "initialVersions": {
+    "@mds-crate/editor": "0.0.0",
+    "@mds-crate/ast": "0.1.0-beta.0",
+    "@mds-crate/blocks": "0.1.0-beta.0",
+    "@mds-crate/cli": "0.1.0-beta.0",
+    "@mds-crate/html-types": "0.1.0-beta.0",
+    "@mds-crate/parser": "0.1.0-beta.0",
+    "@mds-crate/renderer-html": "0.1.0-beta.0",
+    "@mds-crate/theme-builder": "0.1.0-beta.0",
+    "@mds-crate/theme-loader": "0.1.0-beta.0",
+    "@mds-crate/theme-sdk-html": "0.1.0-beta.0",
+    "@mds-crate/theme-sdk-react": "0.1.0-beta.0",
+    "@mds-crate/theme-atelier": "0.0.0",
+    "@mds-crate/theme-canvas": "0.0.0",
+    "@mds-crate/theme-clarity": "0.0.0",
+    "@mds-crate/theme-default": "0.1.0-beta.0",
+    "@mds-crate/theme-folio": "0.0.0"
+  },
+  "changesets": []
+}

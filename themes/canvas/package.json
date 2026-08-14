@@ -1,5 +1,5 @@
 {
-  "name": "@mds/theme-canvas",
+  "name": "@mds-crate/theme-canvas",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -21,7 +21,7 @@
     "check": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@mds/theme-sdk-react": "workspace:*",
+    "@mds-crate/theme-sdk-react": "workspace:*",
     "react": "^19.1.0"
   },
   "devDependencies": {

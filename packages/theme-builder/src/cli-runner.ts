@@ -1,8 +1,9 @@
 import { resolve } from "node:path";
-import { formatThemeDiagnostic, isThemeDiagnostic } from "@mds/theme-loader";
+import { formatThemeDiagnostic, isThemeDiagnostic } from "@mds-crate/theme-loader";
 import {
   buildPackageTheme,
   formatThemeBuildDiagnostic,
+  initializeThemePackage,
   inspectThemeArtifact,
   packThemeArtifact,
   relativeOutputPath,
@@ -36,12 +37,55 @@ export async function runThemeCli(
   const commandName = options.commandName ?? "mds-theme";
   const stdout = options.stdout ?? console;
   const stderr = options.stderr ?? console;
-  const { positional, json } = parseThemeCliArgs(args);
+  const parsed = parseThemeCliArgs(args);
+  const { positional, json } = parsed;
   const [command, target = "."] = positional;
 
-  if (command !== "build" && command !== "watch" && command !== "inspect" && command !== "pack") {
-    stderr.error(`Usage: ${commandName} <build|watch|inspect|pack> [theme-package-or-artifact] [output-directory]`);
+  if (parsed.error !== undefined) {
+    stderr.error(parsed.error);
+    printUsage(commandName, stderr);
     return { exitCode: 1 };
+  }
+
+  if (command !== "init" && command !== "build" && command !== "watch" && command !== "inspect" && command !== "pack") {
+    printUsage(commandName, stderr);
+    return { exitCode: 1 };
+  }
+
+  if (command !== "init" && (parsed.template !== undefined || parsed.packageName !== undefined)) {
+    stderr.error("--template and --name are only valid with the init command.");
+    return { exitCode: 1 };
+  }
+
+  if (command === "init") {
+    const initTarget = positional[1];
+    if (initTarget === undefined || positional.length > 2) {
+      stderr.error(`Usage: ${commandName} init <directory> [--template html|react] [--name package-name] [--json]`);
+      return { exitCode: 1 };
+    }
+
+    try {
+      const result = await initializeThemePackage(resolve(cwd, initTarget), {
+        ...(parsed.template === undefined ? {} : { template: parsed.template }),
+        ...(parsed.packageName === undefined ? {} : { packageName: parsed.packageName })
+      });
+      if (json) {
+        stdout.log(JSON.stringify(result, null, 2));
+      } else {
+        stdout.log(
+          `Initialized ${result.template} MDS theme package ${result.packageName} at ${relativeOutputPath(cwd, result.directory)} (${result.filesWritten.length} files)`
+        );
+        stdout.log(`Next: cd ${relativeOutputPath(cwd, result.directory)} && pnpm install && pnpm build`);
+      }
+      return { exitCode: 0 };
+    } catch (error) {
+      if (json) {
+        printJsonDiagnostics(error, stdout);
+      } else {
+        printBuildError(error, stderr);
+      }
+      return { exitCode: 1 };
+    }
   }
 
   if (command === "build") {
@@ -117,11 +161,68 @@ export async function runThemeCli(
   return runThemeWatch(target, cwd, options, stdout, stderr);
 }
 
-function parseThemeCliArgs(args: string[]): { positional: string[]; json: boolean } {
+function parseThemeCliArgs(args: string[]): {
+  positional: string[];
+  json: boolean;
+  template?: "html" | "jsx" | "react";
+  packageName?: string;
+  error?: string;
+} {
+  const positional: string[] = [];
+  let json = false;
+  let template: "html" | "jsx" | "react" | undefined;
+  let packageName: string | undefined;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index] ?? "";
+    if (argument === "--json") {
+      json = true;
+      continue;
+    }
+    if (argument === "--template" || argument === "--name") {
+      const value = args[index + 1];
+      if (value === undefined || value.startsWith("--")) {
+        return { positional, json, error: `${argument} requires a value.` };
+      }
+      index += 1;
+      if (argument === "--template") {
+        if (value !== "html" && value !== "jsx" && value !== "react") {
+          return { positional, json, error: `Unknown theme template: ${value}. Expected html, jsx, or react.` };
+        }
+        template = value;
+      } else {
+        packageName = value;
+      }
+      continue;
+    }
+    if (argument.startsWith("--template=")) {
+      const value = argument.slice("--template=".length);
+      if (value !== "html" && value !== "jsx" && value !== "react") {
+        return { positional, json, error: `Unknown theme template: ${value}. Expected html, jsx, or react.` };
+      }
+      template = value;
+      continue;
+    }
+    if (argument.startsWith("--name=")) {
+      packageName = argument.slice("--name=".length);
+      continue;
+    }
+    if (argument.startsWith("--")) {
+      return { positional, json, error: `Unknown option: ${argument}.` };
+    }
+    positional.push(argument);
+  }
+
   return {
-    positional: args.filter((arg) => arg !== "--json"),
-    json: args.includes("--json")
+    positional,
+    json,
+    ...(template === undefined ? {} : { template }),
+    ...(packageName === undefined ? {} : { packageName })
   };
+}
+
+function printUsage(commandName: string, stderr: Pick<typeof console, "error">): void {
+  stderr.error(`Usage: ${commandName} <init|build|watch|inspect|pack> [arguments]`);
 }
 
 async function runThemeWatch(

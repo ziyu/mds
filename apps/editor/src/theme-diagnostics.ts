@@ -1,4 +1,4 @@
-import { unknownThemeDiagnostic, type ThemeDiagnostic } from "@mds/theme-loader/browser";
+import { unknownThemeDiagnostic, type ThemeDiagnostic } from "@mds-crate/theme-loader/browser";
 import type { EditorDiagnostic } from "./editor-diagnostics.js";
 
 export function themeDiagnosticToDiagnostic(diagnostic: ThemeDiagnostic): EditorDiagnostic {

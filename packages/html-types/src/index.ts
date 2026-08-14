@@ -1,4 +1,4 @@
-import type { MdsBlockNode, MdsNode, SlotNode } from "@mds/ast";
+import type { MdsBlockNode, MdsNode, SlotNode } from "@mds-crate/ast";
 
 export interface HtmlTheme {
   name: string;

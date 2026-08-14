@@ -1,4 +1,4 @@
-import type { HtmlTheme } from "@mds/html-types";
+import type { HtmlTheme } from "@mds-crate/html-types";
 import { normalizeThemeManifestReferences } from "./artifact.js";
 import {
   createThemeFromSources,

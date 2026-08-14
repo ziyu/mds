@@ -2,12 +2,13 @@ import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { EventEmitter } from "node:events";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { ThemeValidationError } from "@mds/theme-loader";
+import { ThemeValidationError } from "@mds-crate/theme-loader";
 import { describe, expect, it } from "vitest";
 import { runThemeCli } from "./cli-runner.js";
 import {
   buildPackageTheme,
   formatThemeBuildDiagnostic,
+  initializeThemePackage,
   inspectThemeArtifact,
   packThemeArtifact,
   ThemeBuildError,
@@ -17,6 +18,128 @@ import {
 } from "./index.js";
 
 describe("theme builder", () => {
+  it("initializes an artifact-first HTML theme package without overwriting files", async () => {
+    const parent = await mkdtemp(join(tmpdir(), "mds-theme-init-html-"));
+    const root = join(parent, "paper");
+
+    const result = await initializeThemePackage(root, {
+      packageName: "@acme/mds-theme-paper"
+    });
+    const manifest = (await readJson(join(root, "package.json"))) as {
+      devDependencies?: Record<string, string>;
+      [key: string]: unknown;
+    };
+    const builderManifest = (await readJson(join(process.cwd(), "package.json"))) as { version?: unknown };
+    const builderRange = `^${String(builderManifest.version)}`;
+
+    expect(result).toMatchObject({
+      directory: root,
+      packageName: "@acme/mds-theme-paper",
+      themeName: "paper",
+      template: "html"
+    });
+    expect(result.filesWritten).toEqual([
+      ".gitignore",
+      "LICENSE",
+      "README.md",
+      "example.mds",
+      "package.json",
+      "scripts/prepare-package.mjs",
+      "src/preview.svg",
+      "src/script.js",
+      "src/shell.html",
+      "src/style.css",
+      "src/theme.ts",
+      "tsconfig.json"
+    ]);
+    expect(manifest).toMatchObject({
+      name: "@acme/mds-theme-paper",
+      files: ["dist/theme"],
+      publishConfig: { access: "public" },
+      mdsTheme: {
+        source: "./src/theme.ts",
+        dist: "./dist/theme",
+        blockPacks: ["@mds-crate/blocks/standard"],
+        assets: {
+          js: "./src/script.js",
+          shell: "./src/shell.html",
+          preview: "./src/preview.svg"
+        }
+      }
+    });
+    expect(manifest.devDependencies).toMatchObject({
+      "@mds-crate/blocks": builderRange,
+      "@mds-crate/theme-builder": builderRange,
+      "@mds-crate/theme-sdk-html": builderRange
+    });
+    await expect(readFile(join(root, "src/theme.ts"), "utf8")).resolves.toContain("defineHtmlTheme");
+    await expect(initializeThemePackage(root)).rejects.toThrow(`Theme init target must be empty: ${root}.`);
+  });
+
+  it("initializes JSX themes with the browser-safe custom JSX runtime", async () => {
+    const parent = await mkdtemp(join(tmpdir(), "mds-theme-init-jsx-"));
+    const root = join(parent, "jsx-theme");
+
+    const result = await initializeThemePackage(root, {
+      template: "jsx",
+      packageName: "@acme/mds-theme-jsx"
+    });
+    const manifest = (await readJson(join(root, "package.json"))) as {
+      devDependencies?: Record<string, string>;
+    };
+    const source = await readFile(join(root, "src/theme.tsx"), "utf8");
+    const tsconfig = await readFile(join(root, "tsconfig.json"), "utf8");
+
+    expect(result.template).toBe("jsx");
+    expect(manifest.devDependencies).toHaveProperty("@mds-crate/theme-loader");
+    expect(source).toContain("@jsxImportSource @mds-crate/theme-loader");
+    expect(source).toContain("defineJsxTheme");
+    expect(tsconfig).toContain('"jsxImportSource": "@mds-crate/theme-loader"');
+  });
+
+  it("initializes React themes through the shared CLI with JSON output", async () => {
+    const parent = await mkdtemp(join(tmpdir(), "mds-theme-init-react-"));
+    const stdout: string[] = [];
+    const stderr: string[] = [];
+
+    const result = await runThemeCli(
+      ["init", "react-theme", "--template", "react", "--name", "@acme/mds-theme-react", "--json"],
+      {
+        cwd: parent,
+        commandName: "mds theme",
+        stdout: { log: (value: string) => stdout.push(value) },
+        stderr: { error: (value: string) => stderr.push(value) }
+      }
+    );
+    const output = JSON.parse(stdout[0] ?? "{}") as {
+      packageName: string;
+      template: string;
+      filesWritten: string[];
+    };
+    const root = join(parent, "react-theme");
+    const manifest = (await readJson(join(root, "package.json"))) as {
+      devDependencies?: Record<string, string>;
+      [key: string]: unknown;
+    };
+    const builderManifest = (await readJson(join(process.cwd(), "package.json"))) as { version?: unknown };
+    const builderRange = `^${String(builderManifest.version)}`;
+
+    expect(result.exitCode).toBe(0);
+    expect(stderr).toEqual([]);
+    expect(output).toMatchObject({
+      packageName: "@acme/mds-theme-react",
+      template: "react"
+    });
+    expect(output.filesWritten).toContain("src/theme.tsx");
+    expect(manifest.devDependencies).toMatchObject({
+      "@mds-crate/theme-sdk-react": builderRange,
+      react: "^19.0.0",
+      "react-dom": "^19.0.0"
+    });
+    await expect(readFile(join(root, "src/theme.tsx"), "utf8")).resolves.toContain("defineReactTheme");
+    await expect(readFile(join(root, "tsconfig.json"), "utf8")).resolves.toContain('"jsx": "react-jsx"');
+  });
+
   it("writes a standard theme artifact", async () => {
     const outputDirectory = await mkdtemp(join(tmpdir(), "mds-theme-artifact-"));
     const files = await writeThemeSource(outputDirectory, {
@@ -336,7 +459,7 @@ export default defineJsxTheme({
           mdsTheme: {
             source: "./theme.json",
             dist: "./dist/theme",
-            blockPacks: ["@mds/blocks/standard"],
+            blockPacks: ["@mds-crate/blocks/standard"],
             blockOverrides: ["blocks/hero.html", "blocks/custom.html"]
           }
         },
@@ -399,13 +522,13 @@ export default defineJsxTheme({
       expect.arrayContaining([
         { block: "hero", source: "theme" },
         { block: "custom", source: "theme" },
-        { block: "pricing-plan", source: "@mds/blocks/marketing" }
+        { block: "pricing-plan", source: "@mds-crate/blocks/marketing" }
       ])
     );
-    expect(inspection.blockPacks.map((pack) => pack.name)).toContain("@mds/blocks/core");
+    expect(inspection.blockPacks.map((pack) => pack.name)).toContain("@mds-crate/blocks/core");
     expect(inspection.templateSources).toContainEqual({
       block: "pricing-plan",
-      source: "@mds/blocks/marketing"
+      source: "@mds-crate/blocks/marketing"
     });
     expect(result.diagnostics).toEqual([]);
     expect(inspection.diagnostics).toEqual([]);

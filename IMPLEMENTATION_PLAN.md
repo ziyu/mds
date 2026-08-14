@@ -2,6 +2,8 @@
 
 MDS is a Markdown-based semantic authoring language. Its job is to let authors express page intent with a small set of syntax extensions, then compile that intent into HTML.
 
+For the external package, Editor, Renderer, and release-automation roadmap, see [docs/RELEASE_PLAN.md](./docs/RELEASE_PLAN.md).
+
 This document defines the first implementation plan for MDS v0.1.
 
 ## Product Direction
@@ -102,7 +104,7 @@ mds/
 
 ## Package Responsibilities
 
-### `@mds/ast`
+### `@mds-crate/ast`
 
 Defines stable AST types and helper utilities.
 
@@ -130,7 +132,7 @@ Current AST design separates generic semantic blocks from control/data syntax:
 - `DataBlock` for `::: data`.
 - `Markdown` nodes retain raw Markdown text and discovered inline syntax metadata.
 
-### `@mds/parser`
+### `@mds-crate/parser`
 
 Parses `.mds` source into the MDS AST.
 
@@ -159,7 +161,7 @@ The parser is split into focused modules:
 - `patterns.ts` for syntax patterns and known action names.
 - `utils.ts` for source location and syntax utility helpers.
 
-### `@mds/renderer-html`
+### `@mds-crate/renderer-html`
 
 Turns MDS AST into HTML.
 
@@ -176,7 +178,7 @@ Responsibilities:
 
 This package should compile everything to HTML strings or HTML AST. It should not require a browser runtime and should not own the default visual mapping for semantic blocks.
 
-### `@mds/html-types`
+### `@mds-crate/html-types`
 
 Defines shared HTML renderer/theme contracts.
 
@@ -187,9 +189,9 @@ Responsibilities:
 - Export `HtmlBlockRenderers`.
 - Export `HtmlRenderContext`.
 
-This package exists to avoid a dependency cycle between `@mds/renderer-html` and theme packages.
+This package exists to avoid a dependency cycle between `@mds-crate/renderer-html` and theme packages.
 
-### `@mds/theme-loader`
+### `@mds-crate/theme-loader`
 
 Provides the first built-in theme renderer and default file-based theme assets.
 
@@ -237,7 +239,7 @@ interface HtmlTheme {
 
 The default theme is an implementation detail of the default build path, not part of MDS syntax. Users should be able to supply a different theme without changing parser behavior.
 
-### `@mds/theme-builder`
+### `@mds-crate/theme-builder`
 
 Development-time builder for package-style themes.
 
@@ -251,7 +253,7 @@ Responsibilities:
 - Write and inspect `.mds-theme-build.json` metadata.
 - Pack clean distributable artifacts without development metadata.
 
-### `@mds/theme-sdk-html`
+### `@mds-crate/theme-sdk-html`
 
 Lightweight HTML authoring adapter for package themes.
 
@@ -262,7 +264,7 @@ Responsibilities:
 - Preserve explicit raw MDS placeholders.
 - Produce the same `ThemeSourceInput` artifact contract as JSX-authored themes.
 
-### `@mds/theme-sdk-react`
+### `@mds-crate/theme-sdk-react`
 
 React authoring adapter for package themes.
 
@@ -434,8 +436,8 @@ JSX support is a developer authoring layer over the same file/source theme contr
 The intended model:
 
 ```tsx
-/** @jsxImportSource @mds/theme-loader */
-import { Content, defineJsxTheme, Root } from "@mds/theme-loader/jsx";
+/** @jsxImportSource @mds-crate/theme-loader */
+import { Content, defineJsxTheme, Root } from "@mds-crate/theme-loader/jsx";
 
 export default defineJsxTheme({
   name: "jsx-demo",
@@ -509,7 +511,7 @@ my-theme/
 }
 ```
 
-The first builder package is `@mds/theme-builder`. Its MVP command reads `package.json#mdsTheme`, imports the source theme under `tsx`, accepts SDK-produced `ThemeSourceInput` or legacy JSX theme definitions, copies declared assets including preview files, bundles CSS imports and TypeScript script assets to plain artifact CSS/JavaScript, optionally runs Tailwind v4 through PostCSS, writes `.mds-theme-build.json` with input/debug metadata, and writes the artifact directory.
+The first builder package is `@mds-crate/theme-builder`. Its MVP command reads `package.json#mdsTheme`, imports the source theme under `tsx`, accepts SDK-produced `ThemeSourceInput` or legacy JSX theme definitions, copies declared assets including preview files, bundles CSS imports and TypeScript script assets to plain artifact CSS/JavaScript, optionally runs Tailwind v4 through PostCSS, writes `.mds-theme-build.json` with input/debug metadata, and writes the artifact directory.
 
 `mds theme inspect` and `mds-theme inspect` read the built artifact through the same resolution path used by editor and CLI rendering. They print metadata, files, blocks, assets, actions, build metadata, and validation diagnostics without importing package source.
 
@@ -524,7 +526,7 @@ The renderer/CLI should support both:
 - `HtmlTheme` object for developer integrations.
 - Theme directory path for author workflows.
 
-### `@mds/cli`
+### `@mds-crate/cli`
 
 Provides command-line workflows.
 
@@ -832,7 +834,7 @@ The actual AST can later align more closely with `unist` so existing tools can t
 Initialize the monorepo foundation and implement the first parser slice:
 
 1. Create workspace config.
-2. Create `@mds/ast`.
-3. Create `@mds/parser`.
+2. Create `@mds-crate/ast`.
+3. Create `@mds-crate/parser`.
 4. Parse frontmatter, Markdown, and basic `::: block` structures.
 5. Add a basic fixture from `SPEC.md`.

@@ -1,4 +1,4 @@
-import type { Position } from "@mds/ast";
+import type { Position } from "@mds-crate/ast";
 
 export function getContentStartLine(source: string): number {
   if (!source.startsWith("---\n")) {

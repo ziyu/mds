@@ -11,7 +11,7 @@ import type {
   Position,
   SlotNode,
   StateDeclarationNode
-} from "@mds/ast";
+} from "@mds-crate/ast";
 import { parseFrontmatter } from "./frontmatter.js";
 import { parseActionLink, parseMarkdownInlines, validateAction } from "./inline.js";
 import {

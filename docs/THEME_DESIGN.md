@@ -95,17 +95,17 @@ Authoring helpers such as JSX utilities, future React/Preact adapters, and typed
 
 3. **Renderer stays narrow**
 
-   `@mds/renderer-html` should know how to combine AST nodes with an `HtmlTheme`. It should not know how to scan directories, import TSX, resolve npm packages, watch files, or run bundlers.
+   `@mds-crate/renderer-html` should know how to combine AST nodes with an `HtmlTheme`. It should not know how to scan directories, import TSX, resolve npm packages, watch files, or run bundlers.
 
 4. **Loader owns theme artifacts**
 
-   `@mds/theme-loader` owns artifact parsing, asset loading, block template discovery, manifest interpretation, and registry behavior.
+   `@mds-crate/theme-loader` owns artifact parsing, asset loading, block template discovery, manifest interpretation, and registry behavior.
 
-   Node-only package and path resolution lives behind `@mds/theme-loader` resolver helpers. Browser integrations receive serialized `ThemeSource` objects instead of resolving local paths themselves.
+   Node-only package and path resolution lives behind `@mds-crate/theme-loader` resolver helpers. Browser integrations receive serialized `ThemeSource` objects instead of resolving local paths themselves.
 
 5. **Builder owns theme source**
 
-   `@mds/theme-builder` owns developer-time concerns: importing package source, converting JSX/components to templates, copying assets, and later bundling CSS/JS.
+   `@mds-crate/theme-builder` owns developer-time concerns: importing package source, converting JSX/components to templates, copying assets, and later bundling CSS/JS.
 
 6. **Editor uses the same abstraction**
 
@@ -139,7 +139,7 @@ Authoring helpers such as JSX utilities, future React/Preact adapters, and typed
 
 Only `theme.json` is mandatory. Missing templates fall back to renderer defaults or diagnostic output depending on renderer policy.
 All artifact files must stay inside the artifact directory. Builders must reject escaped output paths before writing files, and `theme.json` is reserved for the serialized manifest.
-`@mds/theme-loader` owns the shared artifact contract constants and path normalization helpers. Builder, CLI, editor integrations, and future packaging tools should reuse those helpers instead of duplicating reserved-file checks.
+`@mds-crate/theme-loader` owns the shared artifact contract constants and path normalization helpers. Builder, CLI, editor integrations, and future packaging tools should reuse those helpers instead of duplicating reserved-file checks.
 Artifact paths are canonical relative POSIX paths. Redundant leading `./`, internal `.` segments, and repeated `/` separators are accepted in source input but normalized away before rendering or writing artifacts; for example `./style.css` and `styles//./base.css` become `style.css` and `styles/base.css`. Two source files that normalize to the same path are invalid.
 
 Development metadata files, currently `.mds-theme-build.json`, may exist in an artifact directory for inspection and rebuild tooling. Runtime theme creation ignores development metadata. Packaging flows should strip development metadata from clean distributable artifacts.
@@ -172,7 +172,7 @@ Node tools can load directories. Browser tools can load serialized `ThemeSource`
 Node resolver helpers:
 
 ```ts
-import { resolveThemeRef, readThemeRef } from "@mds/theme-loader";
+import { resolveThemeRef, readThemeRef } from "@mds-crate/theme-loader";
 
 const artifactDirectory = await resolveThemeRef("@acme/mds-theme-clean", {
   roots: ["themes"],
@@ -680,11 +680,11 @@ pnpm build:theme:clarity
 mds-theme inspect ./themes/clarity
 ```
 
-`themes/default`, `themes/folio`, and `themes/atelier` all separate authoring source under `src/` from the complete generated artifact under `dist/theme`. They compose `@mds/blocks/standard` and own only the block templates that need theme-specific structure or behavior.
+`themes/default`, `themes/folio`, and `themes/atelier` all separate authoring source under `src/` from the complete generated artifact under `dist/theme`. They compose `@mds-crate/blocks/standard` and own only the block templates that need theme-specific structure or behavior.
 
 `themes/clarity` keeps source files under `src/`, imports a local component module, bundles CSS imports, bundles `src/script.ts` to artifact JavaScript, and commits the built `dist/theme` artifact. Runtime loading resolves the package directory to `package.json#mdsTheme.dist`.
 
-`themes/canvas` exercises the React SDK and Tailwind v4 pipeline. It uses local shadcn-style components, `@mds/theme-sdk-react`, `mdsTheme.pipeline.css = "tailwind"`, and still emits a plain artifact under `dist/theme`.
+`themes/canvas` exercises the React SDK and Tailwind v4 pipeline. It uses local shadcn-style components, `@mds-crate/theme-sdk-react`, `mdsTheme.pipeline.css = "tailwind"`, and still emits a plain artifact under `dist/theme`.
 
 Current package themes can use the MDS JSX runtime, the HTML SDK, or the React SDK. Future phases can add Preact, Vue, Sass, and richer bundler adapters without changing the artifact format.
 
@@ -698,11 +698,11 @@ Workflow:
 
 ## JSX Authoring Contract
 
-The current JSX helper lives under `@mds/theme-loader/jsx`.
+The current JSX helper lives under `@mds-crate/theme-loader/jsx`.
 
 ```tsx
-/** @jsxImportSource @mds/theme-loader */
-import { Content, defineJsxTheme, Root, Slot } from "@mds/theme-loader/jsx";
+/** @jsxImportSource @mds-crate/theme-loader */
+import { Content, defineJsxTheme, Root, Slot } from "@mds-crate/theme-loader/jsx";
 
 export default defineJsxTheme({
   name: "clean",
@@ -754,10 +754,10 @@ Low-level placeholders such as `rawAttrs`, `children`, `slots`, and `slot(name)`
 
 ## HTML SDK Authoring Contract
 
-The lightweight HTML adapter lives under `@mds/theme-sdk-html`.
+The lightweight HTML adapter lives under `@mds-crate/theme-sdk-html`.
 
 ```ts
-import { defineHtmlTheme, html } from "@mds/theme-sdk-html";
+import { defineHtmlTheme, html } from "@mds-crate/theme-sdk-html";
 
 export default defineHtmlTheme({
   name: "html-clean",
@@ -767,7 +767,7 @@ export default defineHtmlTheme({
 });
 ```
 
-The adapter is a source-authoring layer only. It converts tagged HTML template blocks into the same `ThemeSourceInput` consumed by `@mds/theme-loader`.
+The adapter is a source-authoring layer only. It converts tagged HTML template blocks into the same `ThemeSourceInput` consumed by `@mds-crate/theme-loader`.
 
 Rules:
 
@@ -778,7 +778,7 @@ Rules:
 
 ## Package Builder Design
 
-`@mds/theme-builder` is the development-time builder.
+`@mds-crate/theme-builder` is the development-time builder.
 
 MVP responsibilities:
 
@@ -804,11 +804,11 @@ Non-MVP responsibilities:
 
 ## React SDK Authoring Contract
 
-The React adapter lives under `@mds/theme-sdk-react`.
+The React adapter lives under `@mds-crate/theme-sdk-react`.
 
 ```tsx
 import React from "react";
-import { Content, Root, Slot, defineReactTheme } from "@mds/theme-sdk-react";
+import { Content, Root, Slot, defineReactTheme } from "@mds-crate/theme-sdk-react";
 import { Button } from "./components/Button";
 
 export default defineReactTheme({
@@ -826,7 +826,7 @@ export default defineReactTheme({
 });
 ```
 
-The adapter renders React elements to template HTML during the theme build and returns `ThemeSourceInput`. This keeps `@mds/theme-builder` generic: it can load any source SDK that exports `ThemeSourceInput`, while still supporting the earlier JSX definition shape.
+The adapter renders React elements to template HTML during the theme build and returns `ThemeSourceInput`. This keeps `@mds-crate/theme-builder` generic: it can load any source SDK that exports `ThemeSourceInput`, while still supporting the earlier JSX definition shape.
 
 Rules:
 
@@ -903,7 +903,7 @@ Package theme dev mode:
 - Inspect built artifacts through the dev server. The editor exposes a theme inspection endpoint backed by `inspectThemeArtifact()` and validates the response with the same serialized inspection contract as `mds theme inspect --json`.
 - Reload the artifact through the same `ThemeRegistry`. Manual build and watched rebuilds reload the current theme after a successful build.
 - Show build result context. Manual build displays the most recent output file count, source file, output directory, and input count.
-- Surface builder errors in the editor diagnostics panel. The browser provider can restore builder diagnostics without importing `@mds/theme-builder`, and the editor maps them to the `builder` diagnostic source.
+- Surface builder errors in the editor diagnostics panel. The browser provider can restore builder diagnostics without importing `@mds-crate/theme-builder`, and the editor maps them to the `builder` diagnostic source.
 - Never import raw package source into the editor UI.
 
 ## Validation And Diagnostics
@@ -932,7 +932,7 @@ import {
   assertValidThemeSource,
   validateThemeManifest,
   validateThemeSource
-} from "@mds/theme-loader";
+} from "@mds-crate/theme-loader";
 ```
 
 `validateThemeSource` returns structured diagnostics:
@@ -955,11 +955,11 @@ If a theme ref resolves to a package whose artifact has not been built yet, file
 Unknown theme refs are reported as structured `unknown-theme` diagnostics by both memory and file registries. Malformed package `package.json` files and invalid `package.json#mdsTheme.dist` values are reported as structured `invalid-theme-package` diagnostics during file theme resolution. This applies to `readThemeRef()`, regular registry `loadTheme()`, and `loadThemeWithDiagnostics()`.
 Editor-side and dev-server theme preflight checks should use the same `unknown-theme` diagnostic code instead of degrading to generic load or HTTP text errors.
 
-`@mds/theme-loader` also exposes `formatThemeDiagnostic()`. CLI surfaces should use this shared formatter so `field`, `path`, and `block` details are printed consistently.
+`@mds-crate/theme-loader` also exposes `formatThemeDiagnostic()`. CLI surfaces should use this shared formatter so `field`, `path`, and `block` details are printed consistently.
 `ThemeValidationError.message` uses the same formatter, so logs and HTTP error payloads keep the same location details as CLI output.
 Runtime rendering and validation share the same block-template parser for `<template data-block>` aliases and filename fallback behavior.
 
-Package builder failures use `ThemeBuildError` from `@mds/theme-builder`. This error stays in the development-time builder layer and includes:
+Package builder failures use `ThemeBuildError` from `@mds-crate/theme-builder`. This error stays in the development-time builder layer and includes:
 
 - `stage`: `read-package`, `read-config`, `load-source`, `merge-assets`, `resolve-artifact`, `read-artifact`, `validate-artifact`, or `write-artifact`.
 - `field`: the package config or generated artifact field involved when known.
@@ -968,7 +968,7 @@ Package builder failures use `ThemeBuildError` from `@mds/theme-builder`. This e
 
 For example, an invalid `mdsTheme.source` type should report `stage: "read-config"`, `field: "mdsTheme.source"`, and the package.json path. A missing CSS asset should report `stage: "merge-assets"`, `field: "mdsTheme.assets.css"`, and the concrete missing file path. A JSX block component that throws while rendering should report `stage: "load-source"`, `field: "mdsTheme.source"`, the source file path, and the block name. A generated artifact validation failure should report `stage: "validate-artifact"` and the theme source file that produced the invalid artifact. Inspect and pack failures use the same error type with `resolve-artifact` or `read-artifact`; pack also uses `validate-artifact` and `write-artifact` for blocking copy failures.
 `themeBuildErrorToDiagnostics()` converts builder failures into serializable diagnostics with `stage`, `field`, `path`, `block`, and optional validation details. CLI output and editor package-theme dev mode should use this formatter instead of parsing `Error.message`.
-The browser editor should consume serialized builder diagnostics and HMR build events by shape. It should not import or execute `@mds/theme-builder` in the browser runtime.
+The browser editor should consume serialized builder diagnostics and HMR build events by shape. It should not import or execute `@mds-crate/theme-builder` in the browser runtime.
 
 ## Security And Trust
 
@@ -1028,7 +1028,7 @@ Acceptance:
 
 ### Phase 1: Theme Artifact Validation
 
-Status: completed. Artifact validation APIs are implemented in `@mds/theme-loader`.
+Status: completed. Artifact validation APIs are implemented in `@mds-crate/theme-loader`.
 
 Add schema validation for `theme.json` and block sources.
 
@@ -1055,7 +1055,7 @@ Acceptance:
 
 Status: completed. The builder has staged errors with field/file context, generated-output cleanup, nested asset copying, package-style examples, build metadata inspection, JSON CLI contracts, and editor dev-server diagnostics.
 
-Turn `@mds/theme-builder` from MVP into a reliable development tool.
+Turn `@mds-crate/theme-builder` from MVP into a reliable development tool.
 
 Tasks:
 
@@ -1097,16 +1097,16 @@ Acceptance:
 
 ### Phase 4: Ecosystem Adapters
 
-Status: completed for the current React/HTML adapter milestone. `@mds/theme-sdk-html` covers tagged-template authoring, and `@mds/theme-sdk-react` covers React/shadcn-style component authoring without adding a framework runtime to the final artifact.
+Status: completed for the current React/HTML adapter milestone. `@mds-crate/theme-sdk-html` covers tagged-template authoring, and `@mds-crate/theme-sdk-react` covers React/shadcn-style component authoring without adding a framework runtime to the final artifact.
 
 Add adapters for common frontend ecosystems.
 
 Candidates:
 
-- `@mds/theme-sdk/react`
-- `@mds/theme-sdk-react`. Done.
-- `@mds/theme-sdk/preact`
-- `@mds/theme-sdk-html`. Done.
+- `@mds-crate/theme-sdk/react`
+- `@mds-crate/theme-sdk-react`. Done.
+- `@mds-crate/theme-sdk/preact`
+- `@mds-crate/theme-sdk-html`. Done.
 
 React/Preact adapter behavior:
 
