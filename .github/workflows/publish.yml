@@ -51,7 +51,7 @@ jobs:
           pnpm release:check -- --skip-auth
 
       - name: Publish packages with next tag
-        run: pnpm exec changeset publish --tag next
+        run: node scripts/publish-next.mjs
 
       - name: Verify registry release
         run: pnpm release:verify:next

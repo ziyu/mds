@@ -30,7 +30,7 @@ pnpm release:publish:next
 pnpm release:verify:next
 ```
 
-`release:publish:next` delegates dependency ordering and fixed-version publication to Changesets. Do not use `latest` for the beta. If publication stops partway through, do not bump or reuse versions blindly: inspect the registry, let `release:check` report exact versions that already exist, and publish only a reviewed recovery release.
+`release:publish:next` packs every package with pnpm so `workspace:` dependencies become publishable version references, then publishes those tarballs with npm in dependency order. The command is hard-coded to the `next` dist-tag and creates package Git tags only after every npm publish succeeds. Use `pnpm release:publish:next:dry-run` to exercise the exact packing path without changing npm. Do not use `latest` for the beta. If publication stops partway through, do not bump or reuse versions blindly: inspect the registry, let `release:check` report exact versions that already exist, and publish only a reviewed recovery release.
 
 The registry verifier creates a clean temporary consumer and:
 
