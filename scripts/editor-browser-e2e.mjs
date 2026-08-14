@@ -13,7 +13,6 @@ if (requestedCli === undefined) {
 const cliPath = resolve(requestedCli);
 const chrome = await resolveChromeExecutable();
 const project = await realpath(await mkdtemp(join(tmpdir(), "mds-packed-editor-e2e-")));
-const profile = join(project, ".chrome-profile");
 const input = join(project, "page.mds");
 let editorChild;
 let chromeChild;
@@ -30,21 +29,9 @@ try {
     throw new Error(`Packed Editor opened the wrong project: ${JSON.stringify(editor)}.`);
   }
 
-  chromeChild = spawn(
-    chrome,
-    [
-      "--headless=new",
-      "--disable-gpu",
-      "--disable-background-networking",
-      "--disable-component-update",
-      "--no-first-run",
-      "--no-default-browser-check",
-      "--remote-debugging-port=0",
-      `--user-data-dir=${profile}`
-    ],
-    { stdio: ["ignore", "ignore", "pipe"] }
-  );
-  client = await CdpClient.connect(await waitForDevToolsUrl(chromeChild, 30_000));
+  const launchedChrome = await launchChromeWithRetries(chrome, project);
+  chromeChild = launchedChrome.child;
+  client = await CdpClient.connect(launchedChrome.devToolsUrl);
   const target = await client.send("Target.createTarget", { url: "about:blank" });
   const attached = await client.send("Target.attachToTarget", {
     targetId: target.targetId,
@@ -286,6 +273,42 @@ async function resolveChromeExecutable() {
   throw new Error("Chrome was not found. Set CHROME_BIN to run the Editor browser E2E test.");
 }
 
+async function launchChromeWithRetries(executable, projectRoot, attempts = 3) {
+  const failures = [];
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const profile = join(projectRoot, `.chrome-profile-${attempt}`);
+    await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    const child = spawn(
+      executable,
+      [
+        "--headless=new",
+        "--disable-gpu",
+        "--disable-background-networking",
+        "--disable-component-update",
+        "--disable-extensions",
+        "--no-first-run",
+        "--no-default-browser-check",
+        ...(process.platform === "linux" ? ["--disable-dev-shm-usage", "--no-sandbox"] : []),
+        "--remote-debugging-port=0",
+        `--user-data-dir=${profile}`
+      ],
+      { stdio: ["ignore", "ignore", "pipe"] }
+    );
+    try {
+      const devToolsUrl = await waitForDevToolsUrl(child, 30_000);
+      return { child, devToolsUrl };
+    } catch (error) {
+      failures.push(`attempt ${attempt}: ${error instanceof Error ? error.message : String(error)}`);
+      child.kill("SIGKILL");
+      await waitForExit(child, 2_000, true);
+      if (attempt < attempts) {
+        await delay(1_000);
+      }
+    }
+  }
+  throw new Error(`Chrome failed to start after ${attempts} attempts. ${failures.join(" | ")}`);
+}
+
 async function waitForDevToolsUrl(child, timeoutMs) {
   return new Promise((resolveUrl, rejectUrl) => {
     const stderr = child.stderr;
@@ -315,13 +338,19 @@ async function waitForDevToolsUrl(child, timeoutMs) {
       cleanup();
       rejectUrl(new Error(`Chrome exited before exposing DevTools (exit ${String(code)}).`));
     };
+    const onError = (error) => {
+      cleanup();
+      rejectUrl(new Error(`Chrome could not be started: ${error.message}`));
+    };
     const cleanup = () => {
       clearTimeout(timeout);
       stderr.off("data", onData);
       child.off("exit", onExit);
+      child.off("error", onError);
     };
     stderr.on("data", onData);
     child.once("exit", onExit);
+    child.once("error", onError);
   });
 }
 
