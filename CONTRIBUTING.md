@@ -1,6 +1,6 @@
 # Contributing To MDS
 
-MDS is currently preparing its first public beta. Discuss large syntax, AST, theme artifact, or public API changes before implementation because these contracts affect multiple packages.
+MDS is currently in public beta. Discuss large syntax, AST, theme artifact, or public API changes before implementation because these contracts affect multiple packages.
 
 ## Development Setup
 
