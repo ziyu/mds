@@ -85,7 +85,7 @@ The recommended first public milestone is `0.1.0-beta.1`, not an immediate stabl
 | --- | --- | --- | --- |
 | External package-defined themes | `@mds-crate/theme-builder`, theme SDKs, `@mds-crate/blocks`, `@mds-crate/theme-default`, and `mds theme` commands | HTML/JSX/React scaffolds, build/watch/inspect/pack, artifact validation, shared block composition, a portable default theme, package-name resolution, and tarball lifecycle tests exist. | Packages are not yet bootstrapped on npm, and registry-version acceptance has not run. |
 | External `.mds` file editing | `mds edit <file-or-directory>` backed by the built Editor app | The CLI bundles a production local server and static app with real open/create/save, dirty/conflict UI, atomic writes, project/package themes, a root-jailed API, a restrictive preview sandbox, and packed browser E2E coverage. | Registry-version acceptance remains after the npm bootstrap publication. |
-| Renderer integration | `@mds-crate/renderer-html` plus `@mds-crate/theme-default` and advanced `@mds-crate/theme-loader` APIs | Source and AST rendering, document/fragment output, separate theme assets, a portable default theme, deterministic diagnostics, URL neutralization, and clean Node/Vite consumers exist. | Registry-version acceptance and the Editor preview sandbox review remain. |
+| Renderer integration | `@mds-crate/renderer-html` plus `@mds-crate/theme-default` and advanced `@mds-crate/theme-loader` APIs | Source and AST rendering, document/fragment output, separate theme assets, a portable default theme, deterministic diagnostics, URL neutralization, and clean Node/Vite consumers exist. | Registry-version acceptance remains. |
 
 Current evidence:
 
@@ -185,7 +185,7 @@ Required fixtures:
 - [x] CLI consumer invoking the installed `mds` bin.
 - [x] Theme-author project created by the official scaffold.
 - [x] Theme-consumer project installing a packed theme by package name.
-- [ ] Local Editor consumer opening and saving a real `.mds` file.
+- [x] Local Editor consumer opening and saving a real `.mds` file.
 
 Each fixture must use packed tarballs, not workspace paths or symlinks.
 
@@ -253,7 +253,7 @@ Before external release:
 - [x] Add tests for encoded or mixed-case dangerous URLs.
 - [x] Add XSS fixtures for frontmatter, Markdown, blocks, slots, data blocks, media directives, and theme placeholders.
 - [x] Clearly document that theme JavaScript, theme head content, and executed theme source are trusted code.
-- Review the Editor preview sandbox and remove `allow-same-origin` unless it is demonstrably required.
+- [x] Review the Editor preview sandbox and remove `allow-same-origin`; retain only scripts and forms.
 
 ### 4. Publish integration examples
 

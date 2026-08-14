@@ -120,6 +120,7 @@ Lower-level packages:
 - [Language specification](./SPEC.md)
 - [Implementation plan](./IMPLEMENTATION_PLAN.md)
 - [Release plan](./docs/RELEASE_PLAN.md)
+- [Publishing runbook](./docs/PUBLISHING.md)
 - [Theme authoring](./docs/THEMES.md)
 - [Theme architecture](./docs/THEME_DESIGN.md)
 - [Shared block layer](./docs/BLOCK_LAYER.md)

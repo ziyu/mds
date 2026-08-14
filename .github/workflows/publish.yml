@@ -1,0 +1,60 @@
+name: Publish npm prerelease
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: npm-publish-next
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish next
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: npm
+    env:
+      CI: true
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Install trusted-publishing npm version
+        run: npm install --global npm@11.5.1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate release commit
+        run: |
+          pnpm check
+          pnpm test
+          pnpm build
+          pnpm check:packages
+          pnpm release:check -- --skip-auth
+
+      - name: Publish packages with next tag
+        run: pnpm exec changeset publish --tag next
+
+      - name: Verify registry release
+        run: pnpm release:verify:next
+
+      - name: Push release tags
+        run: git push origin --tags
