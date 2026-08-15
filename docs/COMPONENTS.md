@@ -8,7 +8,7 @@ For the shared blocks layer that turns this vocabulary into reusable block packs
 
 ## Goals
 
-- Cover most common content scenarios: marketing pages, documentation, reports, portfolios, courses, product pages, and AI-generated interactive explanations.
+- Cover common document scenarios: documentation, reports, portfolios, courses, and AI-generated interactive explanations.
 - Keep authoring natural for non-developers.
 - Let advanced authors use attributes when a theme explicitly exposes variants.
 - Keep unknown or unsupported blocks renderable through safe fallback HTML.
@@ -30,8 +30,8 @@ For the shared blocks layer that turns this vocabulary into reusable block packs
    Authors should write what the content means:
 
    ```mds
-   ::: testimonial
-   MDS let us ship standalone pages from plain text.
+   ::: warning
+   Back up the workspace before continuing.
    :::
    ```
 
@@ -46,17 +46,17 @@ For the shared blocks layer that turns this vocabulary into reusable block packs
    Complex components should use nested blocks and slots instead of large attribute payloads:
 
    ```mds
-   ::: pricing
-   ::: pricing-plan pro
-   ## Pro
-   For growing teams.
+   ::: cards
+   ::: card
+   ## First item
+   Reusable content.
    :::
    :::
    ```
 
 3. **Attributes are compact configuration**
 
-   Attributes should handle small options such as `tone`, `variant`, `columns`, `value`, `price`, `motion`, and `duration`.
+   Attributes should handle small options such as `tone`, `variant`, `columns`, `value`, `motion`, and `duration`.
 
 4. **Themes own presentation**
 
@@ -77,11 +77,12 @@ For the shared blocks layer that turns this vocabulary into reusable block packs
 | Block | Purpose | Recommended Content |
 | --- | --- | --- |
 | `page` | Top-level page shell. | Whole document body. |
+| `hero` | Primary first-viewport message. | `title`, `body`, `media`, `actions` slots. |
 | `section` | Generic content section. | Headings, paragraphs, nested blocks. |
 | `header` | Page or section header. | Title, eyebrow, summary, actions. |
 | `footer` | Footer content. | Links, copyright, notes. |
 | `aside` | Secondary contextual content. | Notes, links, supporting copy. |
-| `sticky` | Sticky supporting panel. | CTA, outline, related links. |
+| `sticky` | Sticky supporting panel. | Outline, status, related links. |
 | `divider` | Visual section separator. | Optional label. |
 | `spacer` | Intentional spacing. | Usually empty; advanced use only. |
 
@@ -90,31 +91,14 @@ For the shared blocks layer that turns this vocabulary into reusable block packs
 | Block | Purpose | Recommended Content |
 | --- | --- | --- |
 | `split` | Two-column layout. | `left` and `right` slots, or nested blocks. |
-| `grid` | Generic responsive grid. | Cards, figures, stats, feature blocks. |
+| `grid` | Generic responsive grid. | Cards, figures, and repeated items. |
 | `grid-2` | Two-column grid. | Repeated child blocks. |
 | `grid-3` | Three-column grid. | Repeated child blocks. |
 | `grid-auto` | Auto-fit grid. | Repeated child blocks. |
 | `stack` | Vertical grouping with theme spacing. | Any block sequence. |
 | `cluster` | Wrapping inline group. | Badges, buttons, small items. |
-
-### Marketing And Product
-
-| Block | Purpose | Recommended Content |
-| --- | --- | --- |
-| `hero` | Primary first-viewport message. | `title`, `body`, `media`, `actions` slots. |
-| `cta` | Focused call to action. | Heading, body, actions. |
-| `feature` | Single feature. | Heading, body, optional media. |
-| `features` | Feature collection. | Nested `feature` or `card` blocks. |
 | `cards` | Card collection. | Nested `card` blocks. |
 | `card` | General framed item. | Heading, paragraph, action. |
-| `stats` | Metric group. | Nested `stat` blocks. |
-| `stat` | Single metric. | `value`, `label`, optional body. |
-| `logos` | Logo cloud. | Nested `logo` blocks or images. |
-| `logo` | Single logo item. | Text or image. |
-| `testimonials` | Testimonial collection. | Nested `testimonial` blocks. |
-| `testimonial` | Quote with attribution. | Quote text, `author`, `role`. |
-| `pricing` | Pricing table/group. | Nested `pricing-plan` blocks. |
-| `pricing-plan` | Single plan. | Title, price, features, action. |
 
 ### Information And Guidance
 
@@ -234,12 +218,8 @@ Status: implemented in Canvas.
 Implement these first in Canvas because they unlock most examples:
 
 ```txt
-stats / stat
 steps / step
 timeline
-testimonials / testimonial
-pricing / pricing-plan
-cta
 gallery / figure / caption
 comparison
 badge / tag / metric / progress
@@ -255,8 +235,6 @@ Status: implemented in Canvas as static or native-first components.
 
 ```txt
 faq
-logos / logo
-feature / features
 popover
 tooltip
 file-tree
@@ -293,20 +271,6 @@ The Canvas implementation keeps the no-JavaScript fallback readable:
 
 ## Authoring Patterns
 
-### Stats
-
-```mds
-::: stats
-::: stat value="12k+" label="Pages generated"
-Standalone pages built from semantic Markdown.
-:::
-
-::: stat value="98%" label="Runtime-free"
-The output is static HTML, CSS, and JavaScript.
-:::
-:::
-```
-
 ### Steps
 
 ```mds
@@ -340,33 +304,6 @@ Block attrs and slots become AST data.
 ::: step date="2026-07"
 ## Theme ecosystem
 Themes implement rich components.
-:::
-:::
-```
-
-### Testimonials
-
-```mds
-::: testimonials
-::: testimonial author="Ava Chen" role="Content Lead"
-MDS keeps authoring simple without giving up polished pages.
-:::
-:::
-```
-
-### Pricing
-
-```mds
-::: pricing
-::: pricing-plan creator price="$9" highlighted
-## Creator
-For writers and solo builders.
-
-- 10 projects
-- Canvas theme
-- Export HTML
-
-[Start !plan.select creator]
 :::
 :::
 ```
@@ -406,36 +343,6 @@ pnpm create mds
 ::: api
 ::: endpoint method="POST" path="/v1/render"
 Render an MDS document to standalone HTML.
-:::
-:::
-```
-
-### Features
-
-```mds
-::: features
-::: feature label="Authoring"
-## Natural structure
-Write Markdown first, then add semantic blocks where layout matters.
-:::
-
-::: feature label="Themes"
-## Reusable presentation
-Themes own spacing, motion, and component composition.
-:::
-:::
-```
-
-### Logos
-
-```mds
-::: logos
-::: logo
-Atlas
-:::
-
-::: logo
-Northstar
 :::
 :::
 ```
@@ -796,7 +703,7 @@ The editor `Components` example should become a broad showcase with stable secti
    hero, section, split, aside, sticky
 
 2. Cards And Metrics
-   cards, card, features, stats, metric, progress
+   cards, card, metric, progress
 
 3. Guidance
    note, info, warning, success, quote, steps, timeline
@@ -815,12 +722,9 @@ The editor `Components` example should become a broad showcase with stable secti
 
 8. Technical Docs
    code-group, terminal, file-tree, api, endpoint
-
-9. Pricing And CTA
-   pricing, pricing-plan, testimonials, cta
 ```
 
-The implemented editor example uses realistic copy and includes every shared foundation, data, and chat family before optional presentation blocks.
+The implemented editor example uses realistic copy and includes every shared foundation, data, and chat family.
 
 ## Testing Expectations
 
@@ -854,4 +758,4 @@ Component expansion should be verified at three levels:
 - Shared block packs may provide reusable templates for subsets of this vocabulary. Themes can opt into those packs and override selected block templates.
 - MDS documents may use custom block names outside this list.
 - Core should not special-case most component names. The list is a shared vocabulary and Canvas roadmap, not a closed grammar.
-- Block names should stay lowercase and hyphenated when they contain multiple words, such as `pricing-plan` and `code-group`.
+- Block names should stay lowercase and hyphenated when they contain multiple words, such as `code-group` and `message-scroller`.

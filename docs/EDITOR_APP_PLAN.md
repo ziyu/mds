@@ -138,7 +138,7 @@ renderer-html does not know where the theme came from
 
 ## MVP UI
 
-Use a dense two-pane app, not a marketing page:
+Use a dense two-pane app, not a promotional landing page:
 
 ```txt
 ┌─────────────────────────────────────────────────────────┐

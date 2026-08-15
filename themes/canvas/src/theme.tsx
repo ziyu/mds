@@ -37,21 +37,10 @@ export default defineReactTheme({
     "danger",
     "success",
     "quote",
-    "cta",
-    "stats",
-    "stat",
-    "features",
-    "feature",
-    "logos",
-    "logo",
     "steps",
     "step",
     "faq",
     "timeline",
-    "testimonials",
-    "testimonial",
-    "pricing",
-    "pricing-plan",
     "gallery",
     "figure",
     "caption",
@@ -200,47 +189,6 @@ export default defineReactTheme({
         <Content block={block} />
       </Surface>
     ),
-    cta: (block) => (
-      <Surface block={block} motion="reveal" duration={760} className="cta rounded-2xl border border-border bg-card p-7 shadow-sm sm:p-9">
-        <Flow block={block} />
-      </Surface>
-    ),
-    stats: (block) => (
-      <Surface block={block} motion="fade-up" duration={680} stagger={70} className="stats grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Content block={block} />
-        <Slots block={block} />
-      </Surface>
-    ),
-    stat: (block) => (
-      <Surface block={block} as="article" motion="scale-in" duration={540} className="stat rounded-xl border border-border bg-card p-5 shadow-xs">
-        <strong className="stat-value">{block.attr("value")}</strong>
-        <span className="stat-label">{block.attr("label")}</span>
-        <Flow block={block} className="stat-body" />
-      </Surface>
-    ),
-    features: (block) => (
-      <Surface block={block} motion="fade-up" duration={700} stagger={80} className="features grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        <Content block={block} />
-        <Slots block={block} />
-      </Surface>
-    ),
-    feature: (block) => (
-      <Surface block={block} as="article" motion="scale-in" duration={560} className="feature rounded-xl border border-border bg-card p-6 shadow-xs">
-        <Badge tone="muted">{block.attr("label", "Feature")}</Badge>
-        <Flow block={block} className="feature-body" />
-      </Surface>
-    ),
-    logos: (block) => (
-      <Surface block={block} motion="fade-up" duration={640} stagger={55} className="logos">
-        <Content block={block} />
-        <Slots block={block} />
-      </Surface>
-    ),
-    logo: (block) => (
-      <Surface block={block} as="div" motion="scale-in" duration={460} className="logo">
-        <Content block={block} />
-      </Surface>
-    ),
     "steps timeline": (block) => (
       <Surface block={block} motion="fade-up" duration={700} stagger={90} className={`${block.type} grid gap-4`}>
         <Content block={block} />
@@ -257,35 +205,6 @@ export default defineReactTheme({
       <Surface block={block} motion="fade-up" duration={680} stagger={70} className="faq grid gap-3">
         <Content block={block} />
         <Slots block={block} />
-      </Surface>
-    ),
-    testimonials: (block) => (
-      <Surface block={block} motion="fade-up" duration={700} stagger={80} className="testimonials grid gap-5 md:grid-cols-2">
-        <Content block={block} />
-        <Slots block={block} />
-      </Surface>
-    ),
-    testimonial: (block) => (
-      <Surface block={block} as="figure" motion="scale-in" duration={560} className="testimonial rounded-xl border border-border bg-card p-6 shadow-xs">
-        <blockquote>
-          <Content block={block} />
-        </blockquote>
-        <figcaption>
-          <strong>{block.attr("author", "Anonymous")}</strong>
-          <span>{block.attr("role")}</span>
-        </figcaption>
-      </Surface>
-    ),
-    pricing: (block) => (
-      <Surface block={block} motion="fade-up" duration={700} stagger={90} className="pricing grid gap-5 lg:grid-cols-3">
-        <Content block={block} />
-        <Slots block={block} />
-      </Surface>
-    ),
-    "pricing-plan": (block) => (
-      <Surface block={block} as="article" motion="scale-in" duration={560} className="pricing-plan rounded-xl border border-border bg-card p-6 shadow-xs">
-        <div className="pricing-price">{block.attr("price")}</div>
-        <Flow block={block} />
       </Surface>
     ),
     gallery: (block) => (

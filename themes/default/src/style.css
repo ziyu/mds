@@ -819,11 +819,6 @@ textarea {
 }
 
 /* Shared block-pack baseline: structural styles that remain theme-neutral. */
-.features,
-.stats,
-.logos,
-.testimonials,
-.pricing,
 .steps,
 .timeline,
 .comparison,
@@ -835,11 +830,6 @@ textarea {
   margin-block: 1.5rem;
 }
 
-.feature,
-.stat,
-.logo,
-.testimonial,
-.pricing-plan,
 .step,
 .metric,
 .endpoint,
@@ -850,8 +840,7 @@ textarea {
 .file-tree,
 .terminal,
 .code-group,
-.faq,
-.cta {
+.faq {
   min-width: 0;
   border: 1px solid color-mix(in srgb, currentColor, transparent 78%);
   border-radius: 0.85rem;
@@ -859,16 +848,13 @@ textarea {
   padding: 1rem;
 }
 
-.stat-value,
-.metric-value,
-.pricing-price {
+.metric-value {
   display: block;
   font-size: clamp(1.4rem, 4vw, 2.35rem);
   font-weight: 800;
   line-height: 1;
 }
 
-.stat-label,
 .metric-label,
 .step-label,
 .step-date,

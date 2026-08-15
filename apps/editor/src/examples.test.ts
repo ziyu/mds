@@ -76,13 +76,12 @@ describe("editor examples", () => {
 
       expect(result.diagnostics, theme.name).toEqual([]);
       expect(inspection.diagnostics, theme.name).toEqual([]);
-      expect(inspection.blocks, theme.name).toHaveLength(113);
-      expect(inspection.blockPacks, theme.name).toHaveLength(14);
+      expect(inspection.blocks, theme.name).toHaveLength(102);
+      expect(inspection.blockPacks, theme.name).toHaveLength(13);
       expect(
         inspection.templateSources.filter((entry) => entry.source === "theme"),
         theme.name
       ).toHaveLength(themePackage.themeOwnedBlocks);
-      expect(result.html, theme.name).toContain('class="pricing-plan"');
       expect(result.html, theme.name).toContain('class="terminal"');
       expect(result.html, theme.name).toContain('class="popover"');
       expect(result.html, theme.name).toContain('class="action control-button"');

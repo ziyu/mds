@@ -128,7 +128,7 @@ MDS is a semantic layer on top of Markdown.
     label: "Components",
     source: `---
 title: Foundation-first Component Gallery
-description: Native controls, forms, menus, interaction, content, and optional presentation blocks.
+description: Native controls, forms, menus, interaction, data, documentation, media, and conversation blocks.
 ---
 
 ::: hero
@@ -136,7 +136,7 @@ description: Native controls, forms, menus, interaction, content, and optional p
 # UI blocks
 
 --- body
-Start with the controls people use every day. Add structure, data, documentation, and media next. Marketing and motion stay optional presentation layers.
+Start with the controls people use every day. Add structure, data, documentation, media, and conversation patterns next. Motion remains an optional presentation layer.
 
 --- actions
 [Explore controls -> #foundationControls]
@@ -451,7 +451,7 @@ Prioritize reusable controls and readable native fallbacks.
 
 ::: step date="Later"
 ## Later
-Add marketing layouts only when the document needs them.
+Add domain-specific layouts in the owning theme or application when the document needs them.
 :::
 :::
 
@@ -515,7 +515,7 @@ Choose semantic intent first; let the selected theme own presentation.
 :::
 :::
 
-::: metric value="111" label="Shared block vocabulary"
+::: metric value="100" label="Shared block vocabulary"
 Foundation and specialized profiles compose without duplicating theme templates.
 :::
 
@@ -719,94 +719,8 @@ Generated package versions and integrity hashes.
 :::
 :::
 
-::: section presentation
-## 7. Optional presentation blocks
-
-Marketing blocks remain available, but they come after the reusable foundation.
-
-::: stats
-::: stat value="111" label="Shared blocks"
-Foundation, content, and presentation profiles.
-:::
-::: stat value="0" label="Required browser runtime"
-Native fallbacks keep the document readable.
-:::
-::: stat value="100%" label="Portable intent"
-The source is independent from one theme implementation.
-:::
-:::
-
-::: logos
-::: logo
-Atlas
-:::
-::: logo
-Northstar
-:::
-::: logo
-Papertrail
-:::
-:::
-
-::: features
-::: feature label="Authoring"
-## Write
-Use plain Markdown for prose and semantic blocks for layout.
-:::
-::: feature label="Rendering"
-## Render
-Themes turn the same semantic intent into different visual systems.
-:::
-::: feature label="Output"
-## Publish
-Rendered pages can be copied, downloaded, and hosted directly.
-:::
-:::
-
-::: testimonials
-::: testimonial author="Ava Chen" role="Content lead"
-MDS feels like writing notes, but those notes can render as a polished page.
-:::
-::: testimonial author="Noah Patel" role="Frontend engineer"
-The foundation is predictable, and specialized blocks remain optional.
-:::
-:::
-
-::: pricing plans
-::: pricing-plan starter price="$9"
-## Starter
-For individual authors.
-
-- Native foundation controls
-- Standalone HTML export
-- Shared themes
-
-[Start -> #foundationControls]
-:::
-
-::: pricing-plan team price="$29" highlighted
-## Team
-For reusable content systems.
-
-- Shared block vocabulary
-- Theme overrides
-- Review-friendly Markdown
-
-[Choose team -> #foundationControls]
-:::
-:::
-
-::: cta
-## Build from intent
-Start with native controls and semantic content. Add promotional layout only when it serves the document.
-
-[Open dialog !open componentDialog]
-[Back to controls -> #foundationControls]
-:::
-:::
-
 ::: section advancedMotion
-## 8. Advanced motion
+## 7. Advanced motion
 
 Action and motion contracts remain separate from the new foundation blocks.
 

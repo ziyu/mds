@@ -1198,12 +1198,12 @@ MDS 可以有极简状态，但不要变成编程语言。
 可以支持简单列表循环，但不要做复杂模板语言。
 
 ```mds
-@list features
+@list qualities
 - 简洁
 - 生动
 - 可扩展
 
-::: each features
+::: each qualities
 - {{ item }}
 :::
 ```
@@ -1211,10 +1211,19 @@ MDS 可以有极简状态，但不要变成编程语言。
 更常见的是直接用语义块：
 
 ```mds
-::: features
-- 简洁：保持 Markdown 体验
-- 生动：支持动画和交互
-- 可扩展：主题和插件驱动
+::: cards
+::: card
+## 简洁
+保持 Markdown 体验。
+:::
+::: card
+## 生动
+支持动画和交互。
+:::
+::: card
+## 可扩展
+由主题和插件驱动。
+:::
 :::
 ```
 
@@ -1238,20 +1247,20 @@ MDS 可以有极简状态，但不要变成编程语言。
 然后组件可以引用：
 
 ```mds
-::: pricing products
+::: comparison products
 :::
 ```
 
 这个意思是：
 
 ```txt
-使用 products 数据渲染 pricing 组件。
+使用 products 数据渲染 comparison 组件。
 ```
 
 注意：
 
 ```mds
-::: pricing products
+::: comparison products
 :::
 ```
 
@@ -1404,11 +1413,23 @@ HTML 很强，但对内容作者来说太重。
 MDS 只让你写语义。
 :::
 
-::: features
-- 简洁：继承 Markdown 的书写体验
-- 交互：支持按钮、展开、弹窗、表单
-- 动画：通过 reveal、float、scene 等语义块表达
-- 扩展：通过主题和插件渲染成真正的 HTML
+::: cards
+::: card
+## 简洁
+继承 Markdown 的书写体验。
+:::
+::: card
+## 交互
+支持按钮、展开、弹窗和表单。
+:::
+::: card
+## 动画
+通过 reveal、float、scene 等语义块表达。
+:::
+::: card
+## 扩展
+通过主题和插件渲染成真正的 HTML。
+:::
 :::
 
 ::: tabs docs

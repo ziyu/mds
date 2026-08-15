@@ -133,7 +133,7 @@ Rules:
 - `actions` declares commands handled by theme JavaScript. It does not define application logic.
 - `actions` and `supportedBlocks` should be unique. Duplicates produce warnings and the first entry wins.
 - Generated HTML should use normal class names such as `page`, `hero`, and `card`. Themes should not add an `mds-` prefix unless they intentionally want one.
-- Theme-owned components are ordinary block templates. A custom component such as `pricing-plan` or a motion primitive such as `motion` is registered the same way as `hero` or `card`.
+- Theme-owned components are ordinary block templates. A custom component such as `kanban-column` or a motion primitive such as `motion` is registered the same way as `hero` or `card`.
 - Shared block packs compose before theme-owned block templates. A theme can reuse common blocks while overriding selected templates with its own `blocks` source.
 
 ## Block Templates
@@ -323,7 +323,7 @@ Package themes may compose shared block packs before their own templates:
 }
 ```
 
-`blockPacks` accepts named `@mds-crate/blocks/*` profiles, `@mds-crate/blocks/foundation`, or `@mds-crate/blocks/standard`. `foundation` contains core layout, display, navigation, controls, forms, interactive containers, and menus; `standard` adds data, chat, documentation, media, guidance, marketing, and motion profiles. These packs contain reusable structural implementations, not just type declarations. Packs may contribute de-duplicated CSS and progressive-enhancement JavaScript; those assets are emitted before the theme's own assets so the theme can override presentation while retaining portable behavior. A theme normally keeps only templates whose DOM, slots, accessibility behavior, or interaction model must differ from the pack. `blockOverrides` lists that theme-owned subset relative to the source manifest; the builder composes packs first and overrides second, then writes the complete runtime artifact to `dist/theme`. Build metadata records selected packs and final template provenance, and `mds theme inspect` reports both.
+`blockPacks` accepts named `@mds-crate/blocks/*` profiles, `@mds-crate/blocks/foundation`, or `@mds-crate/blocks/standard`. `foundation` contains core layout, display, navigation, controls, forms, interactive containers, and menus; `standard` adds data, chat, documentation, media, guidance, and motion profiles. These packs contain reusable structural implementations, not just type declarations. Packs may contribute de-duplicated CSS and progressive-enhancement JavaScript; those assets are emitted before the theme's own assets so the theme can override presentation while retaining portable behavior. A theme normally keeps only templates whose DOM, slots, accessibility behavior, or interaction model must differ from the pack. `blockOverrides` lists that theme-owned subset relative to the source manifest; the builder composes packs first and overrides second, then writes the complete runtime artifact to `dist/theme`. Build metadata records selected packs and final template provenance, and `mds theme inspect` reports both.
 
 ```txt
 my-theme/

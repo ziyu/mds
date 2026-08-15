@@ -836,30 +836,13 @@ details > summary:hover {
   scroll-snap-align: start;
 }
 
-.cta {
-  position: relative;
-  overflow: hidden;
-  background:
-    linear-gradient(135deg, oklch(0.97 0.016 88), var(--color-card) 52%),
-    radial-gradient(circle at 86% 18%, oklch(0.78 0.08 162 / 0.22), transparent 15rem);
-}
-
-.stats,
-.features,
-.pricing,
-.testimonials,
 .gallery,
 .comparison,
 .api {
   align-items: stretch;
 }
 
-.stat,
-.feature,
-.logo,
 .metric,
-.pricing-plan,
-.testimonial,
 .figure,
 .step,
 .popover,
@@ -874,12 +857,7 @@ details > summary:hover {
     transform 200ms ease;
 }
 
-.stat:hover,
-.feature:hover,
-.logo:hover,
 .metric:hover,
-.pricing-plan:hover,
-.testimonial:hover,
 .figure:hover,
 .step:hover,
 .popover:hover,
@@ -893,7 +871,6 @@ details > summary:hover {
   transform: translateY(-3px);
 }
 
-.stat-value,
 .metric-value {
   display: block;
   color: var(--color-primary);
@@ -905,7 +882,6 @@ details > summary:hover {
   line-height: 0.95;
 }
 
-.stat-label,
 .metric-label {
   display: block;
   margin-top: 0.45rem;
@@ -916,64 +892,10 @@ details > summary:hover {
   font-weight: 680;
 }
 
-.stat-body,
 .metric .mds-flow {
   margin-top: 0.9rem;
   color: var(--color-muted-foreground);
   font-size: 0.95rem;
-}
-
-.feature {
-  position: relative;
-  overflow: hidden;
-}
-
-.feature::after {
-  position: absolute;
-  top: 1.15rem;
-  right: 1.15rem;
-  width: 0.58rem;
-  height: 0.58rem;
-  border-radius: 999px;
-  background: var(--color-primary);
-  content: "";
-  opacity: 0.72;
-}
-
-.feature-body {
-  margin-top: 1rem;
-}
-
-.logos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: center;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  background: color-mix(in oklab, var(--color-card), transparent 6%);
-  padding: 1rem;
-}
-
-.logo {
-  display: inline-flex;
-  min-height: 3rem;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--color-border);
-  border-radius: 0.75rem;
-  background: var(--color-card);
-  color: var(--color-muted-foreground);
-  padding: 0.55rem 1rem;
-  font-family:
-    ui-sans-serif, "Avenir Next", Avenir, "Segoe UI", sans-serif;
-  font-size: 0.9rem;
-  font-weight: 720;
-  letter-spacing: 0;
-}
-
-.logo > p {
-  margin: 0;
 }
 
 .steps,
@@ -1043,78 +965,6 @@ details > summary:hover {
 }
 
 .step-marker:empty {
-  display: none;
-}
-
-.testimonial {
-  display: grid;
-  gap: 1.25rem;
-}
-
-.testimonial blockquote {
-  margin: 0;
-  color: var(--color-foreground);
-  font-size: 1.08rem;
-  line-height: 1.62;
-}
-
-.testimonial figcaption {
-  display: grid;
-  gap: 0.15rem;
-  border-top: 1px solid var(--color-border);
-  padding-top: 1rem;
-  color: var(--color-muted-foreground);
-  font-family:
-    ui-sans-serif, "Avenir Next", Avenir, "Segoe UI", sans-serif;
-  font-size: 0.9rem;
-}
-
-.testimonial figcaption strong {
-  color: var(--color-foreground);
-}
-
-.testimonial figcaption span:empty {
-  display: none;
-}
-
-.pricing-plan {
-  position: relative;
-  display: grid;
-  gap: 1.1rem;
-}
-
-.pricing-plan[data-attr-highlighted="true"] {
-  border-color: color-mix(in oklab, var(--color-primary), var(--color-border) 20%);
-  box-shadow:
-    var(--shadow-sm),
-    inset 0 0 0 1px color-mix(in oklab, var(--color-primary), transparent 72%);
-}
-
-.pricing-plan[data-attr-highlighted="true"]::before {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  border-radius: 999px;
-  background: var(--color-primary);
-  color: var(--color-primary-foreground);
-  content: "Featured";
-  padding: 0.15rem 0.55rem;
-  font-family:
-    ui-sans-serif, "Avenir Next", Avenir, "Segoe UI", sans-serif;
-  font-size: 0.72rem;
-  font-weight: 720;
-}
-
-.pricing-price {
-  color: var(--color-primary);
-  font-family:
-    ui-sans-serif, "Avenir Next", Avenir, "Segoe UI", sans-serif;
-  font-size: clamp(2rem, 5vw, 3rem);
-  font-weight: 760;
-  line-height: 1;
-}
-
-.pricing-price:empty {
   display: none;
 }
 

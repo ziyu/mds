@@ -206,8 +206,8 @@ The same shape covers built-in semantic blocks, theme-defined components, and mo
 # Launch faster
 :::
 
-::: pricing-plan pro highlighted price="$29"
-## Pro
+::: data-table releases page-size=20 selectable
+## Releases
 :::
 
 ::: motion preset="fade-up" trigger="view" stagger=80

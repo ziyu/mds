@@ -511,30 +511,28 @@ export default defineJsxTheme({
       blocks: "blocks"
     });
     expect(manifest.supportedBlocks).toEqual(
-      expect.arrayContaining(["hero", "pricing-plan", "terminal", "custom"])
+      expect.arrayContaining(["hero", "data-table", "terminal", "custom"])
     );
     await expect(readFile(join(root, "dist/theme/blocks/hero.html"), "utf8")).resolves.toContain("local-hero");
-    await expect(readFile(join(root, "dist/theme/blocks/pricing-plan.html"), "utf8")).resolves.toContain(
-      "pricing-plan"
-    );
-    expect(metadata.blockPacks).toHaveLength(14);
+    await expect(readFile(join(root, "dist/theme/blocks/data-table.html"), "utf8")).resolves.toContain("data-table");
+    expect(metadata.blockPacks).toHaveLength(13);
     expect(metadata.templateSources).toEqual(
       expect.arrayContaining([
         { block: "hero", source: "theme" },
         { block: "custom", source: "theme" },
-        { block: "pricing-plan", source: "@mds-crate/blocks/marketing" }
+        { block: "data-table", source: "@mds-crate/blocks/data" }
       ])
     );
     expect(inspection.blockPacks.map((pack) => pack.name)).toContain("@mds-crate/blocks/core");
     expect(inspection.templateSources).toContainEqual({
-      block: "pricing-plan",
-      source: "@mds-crate/blocks/marketing"
+      block: "data-table",
+      source: "@mds-crate/blocks/data"
     });
     expect(result.diagnostics).toEqual([]);
     expect(inspection.diagnostics).toEqual([]);
   });
 
-  it("composes the foundation alias without specialized marketing blocks", async () => {
+  it("composes the foundation alias without specialized content packs", async () => {
     const root = await mkdtemp(join(tmpdir(), "mds-theme-foundation-pack-"));
     await writeFile(
       join(root, "package.json"),
@@ -561,7 +559,7 @@ export default defineJsxTheme({
     expect(manifest.supportedBlocks).toEqual(
       expect.arrayContaining(["avatar", "breadcrumb", "pagination", "button", "input", "slider", "dropdown"])
     );
-    expect(manifest.supportedBlocks).not.toContain("pricing");
+    expect(manifest.supportedBlocks).not.toContain("terminal");
     expect(metadata.blockPacks).toHaveLength(7);
   });
 

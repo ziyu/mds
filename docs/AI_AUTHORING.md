@@ -19,16 +19,14 @@ Use this guide when generating MDS from a prompt or converting Markdown into MDS
 | Generic page section | `section` |
 | Side note or supporting content | `aside` |
 | Footer content | `footer` |
-| Repeated feature/resource items | `cards` with nested `card` |
-| Product feature list | `features` with nested `feature` |
-| Metrics | `stats` with nested `stat` |
+| Repeated items | `cards` with nested `card` |
+| Metrics | `metric`, `progress`, or a Markdown table |
 | Steps or instructions | `steps` with nested `step` |
 | Timeline | `timeline` with nested `step` |
 | FAQ | `faq` with nested `details` |
 | Warning or risk | `warning` |
 | Positive status | `success` |
-| Quote or testimonial | `quote` or `testimonial` |
-| Pricing table | `pricing` with nested `pricing-plan` |
+| Quote or citation | `quote` |
 | Image with caption | `figure` with `caption` slot |
 | Multiple media items | `gallery` with nested `figure` |
 | Installation or command transcript | `terminal` |
@@ -109,13 +107,12 @@ answer
 Attributes are advanced. Use them for compact configuration:
 
 ```mds
-::: stat value="12k+" label="Pages generated"
+::: metric value="12k+" label="Pages generated"
 Standalone pages rendered from semantic Markdown.
 :::
 
-::: pricing-plan pro price="$29" highlighted
-## Pro
-For growing teams.
+::: progress value=72 max=100 label="Migration progress"
+Most documents have been converted.
 :::
 ```
 
@@ -178,23 +175,23 @@ Write Markdown and add semantic blocks.
 :::
 ```
 
-### Product Page
+### Structured Page
 
 ```mds
 ::: hero
 --- title
-# Product Name
+# Project Overview
 
 --- body
-One clear value proposition.
+One clear summary.
 
 --- actions
 [Start -> /start]
 :::
 
-::: features
-::: feature
-## Fast authoring
+::: cards
+::: card
+## Readable authoring
 Keep source files readable.
 :::
 :::

@@ -13,7 +13,6 @@ import {
   foundationBlocks,
   formsBlocks,
   interactiveBlocks,
-  marketingBlocks,
   menuBlocks,
   mediaBlocks,
   motionBlocks,
@@ -36,7 +35,6 @@ describe("MDS block packs", () => {
     );
 
     expect(source.manifest.supportedBlocks).toContain("hero");
-    expect(source.manifest.supportedBlocks).toContain("pricing-plan");
     expect(source.manifest.supportedBlocks).toContain("steps");
     expect(source.manifest.supportedBlocks).toContain("figure");
     expect(source.manifest.supportedBlocks).toContain("terminal");
@@ -56,12 +54,10 @@ describe("MDS block packs", () => {
     expect(source.manifest.supportedBlocks).toContain("message-scroller");
     expect(source.manifest.actions).toEqual(["open", "close", "show", "hide", "toggle"]);
     expect(source.files["blocks/hero.html"]).toContain("hero");
-    expect(source.files["blocks/pricing-plan.html"]).toContain("pricing-plan");
     expect(source.files["blocks/terminal.html"]).toContain("terminal");
 
     const theme = createThemeFromSources(source);
     expect(theme.blockRenderers?.hero).toBeDefined();
-    expect(theme.blockRenderers?.["pricing-plan"]).toBeDefined();
     expect(theme.blockRenderers?.steps).toBeDefined();
     expect(theme.blockRenderers?.figure).toBeDefined();
     expect(theme.blockRenderers?.terminal).toBeDefined();
@@ -79,10 +75,75 @@ describe("MDS block packs", () => {
     expect(theme.blockRenderers?.["context-menu"]).toBeDefined();
     expect(theme.blockRenderers?.menubar).toBeDefined();
     expect(theme.blockRenderers?.["message-scroller"]).toBeDefined();
+    expect(theme.js).toContain("setupCommands");
     expect(theme.js).toContain("setupCalendars");
+    expect(theme.js).toContain("setupDataTables");
+    expect(theme.js).toContain("setupContextMenus");
+    expect(theme.js).toContain("setupMenubars");
+    expect(theme.js).toContain("setupMessageScrollers");
+    expect(() => new Function(theme.js ?? "")).not.toThrow();
   });
 
-  it("offers a foundation composition without marketing or motion profiles", () => {
+  it("keeps progressive enhancements scoped to the pack that owns them", () => {
+    const cases = [
+      {
+        pack: formsBlocks,
+        setupFunctions: ["setupCalendars"],
+        selector: ".calendar-enhanced",
+        unrelatedSetup: "setupDataTables",
+        unrelatedSelector: ".data-table-shell"
+      },
+      {
+        pack: interactiveBlocks,
+        setupFunctions: ["setupCommands"],
+        selector: ".command-input",
+        unrelatedSetup: "setupCalendars",
+        unrelatedSelector: ".context-menu-content"
+      },
+      {
+        pack: dataBlocks,
+        setupFunctions: ["setupDataTables"],
+        selector: ".data-table-shell",
+        unrelatedSetup: "setupMessageScrollers",
+        unrelatedSelector: ".message-scroller"
+      },
+      {
+        pack: menuBlocks,
+        setupFunctions: ["setupContextMenus", "setupMenubars"],
+        selector: ".context-menu-content",
+        unrelatedSetup: "setupCommands",
+        unrelatedSelector: ".command-input"
+      },
+      {
+        pack: chatBlocks,
+        setupFunctions: ["setupMessageScrollers"],
+        selector: ".message-scroller-viewport",
+        unrelatedSetup: "setupDataTables",
+        unrelatedSelector: ".data-table-shell"
+      }
+    ] as const;
+
+    for (const { pack, setupFunctions, selector, unrelatedSetup, unrelatedSelector } of cases) {
+      const script = pack.files["runtime.js"];
+      const styles = pack.files["runtime.css"];
+
+      expect(script).toBeTypeOf("string");
+      expect(styles).toBeTypeOf("string");
+      if (script === undefined || styles === undefined) {
+        throw new Error(`Expected runtime assets for ${pack.name}.`);
+      }
+      expect(() => new Function(script)).not.toThrow();
+      expect(script).toContain("const truthy");
+      for (const setupFunction of setupFunctions) {
+        expect(script).toContain(setupFunction);
+      }
+      expect(script).not.toContain(unrelatedSetup);
+      expect(styles).toContain(selector);
+      expect(styles).not.toContain(unrelatedSelector);
+    }
+  });
+
+  it("offers a foundation composition without specialized content or motion profiles", () => {
     const supportedBlocks = foundationBlocks.flatMap((pack) => pack.supportedBlocks ?? []);
 
     expect(supportedBlocks).toEqual(
@@ -99,7 +160,7 @@ describe("MDS block packs", () => {
         "menubar"
       ])
     );
-    expect(supportedBlocks).not.toContain("pricing");
+    expect(supportedBlocks).not.toContain("terminal");
     expect(supportedBlocks).not.toContain("motion");
   });
 
@@ -117,22 +178,7 @@ describe("MDS block packs", () => {
     );
 
     expect(source.manifest.supportedBlocks).toContain("details");
-    expect(source.manifest.supportedBlocks).not.toContain("pricing");
-
-    const marketingSource = composeThemeSource(
-      {
-        manifest: {
-          name: "marketing-only"
-        },
-        files: {}
-      },
-      {
-        blockPacks: [marketingBlocks]
-      }
-    );
-
-    expect(marketingSource.manifest.supportedBlocks).toContain("pricing");
-    expect(marketingSource.manifest.supportedBlocks).not.toContain("details");
+    expect(source.manifest.supportedBlocks).not.toContain("terminal");
 
     const docsSource = composeThemeSource(
       {
@@ -147,17 +193,13 @@ describe("MDS block packs", () => {
     );
 
     expect(docsSource.manifest.supportedBlocks).toContain("terminal");
-    expect(docsSource.manifest.supportedBlocks).not.toContain("pricing");
+    expect(docsSource.manifest.supportedBlocks).not.toContain("details");
   });
 
   it("exports machine-readable vocabulary for generated authoring tools", () => {
     expect(blockVocabularyByName.hero).toMatchObject({
       profile: "core",
       slots: ["title", "body", "actions", "media"]
-    });
-    expect(blockVocabularyByName["pricing-plan"]).toMatchObject({
-      profile: "marketing",
-      attrs: ["price", "highlighted"]
     });
     expect(blockVocabularyByName["code-group"]).toMatchObject({
       profile: "docs"
@@ -185,6 +227,9 @@ describe("MDS block packs", () => {
     const supportedBlocks = standardBlocks.flatMap((pack) => pack.supportedBlocks ?? []);
     const missingVocabulary = supportedBlocks.filter((block) => blockVocabularyByName[block] === undefined);
 
+    expect(blockVocabulary).toHaveLength(100);
+    expect(standardBlocks).toHaveLength(13);
+    expect(Object.keys(blockPacksByName)).toHaveLength(13);
     expect(missingVocabulary).toEqual([]);
     expect(new Set(blockVocabulary.map((block) => block.name)).size).toBe(blockVocabulary.length);
   });

@@ -81,7 +81,7 @@ MDS parser
   -> standalone HTML
 ```
 
-The parser only preserves `blockType`, `name`, `id`, `attrs`, slots, and children. It does not validate whether `pricing-plan` or `code-group` is a standard block.
+The parser only preserves `blockType`, `name`, `id`, `attrs`, slots, and children. It does not validate whether `message-scroller` or `code-group` is a standard block.
 
 The renderer remains narrow. It receives an `HtmlTheme` and renders block nodes through the merged renderer map.
 
@@ -207,12 +207,11 @@ Current profiles are ordered by product priority. Foundation controls come befor
 | `chat` | Portable conversation layout and transcript behavior. | `attachment`, `bubble`, `marker`, `message`, `message-scroller` |
 | `docs` | Technical documentation and reference pages. | `terminal`, `code-group`, `file-tree`, `api`, `endpoint`, `steps`, `timeline` |
 | `media` | Images, video, figures, galleries. | `media`, `image`, `video`, `figure`, `caption`, `gallery` |
-| `marketing` | Lower-priority landing and product presentation. | `cta`, `features`, `feature`, `stats`, `stat`, `logos`, `testimonial`, `pricing`, `pricing-plan` |
 | `motion` | Motion wrappers and reveal semantics. | `motion`, `reveal`, `scene` |
 
 Themes may opt into multiple profiles. A theme should only publish profiles whose output has been visually checked with its CSS.
 
-`foundationBlocks` composes `core`, `display`, `navigation`, `controls`, `forms`, `interactive`, and `menus`. `standardBlocks` adds data, chat, documentation, media, guidance, marketing, and motion profiles. Packs may include de-duplicated structural CSS and progressive-enhancement JavaScript; those assets compose before theme-owned assets so external themes work immediately and can override the presentation.
+`foundationBlocks` composes `core`, `display`, `navigation`, `controls`, `forms`, `interactive`, and `menus`. `standardBlocks` adds data, chat, documentation, media, guidance, and motion profiles. Packs may include de-duplicated structural CSS and progressive-enhancement JavaScript; those assets compose before theme-owned assets so external themes work immediately and can override the presentation.
 
 The [shadcn/ui coverage matrix](./SHADCN_BLOCK_MAP.md) is used as a completeness benchmark. It does not introduce library-specific aliases when Markdown or an existing MDS block already provides a stronger representation.
 
@@ -300,7 +299,7 @@ For editor development mode, the dev server may compose pack sources before send
 
 4. **Move existing themes gradually**
 
-   Status: implemented for `default`, `folio`, and `atelier`. They opt into `@mds-crate/blocks/standard`, keep source under `src/`, and materialize complete plain runtime artifacts under `dist/theme`. The override audit reduced theme-owned templates from 31 each to 6 for `default`, 10 for `folio`, and 6 for `atelier`; the shared vocabulary contains 111 blocks across 14 packs, and these composed theme artifacts expose 113 templates after their theme-owned additions.
+   Status: implemented for `default`, `folio`, and `atelier`. They opt into `@mds-crate/blocks/standard`, keep source under `src/`, and materialize complete plain runtime artifacts under `dist/theme`. The override audit reduced theme-owned templates from 31 each to 6 for `default`, 10 for `folio`, and 6 for `atelier`; the shared vocabulary contains 100 blocks across 13 packs, and these composed theme artifacts expose 102 templates after their theme-owned additions.
 
 5. **Update package SDKs**
 

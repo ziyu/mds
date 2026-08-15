@@ -50,19 +50,19 @@ attrs:
 ```
 
 ```mds
-::: pricing-plan pro highlighted price="$29"
-## Pro
-For growing teams.
+::: data-table releases page-size=20 selectable
+## Releases
+Recent package versions.
 :::
 ```
 
 ```txt
-type: pricing-plan
-name: pro
-id: pro
+type: data-table
+name: releases
+id: releases
 attrs:
-  highlighted: true
-  price: $29
+  page-size: 20
+  selectable: true
 ```
 
 ## Names, IDs, And Display Titles

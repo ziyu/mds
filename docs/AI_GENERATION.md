@@ -34,7 +34,7 @@ AI generation should follow three levels.
 The default generation policy is:
 
 1. Write normal prose, headings, lists, code, tables, and links as Markdown.
-2. Use blocks when the content has page-level intent: `hero`, `section`, `cards`, `steps`, `faq`, `pricing`, `form`, and similar.
+2. Use blocks when the content has page-level intent: `hero`, `section`, `cards`, `steps`, `faq`, `form`, and similar.
 3. Prefer semantic block names over generic blocks with attributes. Use `::: warning` before `::: callout tone="warning"`.
 4. Treat the optional token after a block type as a stable id, never as a display title.
 5. Put human-readable titles in headings or slots.
@@ -67,7 +67,7 @@ This should live in `@mds-crate/blocks` so themes, editor UI, generation tools, 
 AI-generated MDS needs a dependable default surface. The shared packs should cover the common document shapes before themes get fancy:
 
 - core layout and callouts;
-- marketing and product pages;
+- structured project and reference pages;
 - guidance blocks such as steps, timeline, and FAQ;
 - media blocks such as figure, gallery, image, and video;
 - documentation blocks such as terminal, code group, file tree, API, and endpoint;
@@ -99,11 +99,11 @@ MDS needs paired examples that teach the model what to do:
 - README to MDS;
 - tutorial to MDS;
 - API reference to MDS;
-- product page to MDS;
+- project overview to MDS;
 - report to MDS;
 - course notes to MDS;
 - FAQ to MDS;
-- launch announcement to MDS.
+- release notes to MDS.
 
 The goal is not only documentation for humans. These examples are training-shaped context for agents.
 
@@ -114,7 +114,7 @@ The goal is not only documentation for humans. These examples are training-shape
 - Add this roadmap.
 - Add an operational authoring guide for AI generation.
 - Export a structured block vocabulary from `@mds-crate/blocks`.
-- Expand shared block packs beyond core and marketing.
+- Expand shared block packs beyond core.
 - Add JSON diagnostics to `mds build` and `mds check`.
 - Add tests that prove the vocabulary and JSON output stay stable.
 
