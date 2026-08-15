@@ -1,0 +1,6 @@
+<figure{{ attrs }} class="image">
+  <img src="{{ attr:src }}" alt="{{ attr:alt }}">
+  <figcaption>{{ slot:caption }}</figcaption>
+  <div class="image-fallback">{{ children }}</div>
+  {{ slots }}
+</figure>

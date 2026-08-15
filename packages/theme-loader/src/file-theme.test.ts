@@ -180,6 +180,12 @@ describe("loadThemeDirectory", () => {
     );
     expect(themes).toContainEqual(
       expect.objectContaining({
+        name: "rich",
+        label: "Rich"
+      })
+    );
+    expect(themes).toContainEqual(
+      expect.objectContaining({
         name: "clarity",
         label: "Clarity"
       })
@@ -197,8 +203,13 @@ describe("loadThemeDirectory", () => {
     const atelierTheme = await registry.loadTheme("atelier");
     expect(atelierTheme.name).toBe("atelier");
     expect(atelierTheme.css).toContain(".hero-media");
-    expect(atelierTheme.blockRenderers?.warning).toBeDefined();
+    expect(atelierTheme.blockRenderers?.callout).toBeDefined();
 
+    const richTheme = await registry.loadTheme("rich");
+    expect(richTheme.name).toBe("rich");
+    expect(richTheme.blockRenderers?.warning).toBeDefined();
+    expect(richTheme.blockRenderers?.["data-table"]).toBeDefined();
+    expect(richTheme.blockRenderers?.message).toBeDefined();
   });
 
   it("deduplicates supported block summaries from file registries", async () => {

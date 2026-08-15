@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { build as buildWithEsbuild } from "esbuild";
 import type { AcceptedPlugin, Message } from "postcss";
 import { tsImport } from "tsx/esm/api";
-import { blockPacksByName, foundationBlocks, standardBlocks } from "@mds-crate/blocks";
+import { blockPacksByName, foundationBlocks } from "@mds-crate/blocks";
 import {
   createThemeSourceFromJsxTheme,
   isJsxThemeDefinition,
@@ -746,9 +746,6 @@ function resolvePackageBlockPacks(refs: string[]): PackageThemeBlockPackLoadResu
   }
 
   const blockPacks = refs.flatMap((ref) => {
-    if (ref === "@mds-crate/blocks/standard") {
-      return [...standardBlocks];
-    }
     if (ref === "@mds-crate/blocks/foundation") {
       return [...foundationBlocks];
     }
@@ -758,8 +755,7 @@ function resolvePackageBlockPacks(refs: string[]): PackageThemeBlockPackLoadResu
       throw new Error(
         `Unknown MDS block pack: ${ref}. Available packs: ${[
           ...Object.keys(blockPacksByName),
-          "@mds-crate/blocks/foundation",
-          "@mds-crate/blocks/standard"
+          "@mds-crate/blocks/foundation"
         ].join(", ")}.`
       );
     }

@@ -4,15 +4,15 @@ This document defines the shared blocks layer that sits between MDS syntax and i
 
 The short version:
 
-**Blocks are shared semantic capabilities. Themes are visual implementations and overrides. Runtime still consumes plain theme artifacts.**
+**The block layer provides portable UI primitives. Themes compose those primitives, own higher-level content patterns, and still build to plain runtime artifacts.**
 
 MDS already treats every extensible component as a block. The next step is to make the common block vocabulary reusable across themes without copying `blocks/*.html` into every theme directory.
 
 ## Goals
 
-- Let many themes support the same broad block vocabulary.
+- Let many themes share a compact, stable vocabulary of UI primitives.
 - Keep the current artifact contract: runtime loads `theme.json`, block templates, CSS, optional JavaScript, and shell files.
-- Let themes opt into shared block sets and override only the templates they need to change.
+- Let themes opt into shared block sets, override primitive structure when needed, and add richer blocks without expanding the base package.
 - Keep renderer, parser, and editor contracts stable.
 - Keep file-based themes approachable for authors who do not use TypeScript, JSX, or a package builder.
 - Let package themes author rich blocks through SDKs, then build to the same artifact format.
@@ -40,7 +40,7 @@ A reusable artifact-shaped source of block templates and optional metadata:
 ```txt
 blocks/
   page.html
-  hero.html
+  button.html
   card.html
 metadata.json
 ```
@@ -49,7 +49,7 @@ A block pack is not a runtime component library. It is merged into a theme sourc
 
 **Block profile**
 
-A named subset of a vocabulary, such as `core`, `display`, `navigation`, `controls`, `forms`, `menus`, or `motion`. Profiles let small themes opt into useful coverage without claiming the full Canvas-sized set.
+A named subset of the primitive vocabulary, such as `core`, `display`, `navigation`, `controls`, `forms`, `menus`, or `motion`. Profiles let small themes opt into only the contracts they use.
 
 **Theme override**
 
@@ -93,7 +93,7 @@ The first implementation is source-level composition:
 
 - `@mds-crate/theme-loader` exports `composeThemeSource()`.
 - `@mds-crate/theme-loader` exports the `ThemeBlockPackSource` and `ComposeThemeSourceOptions` types.
-- `@mds-crate/blocks` exports focused packs, `foundationBlocks`, and `standardBlocks`.
+- `@mds-crate/blocks` exports nine focused packs and the seven-pack `foundationBlocks` composition.
 - JSX, HTML, and React theme SDK definitions accept optional `blockPacks`.
 
 This first version intentionally does not resolve string references such as `"@mds-crate/blocks/core"` from `theme.json`. Package and SDK authors pass pack objects directly, and the generated `ThemeSourceInput` is a normal artifact-shaped source.
@@ -192,26 +192,25 @@ Rules:
 
 ## Profiles
 
-Current profiles are ordered by product priority. Foundation controls come before specialized presentation blocks:
+The shared package intentionally stops at portable primitives:
 
 | Profile | Purpose | Example Blocks |
 | --- | --- | --- |
-| `core` | Basic page structure and content containers. | `page`, `section`, `hero`, `nav`, `footer`, `card`, `cards`, `grid`, `split`, `note`, `details` |
-| `display` | Reusable identity and content presentation. | `avatar`, `empty`, `item` |
+| `core` | Basic page structure and content containers. | `page`, `section`, `nav`, `footer`, `card`, `grid`, `split`, `callout`, `details` |
+| `display` | Reusable identity and compact status presentation. | `avatar`, `empty`, `item`, `badge`, `progress` |
 | `navigation` | Hierarchical and paged navigation. | `breadcrumb`, `breadcrumb-item`, `pagination` |
 | `controls` | Universal buttons and two-state controls. | `button`, `toggle`, `toggle-group` |
 | `forms` | Native-first form composition and date selection. | `form`, `fieldset`, `field`, `label`, `input`, `input-group`, `input-otp`, `combobox`, `calendar`, `textarea`, `select`, `option`, `checkbox`, `radio-group`, `radio`, `slider`, `switch`, `button-group` |
 | `interactive` | Native-first interactive containers. | `tabs`, `accordion`, `carousel`, `dialog`, `drawer`, `popover`, `tooltip`, `command` |
-| `menus` | Commands, disclosure menus, context menus, and application menubars. | `dropdown`, `dropdown-menu`, `context-menu`, `menubar`, `menu`, `menu-group`, `menu-item`, `menu-separator` |
-| `data` | Metrics, charts, and progressively enhanced native tables. | `metric`, `progress`, `chart`, `chart-series`, `chart-point`, `data-table`, `data-column`, `data-row`, `data-cell` |
-| `chat` | Portable conversation layout and transcript behavior. | `attachment`, `bubble`, `marker`, `message`, `message-scroller` |
-| `docs` | Technical documentation and reference pages. | `terminal`, `code-group`, `file-tree`, `api`, `endpoint`, `steps`, `timeline` |
-| `media` | Images, video, figures, galleries. | `media`, `image`, `video`, `figure`, `caption`, `gallery` |
+| `menus` | Commands, disclosure menus, context menus, and application menubars. | `dropdown`, `context-menu`, `menubar`, `menu`, `menu-group`, `menu-item`, `menu-separator` |
+| `media` | Native media semantics that do not imply a gallery system. | `video`, `figure`, `caption` |
 | `motion` | Motion wrappers and reveal semantics. | `motion`, `reveal`, `scene` |
 
 Themes may opt into multiple profiles. A theme should only publish profiles whose output has been visually checked with its CSS.
 
-`foundationBlocks` composes `core`, `display`, `navigation`, `controls`, `forms`, `interactive`, and `menus`. `standardBlocks` adds data, chat, documentation, media, guidance, and motion profiles. Packs may include de-duplicated structural CSS and progressive-enhancement JavaScript; those assets compose before theme-owned assets so external themes work immediately and can override the presentation.
+`foundationBlocks` composes `core`, `display`, `navigation`, `controls`, `forms`, `interactive`, and `menus`. Themes add `media` and `motion` explicitly when needed. The complete shared layer is 63 blocks across nine packs. Packs may include de-duplicated structural CSS and progressive-enhancement JavaScript; those assets compose before theme-owned assets so external themes work immediately and can override presentation.
+
+Higher-level patterns are theme capabilities. The official `@mds-crate/theme-rich` package owns 38 such names: hero/card collections and layout aliases, semantic callout aliases, data tables and charts, documentation structures, guided sequences, gallery composition, and conversation layouts. This preserves useful built-in coverage without making every theme or application inherit those opinions.
 
 The [shadcn/ui coverage matrix](./SHADCN_BLOCK_MAP.md) is used as a completeness benchmark. It does not introduce library-specific aliases when Markdown or an existing MDS block already provides a stronger representation.
 
@@ -289,7 +288,7 @@ For editor development mode, the dev server may compose pack sources before send
 
    Keep this file as the design contract before changing runtime behavior.
 
-2. **Extract a standard block pack**
+2. **Extract reusable primitive packs**
 
    Use Canvas as the initial reference because it currently has the broadest implemented block set. Start with templates that are readable without Canvas-specific styling.
 
@@ -299,7 +298,7 @@ For editor development mode, the dev server may compose pack sources before send
 
 4. **Move existing themes gradually**
 
-   Status: implemented for `default`, `folio`, and `atelier`. They opt into `@mds-crate/blocks/standard`, keep source under `src/`, and materialize complete plain runtime artifacts under `dist/theme`. The override audit reduced theme-owned templates from 31 each to 6 for `default`, 10 for `folio`, and 6 for `atelier`; the shared vocabulary contains 100 blocks across 13 packs, and these composed theme artifacts expose 102 templates after their theme-owned additions.
+   Status: implemented for `default`, `folio`, `atelier`, and `rich`. Themes explicitly compose `foundation`, `media`, and `motion` as needed, keep source under `src/`, and materialize complete plain runtime artifacts under `dist/theme`. The shared vocabulary contains 63 blocks across nine packs. Rich adds 38 higher-level names and exposes 101 capabilities in its final artifact.
 
 5. **Update package SDKs**
 
@@ -311,7 +310,7 @@ For editor development mode, the dev server may compose pack sources before send
 
 7. **Add visual smoke tests**
 
-   Status: implemented through `pnpm test:visual`. The Components example renders through `default`, `folio`, and `atelier` at 390x844 and 1440x1000, captures PNGs through Chrome DevTools Protocol, and fails on horizontal overflow or render diagnostics.
+   Status: implemented through `pnpm test:visual`. The Components gallery covers exactly the 63 shared blocks and renders through `default` at 390x844 and 1440x1000. Chrome DevTools Protocol captures PNGs and fails on horizontal overflow, missing shared enhancement behavior, or render diagnostics.
 
 ## Compatibility
 

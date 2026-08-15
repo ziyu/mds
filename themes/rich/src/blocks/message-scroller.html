@@ -1,0 +1,9 @@
+<section{{ attrs }} class="message-scroller" role="region" aria-label="{{ attr:label:Messages }}">
+  <div class="message-scroller-viewport" tabindex="0">
+    <div class="message-scroller-content" role="log" aria-relevant="additions">
+      {{ children }}
+      {{ slots }}
+    </div>
+  </div>
+  <button class="message-scroller-button" type="button" hidden>↓ Latest</button>
+</section>

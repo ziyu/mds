@@ -6,22 +6,13 @@ export const coreBlocks: ThemeBlockPackSource = {
   supportedBlocks: [
     "page",
     "nav",
-    "hero",
     "section",
     "aside",
     "footer",
-    "cards",
     "card",
     "grid",
-    "grid-2",
-    "grid-3",
-    "grid-auto",
     "split",
-    "note",
-    "info",
-    "warning",
-    "danger",
-    "success",
+    "callout",
     "quote",
     "details"
   ],
@@ -35,13 +26,6 @@ export const coreBlocks: ThemeBlockPackSource = {
   {{ children }}
   {{ slots }}
 </nav>`,
-    "blocks/hero.html": `<section{{ attrs }} class="hero">
-  <div class="hero-title">{{ slot:title }}</div>
-  <div class="hero-body">{{ slot:body }}</div>
-  <div class="hero-content">{{ children }}</div>
-  <div class="hero-actions">{{ slot:actions }}</div>
-  <div class="hero-media">{{ slot:media }}</div>
-</section>`,
     "blocks/section.html": `<section{{ attrs }} class="section {{ type }}">
   {{ children }}
   {{ slots }}
@@ -54,33 +38,25 @@ export const coreBlocks: ThemeBlockPackSource = {
   {{ children }}
   {{ slots }}
 </footer>`,
-    "blocks/cards.html": `<section{{ attrs }} class="cards">
-  {{ children }}
-  {{ slots }}
-</section>`,
     "blocks/card.html": `<article{{ attrs }} class="card">
   {{ children }}
   {{ slots }}
 </article>`,
-    "blocks/grid.html": `<template data-block="grid grid-2 grid-3 grid-auto">
-<section{{ attrs }} class="grid {{ type }}">
+    "blocks/grid.html": `<section{{ attrs }} class="grid">
   {{ children }}
   {{ slots }}
-</section>
-</template>`,
+</section>`,
     "blocks/split.html": `<section{{ attrs }} class="split">
   <div class="split-pane" data-slot="left">{{ slot:left }}</div>
   <div class="split-pane" data-slot="right">{{ slot:right }}</div>
   <div class="split-content">{{ children }}</div>
   {{ slots }}
 </section>`,
-    "blocks/callout.html": `<template data-block="note info warning danger success">
-<aside{{ attrs }} class="callout {{ type }}" role="note">
-  <strong class="callout-label">{{ type }}</strong>
+    "blocks/callout.html": `<aside{{ attrs }} class="callout {{ attr:tone:note }}" role="note">
+  <strong class="callout-label">{{ attr:label:Note }}</strong>
   <div class="callout-body">{{ children }}</div>
   {{ slots }}
-</aside>
-</template>`,
+</aside>`,
     "blocks/quote.html": `<blockquote{{ attrs }} class="quote">
   {{ children }}
   {{ slots }}

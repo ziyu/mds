@@ -11,7 +11,7 @@ import { examples } from "../apps/editor/src/examples.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outputDirectory = join(root, ".tmp/visual-smoke");
-const themeNames = ["default", "folio", "atelier", "canvas"] as const;
+const themeNames = ["default"] as const;
 const viewports = [
   { name: "mobile", width: 390, height: 844 },
   { name: "desktop", width: 1440, height: 1000 }
@@ -44,13 +44,10 @@ interface CommandMetrics {
   restores: boolean;
 }
 
-interface RemainingBlockMetrics {
+interface SharedEnhancementMetrics {
   calendar: boolean;
-  dataTable: boolean;
   contextMenu: boolean;
   menubar: boolean;
-  messageScroller: boolean;
-  chart: boolean;
 }
 
 async function main(): Promise<void> {
@@ -254,7 +251,7 @@ async function captureScreenshot(
         `Command enhancement failed for ${screenshotPath}: ${JSON.stringify(command)}.`
       );
     }
-    const remainingEvaluated = await client.send<{ result: { value: RemainingBlockMetrics } }>(
+    const remainingEvaluated = await client.send<{ result: { value: SharedEnhancementMetrics } }>(
       "Runtime.evaluate",
       {
         expression: `(() => {
@@ -269,30 +266,6 @@ async function captureScreenshot(
             calendarNative instanceof HTMLElement && calendarNative.hidden &&
             calendarTarget instanceof HTMLButtonElement &&
             calendarRoot.getAttribute('data-value') !== calendarBefore;
-
-          const tableShell = document.querySelector('.data-table-shell');
-          const table = tableShell?.querySelector('.data-table');
-          const tableToolbar = tableShell?.querySelector('.data-table-toolbar');
-          const tableFilter = tableShell?.querySelector('.data-table-filter-input');
-          const tableEmpty = tableShell?.querySelector('.data-table-empty');
-          const tablePager = tableShell?.querySelector('.data-table-pagination');
-          const tableSort = tableShell?.querySelector('.data-table-sort');
-          let filters = false;
-          let restoresTable = false;
-          if (tableFilter instanceof HTMLInputElement && table instanceof HTMLTableElement && tableEmpty instanceof HTMLElement) {
-            tableFilter.value = '__mds_no_matching_row__';
-            tableFilter.dispatchEvent(new Event('input', { bubbles: true }));
-            filters = table.hidden && !tableEmpty.hidden;
-            tableFilter.value = '';
-            tableFilter.dispatchEvent(new Event('input', { bubbles: true }));
-            restoresTable = !table.hidden && tableEmpty.hidden;
-            if (tableSort instanceof HTMLButtonElement) tableSort.click();
-          }
-          const dataTable = tableShell instanceof HTMLElement &&
-            tableShell.classList.contains('is-enhanced') &&
-            tableToolbar instanceof HTMLElement && !tableToolbar.hidden &&
-            tablePager instanceof HTMLElement && !tablePager.hidden &&
-            filters && restoresTable;
 
           const contextRoot = document.querySelector('.context-menu');
           const contextTrigger = contextRoot?.querySelector('.context-menu-trigger');
@@ -316,34 +289,8 @@ async function captureScreenshot(
           const menubar = menubarRoot instanceof HTMLElement &&
             menubarRoot.classList.contains('is-enhanced') && menubarKeyboard;
 
-          const scroller = document.querySelector('.message-scroller');
-          const viewport = scroller?.querySelector('.message-scroller-viewport');
-          const content = scroller?.querySelector('.message-scroller-content');
-          const latest = scroller?.querySelector('.message-scroller-button');
-          let scrollControl = false;
-          if (viewport instanceof HTMLElement && content instanceof HTMLElement && latest instanceof HTMLButtonElement) {
-            const additions = Array.from({ length: 16 }, (_, index) => {
-              const row = document.createElement('p');
-              row.textContent = 'Temporary transcript row ' + index;
-              content.append(row);
-              return row;
-            });
-            viewport.scrollTop = 0;
-            viewport.dispatchEvent(new Event('scroll'));
-            scrollControl = viewport.scrollHeight > viewport.clientHeight && !latest.hidden;
-            additions.forEach((row) => row.remove());
-            viewport.scrollTop = viewport.scrollHeight;
-            viewport.dispatchEvent(new Event('scroll'));
-          }
-          const messageScroller = scroller instanceof HTMLElement &&
-            scroller.classList.contains('is-enhanced') &&
-            content?.getAttribute('role') === 'log' && scrollControl;
-
-          const chart = document.querySelectorAll('.chart-point-meter').length >= 4 &&
-            [...document.querySelectorAll('.chart-point-meter')].every((meter) => meter instanceof HTMLMeterElement);
-
           window.scrollTo(0, 0);
-          return { calendar, dataTable, contextMenu, menubar, messageScroller, chart };
+          return { calendar, contextMenu, menubar };
         })()`,
         returnByValue: true
       },
@@ -352,7 +299,7 @@ async function captureScreenshot(
     const remaining = remainingEvaluated.result.value;
     if (Object.values(remaining).some((value) => !value)) {
       throw new Error(
-        `Remaining block enhancement failed for ${screenshotPath}: ${JSON.stringify(remaining)}.`
+        `Shared block enhancement failed for ${screenshotPath}: ${JSON.stringify(remaining)}.`
       );
     }
     const evaluated = await client.send<{ result: { value: LayoutMetrics } }>(

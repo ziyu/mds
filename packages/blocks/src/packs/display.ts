@@ -3,7 +3,7 @@ import type { ThemeBlockPackSource } from "@mds-crate/theme-loader";
 export const displayBlocks: ThemeBlockPackSource = {
   name: "@mds-crate/blocks/display",
   profiles: ["display"],
-  supportedBlocks: ["avatar", "empty", "item"],
+  supportedBlocks: ["avatar", "empty", "item", "badge", "progress"],
   blocks: "blocks",
   files: {
     "blocks/avatar.html": `<span{{ attrs }} class="avatar" role="img" aria-label="{{ attr:alt:Avatar }}">
@@ -26,6 +26,15 @@ export const displayBlocks: ThemeBlockPackSource = {
   </div>
   <div class="item-actions">{{ slot:actions }}</div>
   <footer class="item-footer">{{ slot:footer }}</footer>
-</article>`
+</article>`,
+    "blocks/badge.html": `<span{{ attrs }} class="badge {{ attr:tone }}">
+  {{ children }}
+</span>`,
+    "blocks/progress.html": `<figure{{ attrs }} class="progress">
+  <progress value="{{ attr:value:0 }}" max="{{ attr:max:100 }}"></progress>
+  <figcaption>{{ attr:label }}</figcaption>
+  {{ children }}
+  {{ slots }}
+</figure>`
   }
 };

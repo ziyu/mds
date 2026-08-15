@@ -9,6 +9,7 @@ export const publicPackageDirectories = [
   "packages/theme-sdk-react",
   "packages/theme-builder",
   "themes/default",
+  "themes/rich",
   "packages/cli"
 ];
 
@@ -20,5 +21,6 @@ export const expectedRuntimeExports = {
   "@mds-crate/theme-sdk-html": "defineHtmlTheme",
   "@mds-crate/theme-sdk-react": "defineReactTheme",
   "@mds-crate/theme-builder": "buildPackageTheme",
-  "@mds-crate/theme-default": "theme"
+  "@mds-crate/theme-default": "theme",
+  "@mds-crate/theme-rich": "theme"
 };

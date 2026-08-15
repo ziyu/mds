@@ -1,0 +1,9 @@
+<template data-block="dropdown dropdown-menu">
+<details{{ attrs }} class="dropdown-menu"{{ bool:open }}>
+  <summary>{{ attr:label:Menu }}</summary>
+  <div class="dropdown-menu-content">
+    {{ children }}
+    {{ slots }}
+  </div>
+</details>
+</template>

@@ -9,13 +9,6 @@ export const menuVocabulary = [
     children: ["menu", "menu-item", "menu-group", "menu-separator"]
   },
   {
-    name: "dropdown-menu",
-    profile: "menus",
-    purpose: "Explicit alias for the dropdown menu block.",
-    attrs: ["label", "open"],
-    children: ["menu", "menu-item", "menu-group", "menu-separator"]
-  },
-  {
     name: "context-menu",
     profile: "menus",
     purpose: "Right-click menu with an explicit native disclosure fallback.",
@@ -27,7 +20,7 @@ export const menuVocabulary = [
     profile: "menus",
     purpose: "Persistent application menu bar composed from dropdown and menu blocks.",
     attrs: ["label"],
-    children: ["dropdown", "dropdown-menu", "menu"]
+    children: ["dropdown", "menu"]
   },
   {
     name: "menu",

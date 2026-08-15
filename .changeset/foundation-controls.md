@@ -5,4 +5,4 @@
 "@mds-crate/theme-default": minor
 ---
 
-Add complete native-first display, navigation, control, form, calendar, command, menu, data-table, chart, and chat block coverage; compose de-duplicated pack CSS and progressive-enhancement JavaScript before theme assets; and finish the shadcn/ui coverage matrix. Existing action and motion contracts remain unchanged.
+Add complete native-first display, navigation, control, form, calendar, command, and menu coverage; focus the shared package on 63 portable primitives across nine packs; and preserve the existing action and motion contracts. Higher-level data, documentation, guidance, gallery, and conversation blocks move to the Rich theme instead of becoming universal dependencies.

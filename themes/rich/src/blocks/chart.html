@@ -1,0 +1,8 @@
+<figure{{ attrs }} class="chart" aria-label="{{ attr:label:Chart }}">
+  <figcaption class="chart-heading">{{ attr:label:Chart }}</figcaption>
+  <div class="chart-description">{{ slot:description }}</div>
+  <div class="chart-plot">
+    {{ children }}
+  </div>
+  <div class="chart-legend">{{ slot:legend }}</div>
+</figure>

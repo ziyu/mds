@@ -145,8 +145,8 @@ The first slice should be small but compounding:
 
 1. Create the roadmap and authoring docs.
 2. Add structured block vocabulary data to `@mds-crate/blocks`.
-3. Add `guidance`, `media`, `docs`, `forms`, and `interactive` packs.
-4. Export all packs through `standardBlocks`.
+3. Keep the reusable package focused on core, display, navigation, controls, forms, interactive, menus, media, and motion primitives.
+4. Put higher-level guidance, data, documentation, gallery, and conversation patterns in capable themes such as Rich.
 5. Add CLI `--json` diagnostics for `build` and `check`.
 6. Add tests for pack composition, vocabulary consistency, and JSON diagnostics.
 

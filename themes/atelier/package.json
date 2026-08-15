@@ -7,7 +7,9 @@
     "source": "./src/theme.tsx",
     "dist": "./dist/theme",
     "blockPacks": [
-      "@mds-crate/blocks/standard"
+      "@mds-crate/blocks/foundation",
+      "@mds-crate/blocks/media",
+      "@mds-crate/blocks/motion"
     ],
     "assets": {
       "css": "./src/style.css",

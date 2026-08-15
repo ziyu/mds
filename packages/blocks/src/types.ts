@@ -1,16 +1,12 @@
 export type BlockProfile =
   | "core"
-  | "guidance"
-  | "data"
   | "media"
-  | "docs"
   | "display"
   | "navigation"
   | "controls"
   | "forms"
   | "interactive"
   | "menus"
-  | "chat"
   | "motion";
 
 export interface BlockVocabularyEntry {

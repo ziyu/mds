@@ -1,0 +1,21 @@
+<section{{ attrs }} class="data-table-shell" aria-label="{{ attr:label:Data table }}">
+  <header class="data-table-toolbar" hidden>
+    <label class="data-table-filter">
+      <span class="field-label">{{ attr:filter:Filter rows }}</span>
+      <input class="data-table-filter-input" type="search" placeholder="{{ attr:filter:Filter rows }}" autocomplete="off">
+    </label>
+    <span class="data-table-summary" aria-live="polite"></span>
+  </header>
+  <div class="data-table-scroll">
+    <table class="data-table">
+      <thead><tr>{{ slot:columns }}</tr></thead>
+      <tbody>{{ slot:rows }}{{ children }}</tbody>
+    </table>
+  </div>
+  <div class="data-table-empty" hidden>{{ slot:empty }}</div>
+  <footer class="data-table-pagination" hidden>
+    <button class="data-table-previous" type="button">Previous</button>
+    <span class="data-table-page" aria-live="polite"></span>
+    <button class="data-table-next" type="button">Next</button>
+  </footer>
+</section>

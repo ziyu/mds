@@ -1,0 +1,8 @@
+<article{{ attrs }} class="message">
+  <div class="message-avatar">{{ slot:avatar }}</div>
+  <div class="message-content">
+    <header class="message-header">{{ attr:sender }}{{ slot:header }}</header>
+    <div class="message-body">{{ slot:body }}{{ children }}</div>
+    <footer class="message-footer">{{ attr:status }}{{ slot:footer }}</footer>
+  </div>
+</article>

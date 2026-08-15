@@ -1,8 +1,6 @@
 import { createBlockBaseStyles } from "./styles/base.js";
 import { calendarStyles } from "./styles/calendar.js";
-import { chatStyles } from "./styles/chat.js";
 import { commandStyles } from "./styles/command.js";
-import { dataStyles } from "./styles/data.js";
 import { menuPrimitiveStyles } from "./styles/menu-primitives.js";
 import { menuStyles } from "./styles/menus.js";
 
@@ -10,20 +8,16 @@ const composeStyles = (...styles: readonly string[]) => styles.join("\n\n");
 
 const selectorsByCapability = {
   calendar: [".calendar"],
-  chat: [".attachment", ".bubble", ".marker", ".message", ".message-scroller"],
   command: [".command"],
-  data: [".data-table-shell", ".chart"],
   menus: [".context-menu", ".menubar"]
 } as const;
 
 export const calendarBlockStyles = composeStyles(createBlockBaseStyles(selectorsByCapability.calendar), calendarStyles);
-export const chatBlockStyles = composeStyles(createBlockBaseStyles(selectorsByCapability.chat), chatStyles);
 export const commandBlockStyles = composeStyles(
   createBlockBaseStyles(selectorsByCapability.command),
   menuPrimitiveStyles,
   commandStyles
 );
-export const dataBlockStyles = composeStyles(createBlockBaseStyles(selectorsByCapability.data), dataStyles);
 export const menuBlockStyles = composeStyles(
   createBlockBaseStyles(selectorsByCapability.menus),
   menuPrimitiveStyles,
@@ -35,7 +29,5 @@ export const blockFoundationStyles = composeStyles(
   commandStyles,
   menuPrimitiveStyles,
   menuStyles,
-  calendarStyles,
-  dataStyles,
-  chatStyles
+  calendarStyles
 );

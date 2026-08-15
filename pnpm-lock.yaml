@@ -362,6 +362,22 @@ importers:
         specifier: workspace:*
         version: link:../../packages/theme-builder
 
+  themes/rich:
+    dependencies:
+      '@mds-crate/html-types':
+        specifier: workspace:*
+        version: link:../../packages/html-types
+      '@mds-crate/theme-loader':
+        specifier: workspace:*
+        version: link:../../packages/theme-loader
+    devDependencies:
+      '@mds-crate/blocks':
+        specifier: workspace:*
+        version: link:../../packages/blocks
+      '@mds-crate/theme-builder':
+        specifier: workspace:*
+        version: link:../../packages/theme-builder
+
 packages:
 
   '@alloc/quick-lru@5.2.0':

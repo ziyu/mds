@@ -8,7 +8,7 @@ export default defineJsxTheme({
   author: "MDS",
   preview: "preview.svg",
   tags: ["jsx", "landing", "package"],
-  supportedBlocks: ["float", "sticky"],
+  supportedBlocks: ["hero", "float", "sticky"],
   blocks: {
     hero: (block) => (
       <Root block={block} className="hero">

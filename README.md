@@ -39,6 +39,8 @@ const result = renderMdsResult("# Hello from MDS", {
 console.log(result.body, result.diagnostics);
 ```
 
+For data tables, charts, technical documentation, guided sequences, galleries, and conversation layouts, install `@mds-crate/theme-rich@next` and import its `theme` export instead.
+
 ### Create a package-defined theme
 
 ```sh
@@ -67,7 +69,7 @@ All three journeys pass against the published registry packages. See [the releas
 Requirements:
 
 - Node.js 20.19 or newer
-- pnpm 11
+- pnpm 10.34.5
 
 ```sh
 corepack enable
@@ -110,6 +112,7 @@ Build and inspect a package theme:
 
 ```sh
 pnpm build:theme:default
+pnpm build:theme:rich
 node packages/theme-builder/dist/cli.js inspect ./themes/default
 ```
 
@@ -150,6 +153,7 @@ Primary public packages:
 
 - `@mds-crate/renderer-html`
 - `@mds-crate/theme-default`
+- `@mds-crate/theme-rich`
 - `@mds-crate/cli`
 - `@mds-crate/theme-builder`
 - `@mds-crate/theme-sdk-html`

@@ -1,0 +1,102 @@
+{
+  "name": "@mds-crate/theme-rich",
+  "version": "0.1.0-beta.1",
+  "description": "Official rich-content theme for MDS data, documentation, guidance, media, and conversation blocks.",
+  "keywords": [
+    "mds",
+    "markdown",
+    "theme",
+    "rich-content"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ziyu/mds.git",
+    "directory": "themes/rich"
+  },
+  "homepage": "https://github.com/ziyu/mds#readme",
+  "bugs": {
+    "url": "https://github.com/ziyu/mds/issues"
+  },
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./theme/*": "./dist/theme/*",
+    "./package.json": "./package.json"
+  },
+  "mdsTheme": {
+    "source": "./src/theme.json",
+    "dist": "./dist/theme",
+    "blockPacks": [
+      "@mds-crate/blocks/foundation",
+      "@mds-crate/blocks/media",
+      "@mds-crate/blocks/motion"
+    ],
+    "blockOverrides": [
+      "blocks/api.html",
+      "blocks/attachment.html",
+      "blocks/badge.html",
+      "blocks/bubble.html",
+      "blocks/callout.html",
+      "blocks/caption.html",
+      "blocks/cards.html",
+      "blocks/chart-point.html",
+      "blocks/chart-series.html",
+      "blocks/chart.html",
+      "blocks/code-group.html",
+      "blocks/comparison.html",
+      "blocks/data-cell.html",
+      "blocks/data-column.html",
+      "blocks/data-row.html",
+      "blocks/data-table.html",
+      "blocks/dropdown.html",
+      "blocks/endpoint.html",
+      "blocks/faq.html",
+      "blocks/figure.html",
+      "blocks/file-tree.html",
+      "blocks/gallery.html",
+      "blocks/grid.html",
+      "blocks/hero.html",
+      "blocks/image.html",
+      "blocks/marker.html",
+      "blocks/media.html",
+      "blocks/message-scroller.html",
+      "blocks/message.html",
+      "blocks/metric.html",
+      "blocks/progress.html",
+      "blocks/step.html",
+      "blocks/steps.html",
+      "blocks/tag.html",
+      "blocks/terminal.html",
+      "blocks/timeline.html",
+      "blocks/video.html"
+    ]
+  },
+  "scripts": {
+    "build": "node ../../scripts/clean-package-dist.mjs && pnpm --dir ../.. build:theme themes/rich && node ../../scripts/generate-theme-module.mjs .",
+    "prepack": "pnpm run build && node ../../scripts/manage-package-license.mjs add",
+    "postpack": "node ../../scripts/manage-package-license.mjs remove"
+  },
+  "dependencies": {
+    "@mds-crate/html-types": "workspace:*",
+    "@mds-crate/theme-loader": "workspace:*"
+  },
+  "devDependencies": {
+    "@mds-crate/blocks": "workspace:*",
+    "@mds-crate/theme-builder": "workspace:*"
+  }
+}

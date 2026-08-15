@@ -119,7 +119,7 @@ function createThemeFiles(input: {
     mdsTheme: {
       source: sourcePath,
       dist: "./dist/theme",
-      blockPacks: ["@mds-crate/blocks/standard"],
+      blockPacks: ["@mds-crate/blocks/foundation"],
       assets: {
         css: "./src/style.css",
         js: "./src/script.js",

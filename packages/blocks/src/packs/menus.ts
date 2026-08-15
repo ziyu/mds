@@ -7,7 +7,6 @@ export const menuBlocks: ThemeBlockPackSource = {
   profiles: ["menus"],
   supportedBlocks: [
     "dropdown",
-    "dropdown-menu",
     "context-menu",
     "menubar",
     "menu",
@@ -21,15 +20,13 @@ export const menuBlocks: ThemeBlockPackSource = {
   files: {
     "runtime.css": menuBlockStyles,
     "runtime.js": menuEnhancementsScript,
-    "blocks/dropdown.html": `<template data-block="dropdown dropdown-menu">
-<details{{ attrs }} class="dropdown-menu"{{ bool:open }}>
+    "blocks/dropdown.html": `<details{{ attrs }} class="dropdown-menu"{{ bool:open }}>
   <summary>{{ attr:label:Menu }}</summary>
   <div class="dropdown-menu-content">
     {{ children }}
     {{ slots }}
   </div>
-</details>
-</template>`,
+</details>`,
     "blocks/context-menu.html": `<details{{ attrs }} class="context-menu"{{ bool:open }}>
   <summary class="context-menu-trigger">{{ attr:label:Open menu }}</summary>
   <div class="context-menu-content">

@@ -1,0 +1,14 @@
+<article{{ attrs }} class="attachment">
+  <div class="attachment-media">
+    <img{{ optional:src:src }} alt="{{ attr:alt }}">
+    <span class="attachment-file" aria-hidden="true">↗</span>
+    {{ slot:media }}
+  </div>
+  <div class="attachment-content">
+    <a class="attachment-title"{{ optional:href:href }}{{ bool:download }}>{{ attr:title:Attachment }}</a>
+    <div class="attachment-description">{{ slot:description }}</div>
+    <span class="attachment-meta"><span>{{ attr:type }}</span><span>{{ attr:size }}</span></span>
+    <progress class="attachment-progress" max="100" value="{{ attr:progress:0 }}">{{ attr:progress:0 }}%</progress>
+  </div>
+  <div class="attachment-actions">{{ slot:actions }}</div>
+</article>

@@ -26,6 +26,7 @@
     "build:editor": "pnpm --filter @mds-crate/editor build",
     "build:theme": "tsx packages/theme-builder/src/cli.ts build",
     "build:theme:default": "pnpm --filter @mds-crate/theme-default build",
+    "build:theme:rich": "pnpm --filter @mds-crate/theme-rich build",
     "build:theme:folio": "pnpm build:theme themes/folio",
     "build:theme:atelier": "pnpm build:theme themes/atelier",
     "build:theme:clarity": "pnpm build:theme themes/clarity",

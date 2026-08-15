@@ -19,5 +19,17 @@ export const displayVocabulary = [
     purpose: "Versatile content row with media, copy, actions, and footer.",
     slots: ["media", "title", "description", "actions", "footer"],
     attrs: ["variant", "size"]
+  },
+  {
+    name: "badge",
+    profile: "display",
+    purpose: "Compact status or category label.",
+    attrs: ["tone"]
+  },
+  {
+    name: "progress",
+    profile: "display",
+    purpose: "Native progress indicator with a label.",
+    attrs: ["value", "max", "label"]
   }
 ] as const satisfies readonly BlockVocabularyEntry[];

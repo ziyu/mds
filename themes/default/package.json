@@ -42,7 +42,9 @@
     "source": "./src/theme.json",
     "dist": "./dist/theme",
     "blockPacks": [
-      "@mds-crate/blocks/standard"
+      "@mds-crate/blocks/foundation",
+      "@mds-crate/blocks/media",
+      "@mds-crate/blocks/motion"
     ],
     "blockOverrides": [
       "blocks/dialog.html",

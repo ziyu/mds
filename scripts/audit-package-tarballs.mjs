@@ -17,6 +17,7 @@ const packageDirectories = [
   "packages/theme-sdk-react",
   "packages/theme-builder",
   "themes/default",
+  "themes/rich",
   "packages/cli"
 ];
 const importablePackages = [
@@ -29,7 +30,8 @@ const importablePackages = [
   "@mds-crate/theme-sdk-html",
   "@mds-crate/theme-sdk-react",
   "@mds-crate/theme-builder",
-  "@mds-crate/theme-default"
+  "@mds-crate/theme-default",
+  "@mds-crate/theme-rich"
 ];
 const expectedRuntimeExports = {
   "@mds-crate/parser": "parseMds",
@@ -39,7 +41,8 @@ const expectedRuntimeExports = {
   "@mds-crate/theme-sdk-html": "defineHtmlTheme",
   "@mds-crate/theme-sdk-react": "defineReactTheme",
   "@mds-crate/theme-builder": "buildPackageTheme",
-  "@mds-crate/theme-default": "theme"
+  "@mds-crate/theme-default": "theme",
+  "@mds-crate/theme-rich": "theme"
 };
 
 const packDirectory = await mkdtemp(join(tmpdir(), "mds-package-audit-"));
@@ -191,6 +194,10 @@ const themed = renderMdsResult("::: hero\\n# Packed default theme\\n:::", { them
 if (!themed.body.includes('class="hero"') || !themed.css?.includes(":root")) {
   throw new Error("The packed default theme did not render its hero template and CSS.");
 }
+const { theme: richTheme, themeSource: richThemeSource } = await import("@mds-crate/theme-rich");
+if (richTheme.name !== "rich" || !("blocks/data-table.html" in richThemeSource.files)) {
+  throw new Error("The packed Rich theme did not expose its module or high-level block templates.");
+}
 const { readThemeRef } = await import("@mds-crate/theme-loader");
 const artifactThemeSource = await readThemeRef("@mds-crate/theme-default", { baseDirectory: process.cwd() });
 if (artifactThemeSource.manifest.name !== "default" || !("blocks/hero.html" in artifactThemeSource.files)) {
@@ -199,6 +206,7 @@ if (artifactThemeSource.manifest.name !== "default" || !("blocks/hero.html" in a
 console.log(\`Imported \${packages.length} packed MDS libraries.\`);
 console.log("Rendered MDS source through the packed Node.js API.");
 console.log("Loaded the packed default theme through module and artifact entry points.");
+console.log("Loaded the packed Rich theme with its high-level block extensions.");
 `;
   const consumerScriptPath = join(consumerDirectory, "verify.mjs");
   await writeFile(consumerScriptPath, consumerScript, "utf8");

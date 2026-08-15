@@ -1,13 +1,5 @@
 import React from "react";
-import {
-  chatBlocks,
-  controlBlocks,
-  dataBlocks,
-  displayBlocks,
-  formsBlocks,
-  menuBlocks,
-  navigationBlocks
-} from "@mds-crate/blocks";
+import { controlBlocks, displayBlocks, formsBlocks, menuBlocks, navigationBlocks } from "@mds-crate/blocks";
 import { Content, Slot, Slots, defineReactTheme } from "@mds-crate/theme-sdk-react";
 import { Badge, Card, Flow, Panel, Surface } from "./components/ui.js";
 
@@ -18,7 +10,7 @@ export default defineReactTheme({
   author: "MDS",
   preview: "preview.svg",
   tags: ["tailwind", "react", "canvas", "package"],
-  blockPacks: [displayBlocks, navigationBlocks, controlBlocks, formsBlocks, menuBlocks, dataBlocks, chatBlocks],
+  blockPacks: [displayBlocks, navigationBlocks, controlBlocks, formsBlocks, menuBlocks],
   supportedBlocks: [
     "page",
     "nav",

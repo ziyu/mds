@@ -181,20 +181,10 @@ td {
   border-top: 1px solid var(--line);
   padding-top: clamp(1.5rem, 4vw, 2.5rem);
 }
-.cards,
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
   gap: 1rem;
-}
-.grid-2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.grid-3 {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-.grid-auto {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
 }
 .card,
 .callout,
@@ -217,8 +207,8 @@ td {
   gap: 0.45rem;
   background: var(--soft);
 }
-.callout.warning,
-.callout.danger {
+.callout[data-attr-tone="warning"],
+.callout[data-attr-tone="danger"] {
   border-color: color-mix(in srgb, var(--warn), transparent 35%);
 }
 .callout-label {
@@ -400,51 +390,16 @@ button:hover {
 .action.command .nav-target {
   color: rgb(255 255 255 / 78%);
 }
-.steps,
-.timeline,
-.comparison,
-.gallery,
-.api {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
-  gap: 1rem;
-  margin-block: 1.5rem;
-}
-.step,
-.metric,
-.endpoint,
 .figure,
 .media,
-.image,
-.video,
-.file-tree,
-.terminal,
-.code-group,
-.faq {
+.video {
   min-width: 0;
   border: 1px solid color-mix(in srgb, currentColor, transparent 78%);
   border-radius: 0.85rem;
   background: color-mix(in srgb, currentColor, transparent 96%);
   padding: 1rem;
 }
-.metric-value {
-  display: block;
-  font-size: clamp(1.4rem, 4vw, 2.35rem);
-  font-weight: 800;
-  line-height: 1;
-}
-.metric-label,
-.step-label,
-.step-date,
-.endpoint-method,
-.endpoint-path {
-  display: inline-block;
-  margin-top: 0.45rem;
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-.badge,
-.tag {
+.badge {
   display: inline-flex;
   width: fit-content;
   border: 1px solid color-mix(in srgb, currentColor, transparent 72%);
@@ -454,7 +409,6 @@ button:hover {
   font-weight: 750;
 }
 .progress progress,
-.image img,
 .video video,
 .media img,
 .media video,
@@ -463,7 +417,6 @@ button:hover {
   width: 100%;
   max-width: 100%;
 }
-.image img,
 .video video,
 .media img,
 .media video,
@@ -478,13 +431,6 @@ figcaption {
   opacity: 0.72;
   font-size: 0.86rem;
 }
-.terminal,
-.code-group,
-.file-tree,
-.endpoint-path {
-  overflow-x: auto;
-}
-.endpoint-header,
 .button-group {
   display: flex;
   flex-wrap: wrap;
@@ -910,15 +856,13 @@ figcaption {
 }
 .figure,
 .media,
-.image,
 .video {
   margin: 0;
 }
 @media (max-width: 760px) {
   .split,
   .sticky,
-  .grid-2,
-  .grid-3 {
+  .grid {
     grid-template-columns: 1fr;
   }
 }

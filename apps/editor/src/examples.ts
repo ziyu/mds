@@ -22,7 +22,7 @@ layout: landing
 Use semantic blocks to describe intent. MDS turns that intent into layout, motion, and interaction.
 
 --- media
-::: note
+::: callout tone="info" label="MDS"
 Write content. Preview the result. Ship standalone HTML.
 :::
 :::
@@ -33,7 +33,7 @@ Write content. Preview the result. Ship standalone HTML.
 [Contact => #contact]
 :::
 
-::: cards motion="fade-up" delay=180 stagger=90
+::: grid motion="fade-up" delay=180 stagger=90
 
 ::: card authoring
 ## Simple authoring
@@ -59,7 +59,7 @@ The final artifact is plain HTML with embedded CSS and JavaScript.
 
 Markdown is simple. HTML is rich. MDS keeps authoring simple while compiling to HTML.
 
-::: warning
+::: callout tone="warning" label="Authoring note"
 Authors usually write semantic blocks first. Advanced options can use block attrs.
 :::
 
@@ -127,20 +127,24 @@ MDS is a semantic layer on top of Markdown.
     id: "components",
     label: "Components",
     source: `---
-title: Foundation-first Component Gallery
-description: Native controls, forms, menus, interaction, data, documentation, media, and conversation blocks.
+title: Shared Block Gallery
+description: The 63 portable blocks exported by @mds-crate/blocks, with native-first structure, controls, forms, menus, media, actions, and motion.
 ---
 
-::: hero
---- title
+::: page componentGallery
 # UI blocks
 
---- body
-Start with the controls people use every day. Add structure, data, documentation, media, and conversation patterns next. Motion remains an optional presentation layer.
+This gallery is intentionally limited to the 63 portable primitives exported by \`@mds-crate/blocks\`. Theme-owned extensions belong in theme-specific examples.
 
---- actions
+::: nav label="Component gallery"
 [Explore controls -> #foundationControls]
 [See interactions -> #interactions]
+[Review structure -> #structure]
+[Open media -> #mediaBlocks]
+:::
+
+::: callout tone="info" label="Scope"
+Every explicit block in this example comes from the shared package. Unknown, compatibility-only, and Rich-owned names are excluded.
 :::
 
 ::: section foundationControls
@@ -213,6 +217,19 @@ Create a preset when the default foundation is not enough.
 
 ::: form foundationForm method="post"
 ::: fieldset legend="Profile"
+::: field invalid=true
+::: label text="Workspace handle" for="workspaceHandle"
+:::
+::: input label="Workspace handle" name="workspaceHandle" placeholder="mds-core" required invalid=true
+:::
+::: help
+Use lowercase letters and hyphens.
+:::
+::: error
+This example shows the shared validation-message structure.
+:::
+:::
+
 ::: input label="Display name" name="displayName" placeholder="Ada Lovelace" autocomplete="name" required
 :::
 
@@ -413,51 +430,34 @@ Drawers reuse the same show and hide contract.
 :::
 
 ::: section structure
-## 3. Structure and guidance
+## 3. Structure and status
 
 ::: nav label="Component sections"
 [Controls -> #foundationControls]
 [Interactions -> #interactions]
-[Data and docs -> #dataAndDocs]
+[Media -> #mediaBlocks]
 [Presentation -> #presentation]
 :::
 
 ::: split
 
 --- left
-::: steps
-::: step
-## Write
-Write headings, paragraphs, lists, and links.
-:::
+::: aside
+### Primitive boundary
 
-::: step
-## Compose
-Describe controls, forms, menus, and content structure.
-:::
-
-::: step
-## Render
-Themes style and progressively enhance the shared contract.
-:::
+Shared blocks cover structure, native controls, forms, menus, compact status, media semantics, interaction containers, and motion wrappers.
 :::
 
 --- right
-::: timeline
-::: step date="Now"
-## Now
-Prioritize reusable controls and readable native fallbacks.
-:::
+::: details componentBoundary
+# What stays outside?
 
-::: step date="Later"
-## Later
-Add domain-specific layouts in the owning theme or application when the document needs them.
-:::
+Data systems, documentation layouts, guided sequences, galleries, and conversation UI remain theme or application extensions.
 :::
 
 :::
 
-::: grid-3
+::: grid
 ::: card
 ::: badge
 Core
@@ -467,15 +467,15 @@ Cards, grids, sections, asides, and callouts establish readable structure.
 :::
 
 ::: card
-::: tag
-Guidance
+::: badge tone="info"
+Native
 :::
-## Ordered explanation
-Steps and timelines explain sequences without custom layout syntax.
+## Browser semantics
+Inputs, menus, progress, media, and disclosure remain useful without an application runtime.
 :::
 
 ::: card
-::: tag
+::: badge tone="success"
 Portable
 :::
 ## Theme-independent intent
@@ -483,181 +483,32 @@ The same source can render through different themes.
 :::
 :::
 
-::: note
-Foundation blocks should work before optional presentation blocks are added.
+::: callout tone="info" label="Portable"
+The shared contract stays compact enough for every theme to compose selectively.
 :::
 
-::: warning
+::: callout tone="warning" label="Control choice"
 Do not use a switch where a one-time action button is intended.
 :::
 
 ::: quote
 Choose semantic intent first; let the selected theme own presentation.
 :::
-:::
 
-::: section dataAndDocs
-## 4. Data and documentation
-
-::: comparison
-::: card
-## Native foundation
-- Controls have browser semantics.
-- Forms submit normal values.
-- Menus retain readable content.
-:::
-
-::: card
-## Optional enhancement
-- Themes add visual states.
-- Applications register custom actions.
-- Motion remains declarative.
-:::
-:::
-
-::: metric value="100" label="Shared block vocabulary"
-Foundation and specialized profiles compose without duplicating theme templates.
-:::
-
-::: progress value=100 max=100 label="Foundation example coverage"
-This example starts with the controls required by everyday documents and applications.
-:::
-
-::: chart label="Weekly rendered documents" type="bar"
-::: chart-series label="Documents"
-::: chart-point label="Monday" value=42 max=80
-:::
-::: chart-point label="Tuesday" value=58 max=80
-:::
-::: chart-point label="Wednesday" value=71 max=80
-:::
-::: chart-point label="Thursday" value=64 max=80
-:::
-:::
-
---- description
-Native meter elements keep every value readable without a chart runtime.
-
---- legend
-Documents rendered per day.
-:::
-
-::: data-table label="Release queue" filter="Filter releases" page-size=3 selectable
---- columns
-::: data-column key="status" label="Status" sortable
-:::
-::: data-column key="package" label="Package" sortable
-:::
-::: data-column key="version" label="Version" sortable
-:::
-
---- rows
-::: data-row releaseBlocks selected
-::: data-cell column="status"
-Ready
-:::
-::: data-cell column="package"
-@mds-crate/blocks
-:::
-::: data-cell column="version"
-0.2.0
-:::
-:::
-::: data-row releaseEditor
-::: data-cell column="status"
-Review
-:::
-::: data-cell column="package"
-@mds-crate/editor
-:::
-::: data-cell column="version"
-0.1.0
-:::
-:::
-::: data-row releaseDefault
-::: data-cell column="status"
-Ready
-:::
-::: data-cell column="package"
-@mds-crate/theme-default
-:::
-::: data-cell column="version"
-0.2.0
-:::
-:::
-::: data-row releaseCli
-::: data-cell column="status"
-Queued
-:::
-::: data-cell column="package"
-@mds-crate/cli
-:::
-::: data-cell column="version"
-0.1.0
-:::
-:::
-
---- empty
-No releases match this filter.
-:::
-
-::: api
-::: endpoint method="POST" path="/v1/render"
-Render an MDS document into standalone HTML.
-:::
-
-::: endpoint method="GET" path="/v1/renderers/:name"
-Resolve renderer metadata, supported blocks, assets, and diagnostics.
-:::
-:::
-
-::: file-tree
-content/
-- landing.mds
-- docs.mds
-- assets/
-:::
-
-::: terminal title="Install"
-pnpm install
-pnpm dev:editor
-:::
-
-::: code-group
---- Markdown
-A semantic block stays readable in source.
-
---- HTML output
-The selected theme maps that intent to ordinary HTML.
+::: progress value=63 max=63 label="Shared primitive coverage"
+The example covers the complete shared vocabulary boundary without pulling in a richer theme pack.
 :::
 :::
 
 ::: section mediaBlocks
-## 5. Media
-
-::: gallery
-::: figure
-::: info
-A figure can contain media, generated artwork, or a nested semantic block.
-:::
-
---- caption
-Figure blocks preserve captions as structured content.
-:::
+## 4. Native media
 
 ::: figure
-::: success
-Gallery items can mix media and semantic content previews.
-:::
+![MDS preview](https://placehold.co/1200x675/eef2e6/1f2a22?text=MDS+Preview)
 
---- caption
-Useful for reports, documentation, and portfolios.
+::: caption
+Figure and caption provide portable media semantics without defining a gallery system.
 :::
-:::
-
-::: image src="https://placehold.co/1200x675/eef2e6/1f2a22?text=MDS+Preview" alt="MDS placeholder preview"
---- caption
-Image blocks still export ordinary HTML.
 :::
 
 ::: video src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
@@ -666,61 +517,8 @@ Video blocks use native playback controls.
 :::
 :::
 
-::: section chatBlocks
-## 6. Conversation and attachments
-
-Chat blocks describe portable conversation content without owning transport, model state, or persistence.
-
-::: message-scroller label="Build conversation" follow=true height="24rem"
-::: marker variant="separator" label="Today"
-:::
-
-::: message align="start" sender="MDS" status="Delivered"
---- avatar
-::: avatar fallback="MD" alt="MDS"
-:::
-
---- body
-::: bubble variant="secondary" align="start"
-The shared block pack now includes calendars, data tables, charts, menus, and chat composition.
-
---- reactions
-✅ 4
-:::
-
---- footer
-10:24
-:::
-
-::: message align="end" sender="You" status="Read"
---- body
-::: bubble variant="default" align="end"
-Can I attach the release manifest?
-:::
-
---- footer
-10:25
-:::
-
-::: message align="start" sender="MDS"
---- body
-::: bubble variant="ghost" align="start"
-Yes. Attachments keep their file metadata and progress state readable.
-:::
-
-::: attachment title="release-manifest.json" href="/release-manifest.json" type="JSON" size="18 KB" state="done" download
---- description
-Generated package versions and integrity hashes.
-:::
-:::
-
-::: marker variant="border" role="status" label="All package checks passed"
-:::
-:::
-:::
-
 ::: section advancedMotion
-## 7. Advanced motion
+## 5. Motion contract
 
 Action and motion contracts remain separate from the new foundation blocks.
 
@@ -747,6 +545,7 @@ Reduced-motion preferences remain a theme responsibility.
 
 ::: footer
 Foundation first. Presentation when needed. Standalone HTML at the end.
+:::
 :::
 `
   },
@@ -786,7 +585,7 @@ No animation runtime belongs to MDS core.
 
 :::
 
-::: section custom-section tone="quiet" columns=3
+::: section customSection tone="quiet" columns=3
 ## Custom block attrs
 Attributes are preserved for renderers and advanced components.
 :::

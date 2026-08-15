@@ -17,6 +17,7 @@
     "@mds-crate/theme-canvas": "0.0.0",
     "@mds-crate/theme-clarity": "0.0.0",
     "@mds-crate/theme-default": "0.1.0-beta.0",
+    "@mds-crate/theme-rich": "0.1.0-beta.1",
     "@mds-crate/theme-folio": "0.0.0"
   },
   "changesets": [

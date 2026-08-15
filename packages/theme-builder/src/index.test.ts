@@ -59,7 +59,7 @@ describe("theme builder", () => {
       mdsTheme: {
         source: "./src/theme.ts",
         dist: "./dist/theme",
-        blockPacks: ["@mds-crate/blocks/standard"],
+        blockPacks: ["@mds-crate/blocks/foundation"],
         assets: {
           js: "./src/script.js",
           shell: "./src/shell.html",
@@ -459,7 +459,11 @@ export default defineJsxTheme({
           mdsTheme: {
             source: "./theme.json",
             dist: "./dist/theme",
-            blockPacks: ["@mds-crate/blocks/standard"],
+            blockPacks: [
+              "@mds-crate/blocks/foundation",
+              "@mds-crate/blocks/media",
+              "@mds-crate/blocks/motion"
+            ],
             blockOverrides: ["blocks/hero.html", "blocks/custom.html"]
           }
         },
@@ -511,22 +515,22 @@ export default defineJsxTheme({
       blocks: "blocks"
     });
     expect(manifest.supportedBlocks).toEqual(
-      expect.arrayContaining(["hero", "data-table", "terminal", "custom"])
+      expect.arrayContaining(["hero", "figure", "motion", "custom"])
     );
     await expect(readFile(join(root, "dist/theme/blocks/hero.html"), "utf8")).resolves.toContain("local-hero");
-    await expect(readFile(join(root, "dist/theme/blocks/data-table.html"), "utf8")).resolves.toContain("data-table");
-    expect(metadata.blockPacks).toHaveLength(13);
+    await expect(readFile(join(root, "dist/theme/blocks/figure.html"), "utf8")).resolves.toContain("figure");
+    expect(metadata.blockPacks).toHaveLength(9);
     expect(metadata.templateSources).toEqual(
       expect.arrayContaining([
         { block: "hero", source: "theme" },
         { block: "custom", source: "theme" },
-        { block: "data-table", source: "@mds-crate/blocks/data" }
+        { block: "figure", source: "@mds-crate/blocks/media" }
       ])
     );
     expect(inspection.blockPacks.map((pack) => pack.name)).toContain("@mds-crate/blocks/core");
     expect(inspection.templateSources).toContainEqual({
-      block: "data-table",
-      source: "@mds-crate/blocks/data"
+      block: "figure",
+      source: "@mds-crate/blocks/media"
     });
     expect(result.diagnostics).toEqual([]);
     expect(inspection.diagnostics).toEqual([]);

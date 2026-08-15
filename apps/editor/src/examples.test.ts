@@ -3,6 +3,7 @@ import { parseMds } from "@mds-crate/parser";
 import { renderHtmlResult } from "@mds-crate/renderer-html";
 import { buildPackageTheme, inspectThemeArtifact } from "@mds-crate/theme-builder";
 import { loadThemeDirectory } from "@mds-crate/theme-loader";
+import { blockVocabulary } from "../../../packages/blocks/src/index.js";
 import { fileURLToPath } from "node:url";
 import { examples } from "./examples.js";
 
@@ -58,58 +59,67 @@ describe("editor examples", () => {
     expect(actionsResult.html).toContain('<span class="nav-target">#actionContact</span>');
   });
 
-  it("renders the Components example through shared-pack themes without diagnostics", async () => {
+  it("uses every shared block and no theme-owned extensions in the Components example", () => {
     const components = examples.find((item) => item.id === "components");
     expect(components).toBeDefined();
-    const themePackages = [
-      { name: "default", themeOwnedBlocks: 6 },
-      { name: "folio", themeOwnedBlocks: 10 },
-      { name: "atelier", themeOwnedBlocks: 6 }
-    ];
+    expect(collectBlockTypes(components!.source)).toEqual(blockVocabulary.map((block) => block.name).sort());
+  });
 
-    for (const themePackage of themePackages) {
-      const themeDirectory = fileURLToPath(new URL(`../../../themes/${themePackage.name}`, import.meta.url));
-      const build = await buildPackageTheme(themeDirectory);
-      const inspection = await inspectThemeArtifact(build.outputDirectory);
-      const theme = await loadThemeDirectory(build.outputDirectory);
-      const result = renderHtmlResult(parseMds(components!.source), { theme });
+  it("renders every example through Default without unsupported block fallbacks", async () => {
+    const themeDirectory = fileURLToPath(new URL("../../../themes/default", import.meta.url));
+    const build = await buildPackageTheme(themeDirectory);
+    const inspection = await inspectThemeArtifact(build.outputDirectory);
+    const theme = await loadThemeDirectory(build.outputDirectory);
 
-      expect(result.diagnostics, theme.name).toEqual([]);
-      expect(inspection.diagnostics, theme.name).toEqual([]);
-      expect(inspection.blocks, theme.name).toHaveLength(102);
-      expect(inspection.blockPacks, theme.name).toHaveLength(13);
-      expect(
-        inspection.templateSources.filter((entry) => entry.source === "theme"),
-        theme.name
-      ).toHaveLength(themePackage.themeOwnedBlocks);
-      expect(result.html, theme.name).toContain('class="terminal"');
-      expect(result.html, theme.name).toContain('class="popover"');
-      expect(result.html, theme.name).toContain('class="action control-button"');
-      expect(result.html, theme.name).toContain('class="form-field input-group"');
-      expect(result.html, theme.name).toContain('class="form-field input-otp"');
-      expect(result.html, theme.name).toContain('autocomplete="one-time-code"');
-      expect(result.html, theme.name).toContain('class="form-field combobox-field"');
-      expect(result.html, theme.name).toContain('<datalist id="framework-options">');
-      expect(result.html, theme.name).toContain('class="command"');
-      expect(result.html, theme.name).toContain('class="command-input"');
-      expect(result.html, theme.name).toContain('class="menu-item-shortcut">⌘1</kbd>');
-      expect(result.html, theme.name).toContain('class="calendar-days"');
-      expect(result.html, theme.name).toContain('class="data-table-shell"');
-      expect(result.html, theme.name).toContain('class="chart-point-meter"');
-      expect(result.html, theme.name).toContain('class="context-menu"');
-      expect(result.html, theme.name).toContain('class="menubar"');
-      expect(result.html, theme.name).toContain('class="message-scroller"');
-      expect(result.html, theme.name).toContain('class="attachment"');
-      expect(result.html, theme.name).not.toContain("{{ attr:");
-      expect(result.html, theme.name).toContain('class="avatar"');
-      expect(result.html, theme.name).toContain('class="breadcrumb"');
-      expect(result.html, theme.name).toContain('class="empty"');
-      expect(result.html, theme.name).toContain('class="item"');
-      expect(result.html, theme.name).toContain('class="pagination"');
-      expect(result.html, theme.name).toContain('type="range"');
-      expect(result.html, theme.name).toContain('class="dropdown-menu"');
-      expect(result.html, theme.name).toContain('class="action menu-item-control"');
-      expect(result.html, theme.name).not.toContain('data-fallback="true"');
+    expect(inspection.diagnostics).toEqual([]);
+    expect(inspection.blocks).toHaveLength(66);
+    expect(inspection.blockPacks).toHaveLength(9);
+    expect(inspection.templateSources.filter((entry) => entry.source === "theme")).toHaveLength(6);
+
+    for (const example of examples) {
+      const result = renderHtmlResult(parseMds(example.source), { theme });
+      expect(result.html, example.id).not.toContain('data-fallback="true"');
     }
+
+    const components = examples.find((item) => item.id === "components");
+    const result = renderHtmlResult(parseMds(components!.source), { theme });
+    expect(result.diagnostics).toEqual([]);
+    expect(result.html).toContain('class="page"');
+    expect(result.html).toContain('class="callout warning"');
+    expect(result.html).toContain('class="form-field input-group"');
+    expect(result.html).toContain('class="field-error"');
+    expect(result.html).toContain('class="command"');
+    expect(result.html).toContain('class="calendar-days"');
+    expect(result.html).toContain('class="context-menu"');
+    expect(result.html).toContain('class="menubar"');
+    expect(result.html).toContain('class="figure"');
+    expect(result.html).toContain('class="caption"');
+    expect(result.html).toContain('class="motion"');
+    expect(result.html).not.toContain('class="data-table-shell"');
+    expect(result.html).not.toContain('class="message-scroller"');
+    expect(result.html).not.toContain('class="terminal"');
+    expect(result.html).not.toContain("{{ attr:");
   });
 });
+
+function collectBlockTypes(source: string): string[] {
+  const blockTypes = new Set<string>();
+
+  const visit = (value: unknown): void => {
+    if (typeof value !== "object" || value === null) return;
+    const record = value as Record<string, unknown>;
+    if (record.type === "block" && typeof record.blockType === "string") {
+      blockTypes.add(record.blockType);
+    }
+    for (const child of Object.values(record)) {
+      if (Array.isArray(child)) {
+        child.forEach(visit);
+      } else {
+        visit(child);
+      }
+    }
+  };
+
+  visit(parseMds(source));
+  return [...blockTypes].sort();
+}

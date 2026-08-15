@@ -5,7 +5,7 @@
   "author": "MDS",
   "preview": "preview.svg",
   "tags": ["editorial", "portfolio", "docs"],
-  "supportedBlocks": ["float", "sticky"],
+  "supportedBlocks": ["hero", "float", "sticky"],
   "css": "style.css",
   "js": "script.js",
   "shell": "shell.html"

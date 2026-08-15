@@ -2,9 +2,11 @@
 
 Shared MDS block vocabulary, capability metadata, profiles, and reusable structural theme templates.
 
-The package exports focused block packs, `foundationBlocks`, and `standardBlocks`. `foundationBlocks` prioritizes core layout, display, navigation, controls, native forms, interactive containers, and menus; `standardBlocks` adds reusable data, documentation, media, guidance, chat, and motion profiles. Themes can compose those packs and override only the templates whose structure or behavior must differ.
+The package exports nine focused primitive packs and `foundationBlocks`. `foundationBlocks` composes core layout, display, navigation, controls, native forms, interactive containers, and menus; themes may add the separate media and motion packs. Themes can override only the templates whose structure or behavior must differ.
 
-Foundation controls render as usable native HTML without a browser component runtime. The standard vocabulary also includes calendar selection, sortable/filterable native data tables, meter-backed charts, context menus, menubars, and portable chat composition. Packs carry de-duplicated structural CSS and progressive enhancement before theme-owned assets, so external themes get functional fallbacks and retain full styling control. Existing action attributes bridge through `data-action` and `data-target`, while the interactive-action and motion contracts remain unchanged.
+Foundation controls render as usable native HTML without a browser component runtime. The 63-block shared vocabulary includes calendar selection, context menus, menubars, native form controls, media semantics, and the existing action and motion contracts. Packs carry de-duplicated structural CSS and progressive enhancement before theme-owned assets, so external themes get functional fallbacks and retain full styling control.
+
+Data tables, charts, documentation systems, guided sequences, galleries, conversation layouts, and similar compositions are intentionally not shared primitives. Themes can implement them as extensions; `@mds-crate/theme-rich` is the official package that preserves broad built-in coverage.
 
 ## Source layout
 

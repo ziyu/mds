@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-label="Rich theme preview">
+  <rect width="640" height="400" fill="#e7dfca"/>
+  <path d="M0 64H640M0 336H640M72 0V400M568 0V400" stroke="#1d211f" stroke-opacity=".16"/>
+  <rect x="24" y="22" width="592" height="32" fill="#1d211f"/>
+  <text x="42" y="44" fill="#f6f0df" font-family="Georgia,serif" font-size="13" letter-spacing="2">MDS / RICH — CONTENT SYSTEMS ATLAS</text>
+  <text x="72" y="116" fill="#1d211f" font-family="Georgia,serif" font-size="48" font-weight="700">Dense ideas,</text>
+  <text x="72" y="164" fill="#c43b24" font-family="Georgia,serif" font-size="48" font-style="italic">clearly rendered.</text>
+  <rect x="72" y="202" width="222" height="104" rx="4" fill="#f5efde" stroke="#1d211f" stroke-width="2"/>
+  <path d="M88 224H278M88 246H238M88 268H264" stroke="#1d211f" stroke-width="5"/>
+  <rect x="312" y="202" width="256" height="104" rx="4" fill="#163f59"/>
+  <path d="M336 280V258M376 280V228M416 280V246M456 280V218M496 280V238M536 280V212" stroke="#f3c64f" stroke-width="12"/>
+  <circle cx="552" cy="84" r="18" fill="#c43b24"/>
+</svg>

@@ -1,129 +1,91 @@
 import { describe, expect, it } from "vitest";
 import { composeThemeSource, createThemeFromSources } from "@mds-crate/theme-loader";
 import {
+  blockPacksByName,
   blockVocabulary,
   blockVocabularyByName,
-  blockPacksByName,
-  chatBlocks,
   controlBlocks,
   coreBlocks,
-  dataBlocks,
   displayBlocks,
-  docsBlocks,
-  foundationBlocks,
   formsBlocks,
+  foundationBlocks,
   interactiveBlocks,
-  menuBlocks,
   mediaBlocks,
+  menuBlocks,
   motionBlocks,
-  navigationBlocks,
-  standardBlocks
+  navigationBlocks
 } from "./index.js";
 
+const sharedBlocks = [...foundationBlocks, mediaBlocks, motionBlocks] as const;
+
 describe("MDS block packs", () => {
-  it("exports standard packs as composable theme sources", () => {
+  it("composes a compact primitive layer", () => {
     const source = composeThemeSource(
-      {
-        manifest: {
-          name: "packed"
-        },
-        files: {}
-      },
-      {
-        blockPacks: standardBlocks
-      }
+      { manifest: { name: "primitives" }, files: {} },
+      { blockPacks: sharedBlocks }
     );
 
-    expect(source.manifest.supportedBlocks).toContain("hero");
-    expect(source.manifest.supportedBlocks).toContain("steps");
-    expect(source.manifest.supportedBlocks).toContain("figure");
-    expect(source.manifest.supportedBlocks).toContain("terminal");
-    expect(source.manifest.supportedBlocks).toContain("fieldset");
-    expect(source.manifest.supportedBlocks).toContain("avatar");
-    expect(source.manifest.supportedBlocks).toContain("breadcrumb");
-    expect(source.manifest.supportedBlocks).toContain("pagination");
-    expect(source.manifest.supportedBlocks).toContain("button");
-    expect(source.manifest.supportedBlocks).toContain("slider");
-    expect(source.manifest.supportedBlocks).toContain("dropdown");
-    expect(source.manifest.supportedBlocks).toContain("popover");
-    expect(source.manifest.supportedBlocks).toContain("calendar");
-    expect(source.manifest.supportedBlocks).toContain("data-table");
-    expect(source.manifest.supportedBlocks).toContain("chart");
-    expect(source.manifest.supportedBlocks).toContain("context-menu");
-    expect(source.manifest.supportedBlocks).toContain("menubar");
-    expect(source.manifest.supportedBlocks).toContain("message-scroller");
+    expect(source.manifest.supportedBlocks).toEqual(
+      expect.arrayContaining([
+        "page",
+        "callout",
+        "badge",
+        "progress",
+        "breadcrumb",
+        "button",
+        "input",
+        "slider",
+        "calendar",
+        "dropdown",
+        "context-menu",
+        "popover",
+        "figure",
+        "motion"
+      ])
+    );
+    expect(source.manifest.supportedBlocks).not.toEqual(
+      expect.arrayContaining(["hero", "cards", "data-table", "terminal", "steps", "message"])
+    );
     expect(source.manifest.actions).toEqual(["open", "close", "show", "hide", "toggle"]);
-    expect(source.files["blocks/hero.html"]).toContain("hero");
-    expect(source.files["blocks/terminal.html"]).toContain("terminal");
 
     const theme = createThemeFromSources(source);
-    expect(theme.blockRenderers?.hero).toBeDefined();
-    expect(theme.blockRenderers?.steps).toBeDefined();
-    expect(theme.blockRenderers?.figure).toBeDefined();
-    expect(theme.blockRenderers?.terminal).toBeDefined();
-    expect(theme.blockRenderers?.fieldset).toBeDefined();
-    expect(theme.blockRenderers?.avatar).toBeDefined();
-    expect(theme.blockRenderers?.breadcrumb).toBeDefined();
-    expect(theme.blockRenderers?.pagination).toBeDefined();
+    expect(theme.blockRenderers?.callout).toBeDefined();
     expect(theme.blockRenderers?.button).toBeDefined();
-    expect(theme.blockRenderers?.slider).toBeDefined();
-    expect(theme.blockRenderers?.dropdown).toBeDefined();
-    expect(theme.blockRenderers?.popover).toBeDefined();
     expect(theme.blockRenderers?.calendar).toBeDefined();
-    expect(theme.blockRenderers?.["data-table"]).toBeDefined();
-    expect(theme.blockRenderers?.chart).toBeDefined();
-    expect(theme.blockRenderers?.["context-menu"]).toBeDefined();
-    expect(theme.blockRenderers?.menubar).toBeDefined();
-    expect(theme.blockRenderers?.["message-scroller"]).toBeDefined();
+    expect(theme.blockRenderers?.dropdown).toBeDefined();
+    expect(theme.blockRenderers?.motion).toBeDefined();
+    expect(theme.blockRenderers?.hero).toBeUndefined();
     expect(theme.js).toContain("setupCommands");
     expect(theme.js).toContain("setupCalendars");
-    expect(theme.js).toContain("setupDataTables");
     expect(theme.js).toContain("setupContextMenus");
-    expect(theme.js).toContain("setupMenubars");
-    expect(theme.js).toContain("setupMessageScrollers");
+    expect(theme.js).not.toContain("setupDataTables");
+    expect(theme.js).not.toContain("setupMessageScrollers");
     expect(() => new Function(theme.js ?? "")).not.toThrow();
   });
 
-  it("keeps progressive enhancements scoped to the pack that owns them", () => {
+  it("keeps progressive enhancements scoped to their owning pack", () => {
     const cases = [
       {
         pack: formsBlocks,
         setupFunctions: ["setupCalendars"],
         selector: ".calendar-enhanced",
-        unrelatedSetup: "setupDataTables",
-        unrelatedSelector: ".data-table-shell"
+        unrelatedSetup: "setupCommands"
       },
       {
         pack: interactiveBlocks,
         setupFunctions: ["setupCommands"],
         selector: ".command-input",
-        unrelatedSetup: "setupCalendars",
-        unrelatedSelector: ".context-menu-content"
-      },
-      {
-        pack: dataBlocks,
-        setupFunctions: ["setupDataTables"],
-        selector: ".data-table-shell",
-        unrelatedSetup: "setupMessageScrollers",
-        unrelatedSelector: ".message-scroller"
+        unrelatedSetup: "setupCalendars"
       },
       {
         pack: menuBlocks,
         setupFunctions: ["setupContextMenus", "setupMenubars"],
         selector: ".context-menu-content",
-        unrelatedSetup: "setupCommands",
-        unrelatedSelector: ".command-input"
-      },
-      {
-        pack: chatBlocks,
-        setupFunctions: ["setupMessageScrollers"],
-        selector: ".message-scroller-viewport",
-        unrelatedSetup: "setupDataTables",
-        unrelatedSelector: ".data-table-shell"
+        unrelatedSetup: "setupCommands"
       }
     ] as const;
 
-    for (const { pack, setupFunctions, selector, unrelatedSetup, unrelatedSelector } of cases) {
+    for (const { pack, setupFunctions, selector, unrelatedSetup } of cases) {
       const script = pack.files["runtime.js"];
       const styles = pack.files["runtime.css"];
 
@@ -139,135 +101,54 @@ describe("MDS block packs", () => {
       }
       expect(script).not.toContain(unrelatedSetup);
       expect(styles).toContain(selector);
-      expect(styles).not.toContain(unrelatedSelector);
     }
   });
 
-  it("offers a foundation composition without specialized content or motion profiles", () => {
-    const supportedBlocks = foundationBlocks.flatMap((pack) => pack.supportedBlocks ?? []);
-
-    expect(supportedBlocks).toEqual(
-      expect.arrayContaining([
-        "avatar",
-        "breadcrumb",
-        "pagination",
-        "button",
-        "input",
-        "slider",
-        "calendar",
-        "dropdown",
-        "context-menu",
-        "menubar"
-      ])
-    );
-    expect(supportedBlocks).not.toContain("terminal");
-    expect(supportedBlocks).not.toContain("motion");
-  });
-
-  it("lets themes choose individual block profiles", () => {
-    const source = composeThemeSource(
-      {
-        manifest: {
-          name: "core-only"
-        },
-        files: {}
-      },
-      {
-        blockPacks: [coreBlocks]
-      }
-    );
-
-    expect(source.manifest.supportedBlocks).toContain("details");
-    expect(source.manifest.supportedBlocks).not.toContain("terminal");
-
-    const docsSource = composeThemeSource(
-      {
-        manifest: {
-          name: "docs-only"
-        },
-        files: {}
-      },
-      {
-        blockPacks: [docsBlocks]
-      }
-    );
-
-    expect(docsSource.manifest.supportedBlocks).toContain("terminal");
-    expect(docsSource.manifest.supportedBlocks).not.toContain("details");
-  });
-
-  it("exports machine-readable vocabulary for generated authoring tools", () => {
-    expect(blockVocabularyByName.hero).toMatchObject({
-      profile: "core",
-      slots: ["title", "body", "actions", "media"]
-    });
-    expect(blockVocabularyByName["code-group"]).toMatchObject({
-      profile: "docs"
-    });
-    expect(blockVocabularyByName.toggle).toMatchObject({
-      profile: "controls"
-    });
-    expect(blockVocabularyByName.dropdown).toMatchObject({
-      profile: "menus"
-    });
-    expect(blockVocabularyByName.avatar).toMatchObject({
-      profile: "display"
-    });
-    expect(blockVocabularyByName.breadcrumb).toMatchObject({
-      profile: "navigation"
-    });
-    expect(blockVocabularyByName["data-table"]).toMatchObject({
-      profile: "data",
-      slots: ["columns", "rows", "empty"]
-    });
-    expect(blockVocabularyByName["message-scroller"]).toMatchObject({
-      profile: "chat"
-    });
-
-    const supportedBlocks = standardBlocks.flatMap((pack) => pack.supportedBlocks ?? []);
+  it("exports only the nine reusable packs", () => {
+    const supportedBlocks = sharedBlocks.flatMap((pack) => pack.supportedBlocks ?? []);
     const missingVocabulary = supportedBlocks.filter((block) => blockVocabularyByName[block] === undefined);
 
-    expect(blockVocabulary).toHaveLength(100);
-    expect(standardBlocks).toHaveLength(13);
-    expect(Object.keys(blockPacksByName)).toHaveLength(13);
+    expect(blockVocabulary).toHaveLength(63);
+    expect(sharedBlocks).toHaveLength(9);
+    expect(Object.keys(blockPacksByName)).toHaveLength(9);
+    expect(supportedBlocks).toHaveLength(63);
+    expect(new Set(supportedBlocks).size).toBe(63);
     expect(missingVocabulary).toEqual([]);
     expect(new Set(blockVocabulary.map((block) => block.name)).size).toBe(blockVocabulary.length);
   });
 
-  it("keeps focused packs available for theme authors", () => {
-    expect(mediaBlocks.supportedBlocks).toEqual(["media", "image", "video", "figure", "caption", "gallery"]);
-    expect(controlBlocks.supportedBlocks).toEqual(["button", "toggle", "toggle-group"]);
-    expect(displayBlocks.supportedBlocks).toEqual(["avatar", "empty", "item"]);
-    expect(displayBlocks.files?.["blocks/avatar.html"]).toContain("<img");
+  it("keeps the primitive profiles focused", () => {
+    expect(coreBlocks.supportedBlocks).toEqual([
+      "page",
+      "nav",
+      "section",
+      "aside",
+      "footer",
+      "card",
+      "grid",
+      "split",
+      "callout",
+      "quote",
+      "details"
+    ]);
+    expect(displayBlocks.supportedBlocks).toEqual(["avatar", "empty", "item", "badge", "progress"]);
     expect(navigationBlocks.supportedBlocks).toEqual(["breadcrumb", "breadcrumb-item", "pagination"]);
-    expect(navigationBlocks.files?.["blocks/breadcrumb.html"]).toContain("<nav");
+    expect(controlBlocks.supportedBlocks).toEqual(["button", "toggle", "toggle-group"]);
+    expect(mediaBlocks.supportedBlocks).toEqual(["figure", "caption", "video"]);
+    expect(menuBlocks.supportedBlocks).not.toContain("dropdown-menu");
     expect(formsBlocks.supportedBlocks).toEqual(
-      expect.arrayContaining(["button-group", "input", "input-group", "input-otp", "combobox", "select", "option", "slider", "switch"])
+      expect.arrayContaining(["input", "input-group", "input-otp", "combobox", "select", "slider", "switch"])
     );
-    expect(formsBlocks.files?.["blocks/input.html"]).toContain("<input");
-    expect(formsBlocks.files?.["blocks/input-group.html"]).toContain('class="input-group-control"');
-    expect(formsBlocks.files?.["blocks/input-otp.html"]).toContain('autocomplete="one-time-code"');
-    expect(formsBlocks.files?.["blocks/combobox.html"]).toContain("<datalist");
-    expect(formsBlocks.files?.["blocks/calendar.html"]).toContain('class="calendar-days"');
-    expect(formsBlocks.files?.["blocks/select.html"]).toContain("<select");
-    expect(menuBlocks.supportedBlocks).toEqual(
-      expect.arrayContaining(["dropdown", "dropdown-menu", "context-menu", "menubar", "menu", "menu-item"])
-    );
-    expect(interactiveBlocks.supportedBlocks).toContain("command");
-    expect(interactiveBlocks.files?.["blocks/command.html"]).toContain('class="command-input"');
+  });
+
+  it("preserves the action and motion contracts", () => {
     expect(interactiveBlocks.actions).toEqual(["open", "close", "show", "hide", "toggle"]);
-    expect(dataBlocks.supportedBlocks).toEqual(
-      expect.arrayContaining(["data-table", "data-column", "data-row", "data-cell", "chart", "chart-series", "chart-point"])
-    );
-    expect(dataBlocks.files?.["blocks/data-table.html"]).toContain("<table");
-    expect(dataBlocks.files?.["blocks/chart-point.html"]).toContain("<meter");
-    expect(chatBlocks.supportedBlocks).toEqual(["attachment", "bubble", "marker", "message", "message-scroller"]);
-    expect(chatBlocks.files?.["blocks/message-scroller.html"]).toContain('role="log"');
     expect(motionBlocks.supportedBlocks).toEqual(["motion", "reveal", "scene"]);
-    expect(motionBlocks.files?.["blocks/motion.html"]).toContain('class="motion"');
-    expect(blockVocabularyByName.motion!.attrs).toEqual(["preset", "trigger", "delay", "duration", "stagger", "once"]);
-    expect(blockVocabularyByName.reveal!.attrs).toEqual(["preset", "delay", "duration"]);
-    expect(blockVocabularyByName.scene!.attrs).toEqual(["variant"]);
+    expect(blockVocabularyByName.callout).toMatchObject({ profile: "core", attrs: ["tone", "label"] });
+    expect(blockVocabularyByName.badge).toMatchObject({ profile: "display" });
+    expect(blockVocabularyByName.motion?.attrs).toEqual(["preset", "trigger", "delay", "duration", "stagger", "once"]);
+    expect(blockVocabularyByName.reveal?.attrs).toEqual(["preset", "delay", "duration"]);
+    expect(blockVocabularyByName.scene?.attrs).toEqual(["variant"]);
     expect(blockPacksByName["@mds-crate/blocks/core"]).toBe(coreBlocks);
   });
 });

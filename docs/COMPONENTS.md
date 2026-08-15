@@ -72,6 +72,8 @@ For the shared blocks layer that turns this vocabulary into reusable block packs
 
 ## Component Coverage Matrix
 
+This matrix is the authoring vocabulary, not a promise that every name lives in the shared package. The 63 portable primitives come from `@mds-crate/blocks`. Richer layout aliases, data systems, technical-documentation structures, guided sequences, galleries, and conversation blocks are implemented by `@mds-crate/theme-rich`; other themes may implement their own subsets or extensions.
+
 ### Page Structure
 
 | Block | Purpose | Recommended Content |
@@ -532,7 +534,7 @@ Without JavaScript, every command remains visible as an ordinary menu. Theme enh
 
 `context-menu` and `menubar` reuse the same menu children and action bridge. Context menus retain a clickable native `<details>` fallback; menubars add horizontal arrow navigation without defining new action names.
 
-### Data Table And Chart
+### Data Table And Chart (Rich)
 
 ```mds
 ::: chart label="Weekly builds"
@@ -563,9 +565,9 @@ Without JavaScript, every command remains visible as an ordinary menu. Theme enh
 :::
 ```
 
-Charts remain readable through native `<meter>` elements. Data tables emit a complete native `<table>` first; the pack runtime adds search, stable text/number sorting, pagination, optional selection, and live result summaries.
+Charts remain readable through native `<meter>` elements. Data tables emit a complete native `<table>` first; the Rich theme runtime adds search, stable text/number sorting, pagination, optional selection, and live result summaries.
 
-### Conversation Blocks
+### Conversation Blocks (Rich)
 
 ```mds
 ::: message-scroller label="Conversation" follow=true height="24rem"
@@ -583,7 +585,7 @@ Package versions and integrity hashes.
 :::
 ```
 
-The chat profile owns presentation and scroll behavior only. Transport, persistence, streaming state, branching, and model state remain application responsibilities.
+The Rich theme owns presentation and scroll behavior only. Transport, persistence, streaming state, branching, and model state remain application responsibilities.
 
 ### Scene And Reveal
 
@@ -612,7 +614,7 @@ A theme-framed video.
 :::
 ```
 
-### Gallery Lightbox
+### Gallery Lightbox (Rich)
 
 ```mds
 ::: gallery
@@ -670,9 +672,9 @@ These attribute names are recommended across themes:
 
 Avoid attributes that duplicate large content. Prefer slots or child Markdown for anything human-readable and long-form.
 
-## Canvas Theme Implementation Notes
+## Rich Theme Implementation Notes
 
-Canvas should implement component blocks through shared primitives:
+Rich implements higher-level component blocks on top of shared primitives:
 
 ```txt
 Surface      root block shell, attrs, motion data
@@ -688,7 +690,7 @@ Grid         responsive repeated content
 
 Implementation guidelines:
 
-- Keep `theme.tsx` readable by extracting reusable pieces into `themes/canvas/src/components/`.
+- Keep higher-level templates isolated under `themes/rich/src/blocks/` rather than moving them back into the shared package.
 - Prefer CSS for layout and simple interaction states.
 - Use theme JavaScript only for progressive enhancement such as dialog, drawer, carousel controls, code-group switching, and advanced gallery behavior.
 - Every interactive block must still render useful content when JavaScript is unavailable.
@@ -696,35 +698,26 @@ Implementation guidelines:
 
 ## Components Example Plan
 
-The editor `Components` example should become a broad showcase with stable sections:
+The editor `Components` example is the canonical shared-package showcase. It must contain every `@mds-crate/blocks` name exactly within the 63-block vocabulary and no theme-owned extension:
 
 ```txt
-1. Structure
-   hero, section, split, aside, sticky
+1. Foundation
+   page, section, split, aside, card, grid, callout, display, and navigation blocks
 
-2. Cards And Metrics
-   cards, card, metric, progress
+2. Controls And Forms
+   buttons, toggles, fields, inputs, selection controls, calendar, and validation messages
 
-3. Guidance
-   note, info, warning, success, quote, steps, timeline
-
-4. Media
-   figure, gallery, caption
-
-5. Interactive
+3. Menus And Interactive
    tabs, accordion, carousel, dialog, drawer, command, calendar, context-menu, menubar
 
-6. Forms And Data
-   form, fieldset, checkbox, select, combobox, input-group, input-otp, textarea, data-table, chart
+4. Media And Status
+   badge, progress, figure, caption, and video
 
-7. Conversation
-   message-scroller, message, bubble, marker, attachment
-
-8. Technical Docs
-   code-group, terminal, file-tree, api, endpoint
+5. Motion
+   motion, reveal, and scene while preserving the separate action contract
 ```
 
-The implemented editor example uses realistic copy and includes every shared foundation, data, and chat family.
+Rich-owned data, documentation, guidance aliases, gallery, and conversation blocks belong in a separate Rich-specific example if one is added later. They must not leak into the Components capability test or visual baseline.
 
 ## Testing Expectations
 
@@ -745,9 +738,9 @@ Component expansion should be verified at three levels:
 3. **Editor visual smoke tests**
 
    - Components example renders without diagnostics.
-   - `pnpm test:visual` renders default, folio, and atelier at mobile and desktop viewports.
+   - `pnpm test:visual` renders the shared-only Components gallery through Default at mobile and desktop viewports.
    - The smoke runner captures PNG artifacts and rejects horizontal viewport overflow.
-   - Canvas desktop/tablet/mobile previews are readable.
+   - Rich desktop and mobile previews are readable.
    - Interactive blocks do not hide content accidentally.
    - Theme JavaScript does not emit console errors.
 
@@ -755,7 +748,7 @@ Component expansion should be verified at three levels:
 
 - Themes are not required to implement every block in this document.
 - A theme can declare supported blocks through `theme.json#supportedBlocks`.
-- Shared block packs may provide reusable templates for subsets of this vocabulary. Themes can opt into those packs and override selected block templates.
+- Shared block packs provide only portable primitives. Themes can opt into those packs, override selected templates, and own richer vocabulary locally.
 - MDS documents may use custom block names outside this list.
-- Core should not special-case most component names. The list is a shared vocabulary and Canvas roadmap, not a closed grammar.
+- Core should not special-case most component names. The list is an authoring vocabulary and theme-extension roadmap, not a closed grammar.
 - Block names should stay lowercase and hyphenated when they contain multiple words, such as `code-group` and `message-scroller`.
