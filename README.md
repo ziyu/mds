@@ -1,5 +1,7 @@
 # MDS
 
+> **Think in Markdown. Render in HTML.**
+
 MDS is a Markdown-based semantic authoring language. Authors write normal Markdown plus a small set of semantic blocks; MDS parses that source and renders standalone or embeddable HTML through reusable themes.
 
 ## Public Beta

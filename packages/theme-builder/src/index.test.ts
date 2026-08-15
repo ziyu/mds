@@ -517,7 +517,7 @@ export default defineJsxTheme({
     await expect(readFile(join(root, "dist/theme/blocks/pricing-plan.html"), "utf8")).resolves.toContain(
       "pricing-plan"
     );
-    expect(metadata.blockPacks).toHaveLength(9);
+    expect(metadata.blockPacks).toHaveLength(14);
     expect(metadata.templateSources).toEqual(
       expect.arrayContaining([
         { block: "hero", source: "theme" },
@@ -532,6 +532,37 @@ export default defineJsxTheme({
     });
     expect(result.diagnostics).toEqual([]);
     expect(inspection.diagnostics).toEqual([]);
+  });
+
+  it("composes the foundation alias without specialized marketing blocks", async () => {
+    const root = await mkdtemp(join(tmpdir(), "mds-theme-foundation-pack-"));
+    await writeFile(
+      join(root, "package.json"),
+      JSON.stringify({
+        type: "module",
+        mdsTheme: {
+          source: "./theme.json",
+          dist: "./dist/theme",
+          blockPacks: ["@mds-crate/blocks/foundation"]
+        }
+      }),
+      "utf8"
+    );
+    await writeFile(join(root, "theme.json"), JSON.stringify({ name: "foundation-pack" }), "utf8");
+
+    await buildPackageTheme(root);
+    const manifest = (await readJson(join(root, "dist/theme/theme.json"))) as {
+      supportedBlocks: string[];
+    };
+    const metadata = (await readJson(join(root, "dist/theme/.mds-theme-build.json"))) as {
+      blockPacks: Array<{ name: string }>;
+    };
+
+    expect(manifest.supportedBlocks).toEqual(
+      expect.arrayContaining(["avatar", "breadcrumb", "pagination", "button", "input", "slider", "dropdown"])
+    );
+    expect(manifest.supportedBlocks).not.toContain("pricing");
+    expect(metadata.blockPacks).toHaveLength(7);
   });
 
   it("reports unknown configured block packs during the compose stage", async () => {

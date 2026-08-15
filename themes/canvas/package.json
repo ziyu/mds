@@ -21,6 +21,7 @@
     "check": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@mds-crate/blocks": "workspace:*",
     "@mds-crate/theme-sdk-react": "workspace:*",
     "react": "^19.1.0"
   },

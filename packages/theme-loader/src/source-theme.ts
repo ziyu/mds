@@ -45,6 +45,8 @@ export interface ThemeBlockPackSource {
   profiles?: string[];
   supportedBlocks?: string[];
   actions?: string[];
+  css?: ThemeAssetReference;
+  js?: ThemeAssetReference;
   files: Record<string, string>;
   blocks?: ThemeBlockReference;
 }
@@ -102,11 +104,15 @@ export function composeThemeSource(input: ThemeSourceInput, options: ComposeThem
   const templateSources = new Map<string, string>();
   const supportedBlocks: string[] = [];
   const actions: string[] = [];
+  const packStyles: string[] = [];
+  const packScripts: string[] = [];
 
   for (const pack of blockPacks) {
     const normalizedPack = normalizeThemeSourceInput({
       manifest: {
-        ...(pack.blocks === undefined ? {} : { blocks: pack.blocks })
+        ...(pack.blocks === undefined ? {} : { blocks: pack.blocks }),
+        ...(pack.css === undefined ? {} : { css: pack.css }),
+        ...(pack.js === undefined ? {} : { js: pack.js })
       },
       files: pack.files,
       rootName: pack.name
@@ -119,6 +125,14 @@ export function composeThemeSource(input: ThemeSourceInput, options: ComposeThem
     }
     supportedBlocks.push(...(pack.supportedBlocks ?? []));
     actions.push(...(pack.actions ?? []));
+    const packStyle = readAssets(normalizedPack.files, normalizedPack.manifest.css);
+    if (packStyle !== undefined && !packStyles.includes(packStyle)) {
+      packStyles.push(packStyle);
+    }
+    const packScript = readAssets(normalizedPack.files, normalizedPack.manifest.js);
+    if (packScript !== undefined && !packScripts.includes(packScript)) {
+      packScripts.push(packScript);
+    }
   }
 
   const previousTemplateSources = new Map(
@@ -135,12 +149,32 @@ export function composeThemeSource(input: ThemeSourceInput, options: ComposeThem
 
   const files = removeComposedBlockFiles(normalizedInput.files);
   Object.assign(files, writeComposedBlockTemplates(templates));
+  const composedStylePath =
+    packStyles.length === 0 ? undefined : createComposedAssetPath(files, "assets/mds-blocks.css");
+  if (composedStylePath !== undefined) {
+    files[composedStylePath] = packStyles.join("\n");
+  }
+  const composedScriptPath =
+    packScripts.length === 0 ? undefined : createComposedAssetPath(files, "assets/mds-blocks.js");
+  if (composedScriptPath !== undefined) {
+    files[composedScriptPath] = packScripts.join("\n");
+  }
 
   return {
     ...normalizedInput,
     manifest: {
       ...normalizedInput.manifest,
       blocks: "blocks",
+      ...(composedStylePath === undefined
+        ? {}
+        : {
+            css: [composedStylePath, ...assetReferencesToPaths(normalizedInput.manifest.css)]
+          }),
+      ...(composedScriptPath === undefined
+        ? {}
+        : {
+            js: [composedScriptPath, ...assetReferencesToPaths(normalizedInput.manifest.js)]
+          }),
       ...(supportedBlocks.length === 0 ? {} : { supportedBlocks: uniqueStrings(supportedBlocks) }),
       ...(actions.length === 0 ? {} : { actions: uniqueStrings(actions) })
     },
@@ -159,6 +193,23 @@ export function composeThemeSource(input: ThemeSourceInput, options: ComposeThem
         .sort((left, right) => left.block.localeCompare(right.block))
     }
   };
+}
+
+function createComposedAssetPath(files: Record<string, string>, preferredPath: string): string {
+  if (!(preferredPath in files)) {
+    return preferredPath;
+  }
+
+  const extension = preferredPath.lastIndexOf(".");
+  const base = extension === -1 ? preferredPath : preferredPath.slice(0, extension);
+  const suffix = extension === -1 ? "" : preferredPath.slice(extension);
+  let index = 2;
+  let path = `${base}-${index}${suffix}`;
+  while (path in files) {
+    index += 1;
+    path = `${base}-${index}${suffix}`;
+  }
+  return path;
 }
 
 function isThemeSourceComposition(value: unknown): value is ThemeSourceComposition {

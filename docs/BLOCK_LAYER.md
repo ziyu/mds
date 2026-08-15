@@ -49,7 +49,7 @@ A block pack is not a runtime component library. It is merged into a theme sourc
 
 **Block profile**
 
-A named subset of a vocabulary, such as `core`, `marketing`, `docs`, `forms`, or `motion`. Profiles let small themes opt into useful coverage without claiming the full Canvas-sized set.
+A named subset of a vocabulary, such as `core`, `display`, `navigation`, `controls`, `forms`, `menus`, or `motion`. Profiles let small themes opt into useful coverage without claiming the full Canvas-sized set.
 
 **Theme override**
 
@@ -93,7 +93,7 @@ The first implementation is source-level composition:
 
 - `@mds-crate/theme-loader` exports `composeThemeSource()`.
 - `@mds-crate/theme-loader` exports the `ThemeBlockPackSource` and `ComposeThemeSourceOptions` types.
-- `@mds-crate/blocks` exports `coreBlocks`, `marketingBlocks`, and `standardBlocks`.
+- `@mds-crate/blocks` exports focused packs, `foundationBlocks`, and `standardBlocks`.
 - JSX, HTML, and React theme SDK definitions accept optional `blockPacks`.
 
 This first version intentionally does not resolve string references such as `"@mds-crate/blocks/core"` from `theme.json`. Package and SDK authors pass pack objects directly, and the generated `ThemeSourceInput` is a normal artifact-shaped source.
@@ -114,7 +114,7 @@ The composition helper merges packs and themes before `createThemeFromSources()`
 
 ```ts
 import { composeThemeSource } from "@mds-crate/theme-loader";
-import { coreBlocks, marketingBlocks } from "@mds-crate/blocks";
+import { foundationBlocks } from "@mds-crate/blocks";
 
 composeThemeSource({
   manifest: {
@@ -122,7 +122,7 @@ composeThemeSource({
   },
   files: {}
 }, {
-  blockPacks: [coreBlocks, marketingBlocks]
+  blockPacks: foundationBlocks
 });
 ```
 
@@ -143,7 +143,7 @@ File-based themes may eventually declare block packs in `theme.json`:
 ```json
 {
   "name": "clean",
-  "blockPacks": ["@mds-crate/blocks/core", "@mds-crate/blocks/marketing"],
+  "blockPacks": ["@mds-crate/blocks/foundation"],
   "blocks": "blocks",
   "css": "style.css"
 }
@@ -152,12 +152,12 @@ File-based themes may eventually declare block packs in `theme.json`:
 Package themes can already use SDK helpers:
 
 ```ts
-import { coreBlocks, marketingBlocks } from "@mds-crate/blocks";
+import { foundationBlocks } from "@mds-crate/blocks";
 import { defineReactTheme } from "@mds-crate/theme-sdk-react";
 
 export default defineReactTheme({
   name: "clean",
-  blockPacks: [coreBlocks, marketingBlocks],
+  blockPacks: foundationBlocks,
   blocks: {
     hero: (block) => "...theme-specific template..."
   }
@@ -184,7 +184,7 @@ interface BlockPackSource {
 Rules:
 
 - Pack file paths use the same relative POSIX path rules as theme artifacts.
-- Pack templates use the same placeholders as theme templates: `{{ attrs }}`, `{{ children }}`, `{{ slots }}`, `{{ slot:name }}`, and `{{ attr:name:fallback }}`.
+- Pack templates use the same placeholders as theme templates: `{{ attrs }}`, `{{ children }}`, `{{ slots }}`, `{{ slot:name }}`, `{{ attr:name:fallback }}`, `{{ optional:source:html-name }}`, and `{{ bool:name }}`.
 - Pack templates should prefer readable native HTML and safe fallbacks.
 - Pack templates should avoid visual styling that forces one specific theme aesthetic.
 - Pack CSS should be optional. The preferred first version is structural templates plus class names that themes style.
@@ -192,19 +192,31 @@ Rules:
 
 ## Profiles
 
-Recommended first profiles:
+Current profiles are ordered by product priority. Foundation controls come before specialized presentation blocks:
 
 | Profile | Purpose | Example Blocks |
 | --- | --- | --- |
 | `core` | Basic page structure and content containers. | `page`, `section`, `hero`, `nav`, `footer`, `card`, `cards`, `grid`, `split`, `note`, `details` |
-| `marketing` | Landing and product pages. | `cta`, `features`, `feature`, `stats`, `stat`, `logos`, `testimonial`, `pricing`, `pricing-plan` |
+| `display` | Reusable identity and content presentation. | `avatar`, `empty`, `item` |
+| `navigation` | Hierarchical and paged navigation. | `breadcrumb`, `breadcrumb-item`, `pagination` |
+| `controls` | Universal buttons and two-state controls. | `button`, `toggle`, `toggle-group` |
+| `forms` | Native-first form composition and date selection. | `form`, `fieldset`, `field`, `label`, `input`, `input-group`, `input-otp`, `combobox`, `calendar`, `textarea`, `select`, `option`, `checkbox`, `radio-group`, `radio`, `slider`, `switch`, `button-group` |
+| `interactive` | Native-first interactive containers. | `tabs`, `accordion`, `carousel`, `dialog`, `drawer`, `popover`, `tooltip`, `command` |
+| `menus` | Commands, disclosure menus, context menus, and application menubars. | `dropdown`, `dropdown-menu`, `context-menu`, `menubar`, `menu`, `menu-group`, `menu-item`, `menu-separator` |
+| `data` | Metrics, charts, and progressively enhanced native tables. | `metric`, `progress`, `chart`, `chart-series`, `chart-point`, `data-table`, `data-column`, `data-row`, `data-cell` |
+| `chat` | Portable conversation layout and transcript behavior. | `attachment`, `bubble`, `marker`, `message`, `message-scroller` |
 | `docs` | Technical documentation and reference pages. | `terminal`, `code-group`, `file-tree`, `api`, `endpoint`, `steps`, `timeline` |
 | `media` | Images, video, figures, galleries. | `media`, `image`, `video`, `figure`, `caption`, `gallery` |
-| `forms` | Native-first form composition. | `form`, `fieldset`, `button-group` |
+| `marketing` | Lower-priority landing and product presentation. | `cta`, `features`, `feature`, `stats`, `stat`, `logos`, `testimonial`, `pricing`, `pricing-plan` |
 | `motion` | Motion wrappers and reveal semantics. | `motion`, `reveal`, `scene` |
-| `interactive` | Native-first interactive containers. | `tabs`, `accordion`, `carousel`, `dialog`, `drawer`, `popover`, `tooltip` |
 
 Themes may opt into multiple profiles. A theme should only publish profiles whose output has been visually checked with its CSS.
+
+`foundationBlocks` composes `core`, `display`, `navigation`, `controls`, `forms`, `interactive`, and `menus`. `standardBlocks` adds data, chat, documentation, media, guidance, marketing, and motion profiles. Packs may include de-duplicated structural CSS and progressive-enhancement JavaScript; those assets compose before theme-owned assets so external themes work immediately and can override the presentation.
+
+The [shadcn/ui coverage matrix](./SHADCN_BLOCK_MAP.md) is used as a completeness benchmark. It does not introduce library-specific aliases when Markdown or an existing MDS block already provides a stronger representation.
+
+`toggle` and `switch` deliberately remain separate: `toggle` is a pressed/unpressed command button, while `switch` is an immediate on/off form value. `select` chooses a form value; `dropdown` exposes a list of commands. The menu fallback uses native `<details>` and `<summary>` so it stays readable without a browser component runtime.
 
 ## Supported Blocks
 
@@ -288,7 +300,7 @@ For editor development mode, the dev server may compose pack sources before send
 
 4. **Move existing themes gradually**
 
-   Status: implemented for `default`, `folio`, and `atelier`. They opt into `@mds-crate/blocks/standard`, keep source under `src/`, and materialize complete plain runtime artifacts under `dist/theme`. The override audit reduced theme-owned templates from 31 each to 6 for `default`, 10 for `folio`, and 6 for `atelier`; all three artifacts still expose the same 72-block vocabulary.
+   Status: implemented for `default`, `folio`, and `atelier`. They opt into `@mds-crate/blocks/standard`, keep source under `src/`, and materialize complete plain runtime artifacts under `dist/theme`. The override audit reduced theme-owned templates from 31 each to 6 for `default`, 10 for `folio`, and 6 for `atelier`; the shared vocabulary contains 111 blocks across 14 packs, and these composed theme artifacts expose 113 templates after their theme-owned additions.
 
 5. **Update package SDKs**
 

@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { build as buildWithEsbuild } from "esbuild";
 import type { AcceptedPlugin, Message } from "postcss";
 import { tsImport } from "tsx/esm/api";
-import { blockPacksByName, standardBlocks } from "@mds-crate/blocks";
+import { blockPacksByName, foundationBlocks, standardBlocks } from "@mds-crate/blocks";
 import {
   createThemeSourceFromJsxTheme,
   isJsxThemeDefinition,
@@ -749,12 +749,16 @@ function resolvePackageBlockPacks(refs: string[]): PackageThemeBlockPackLoadResu
     if (ref === "@mds-crate/blocks/standard") {
       return [...standardBlocks];
     }
+    if (ref === "@mds-crate/blocks/foundation") {
+      return [...foundationBlocks];
+    }
 
     const blockPack = blockPacksByName[ref];
     if (blockPack === undefined) {
       throw new Error(
         `Unknown MDS block pack: ${ref}. Available packs: ${[
           ...Object.keys(blockPacksByName),
+          "@mds-crate/blocks/foundation",
           "@mds-crate/blocks/standard"
         ].join(", ")}.`
       );
@@ -1405,13 +1409,13 @@ async function mergePackageAssets(
 
   const css = await copyStyleAssetReferences(root, assets.css, usedOutputPaths, inputFiles, pipeline.css ?? "esbuild");
   if (css !== undefined) {
-    manifest.css = css.reference;
+    manifest.css = mergeAssetReferences(source.manifest.css, css.reference);
     Object.assign(files, css.files);
   }
 
   const js = await copyScriptAssetReferences(root, assets.js, usedOutputPaths, inputFiles);
   if (js !== undefined) {
-    manifest.js = js.reference;
+    manifest.js = mergeAssetReferences(source.manifest.js, js.reference);
     Object.assign(files, js.files);
   }
 
@@ -1445,6 +1449,17 @@ async function mergePackageAssets(
     },
     inputFiles: [...inputFiles].sort()
   };
+}
+
+function mergeAssetReferences(
+  existing: ThemeAssetReference | undefined,
+  added: ThemeAssetReference
+): ThemeAssetReference {
+  const references = uniqueThemeStrings([
+    ...assetReferencesToPaths(existing),
+    ...assetReferencesToPaths(added)
+  ]) ?? [];
+  return references.length === 1 ? references[0]! : references;
 }
 
 async function copyAssetReferences(

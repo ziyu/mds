@@ -157,7 +157,12 @@ Common variables:
 {{ slots }}     rendered slot HTML
 {{ summary }}   escaped summary text for details-like blocks
 {{ attr:name }} escaped value for one block attribute
+{{ attr:name:fallback }} escaped value, or a literal fallback when absent
+{{ optional:name:html-name }} complete escaped HTML attribute when present
+{{ bool:name }} native boolean HTML attribute when truthy
 ```
+
+`optional` and `bool` are intended for pack-owned native controls. They only emit safe attribute names, values are escaped, and event attributes such as `oninput` are rejected. `{{ attrs }}` remains the root metadata bridge and emits `data-attr-*`; use the explicit native placeholders only when the browser must interpret the value itself.
 
 Prefer `{{ attrs }}` on the root element because it preserves generated attributes such as resolved ids and safe theme-facing block attributes.
 
@@ -318,7 +323,7 @@ Package themes may compose shared block packs before their own templates:
 }
 ```
 
-`blockPacks` accepts named `@mds-crate/blocks/*` profiles or `@mds-crate/blocks/standard`. These packs contain reusable structural implementations, not just type declarations. A theme normally keeps only templates whose DOM, slots, accessibility behavior, or interaction model must differ from the pack. `blockOverrides` lists that theme-owned subset relative to the source manifest; the builder composes packs first and overrides second, then writes the complete runtime artifact to `dist/theme`. Build metadata records selected packs and final template provenance, and `mds theme inspect` reports both.
+`blockPacks` accepts named `@mds-crate/blocks/*` profiles, `@mds-crate/blocks/foundation`, or `@mds-crate/blocks/standard`. `foundation` contains core layout, display, navigation, controls, forms, interactive containers, and menus; `standard` adds data, chat, documentation, media, guidance, marketing, and motion profiles. These packs contain reusable structural implementations, not just type declarations. Packs may contribute de-duplicated CSS and progressive-enhancement JavaScript; those assets are emitted before the theme's own assets so the theme can override presentation while retaining portable behavior. A theme normally keeps only templates whose DOM, slots, accessibility behavior, or interaction model must differ from the pack. `blockOverrides` lists that theme-owned subset relative to the source manifest; the builder composes packs first and overrides second, then writes the complete runtime artifact to `dist/theme`. Build metadata records selected packs and final template provenance, and `mds theme inspect` reports both.
 
 ```txt
 my-theme/

@@ -11,7 +11,7 @@ import { examples } from "../apps/editor/src/examples.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outputDirectory = join(root, ".tmp/visual-smoke");
-const themeNames = ["default", "folio", "atelier"] as const;
+const themeNames = ["default", "folio", "atelier", "canvas"] as const;
 const viewports = [
   { name: "mobile", width: 390, height: 844 },
   { name: "desktop", width: 1440, height: 1000 }
@@ -35,6 +35,22 @@ interface LayoutMetrics {
   scrollWidth: number;
   scrollHeight: number;
   overflowElements: Array<{ selector: string; left: number; right: number; width: number }>;
+  overflowingContents: Array<{ selector: string; clientWidth: number; scrollWidth: number; overflowX: string }>;
+}
+
+interface CommandMetrics {
+  enhanced: boolean;
+  filters: boolean;
+  restores: boolean;
+}
+
+interface RemainingBlockMetrics {
+  calendar: boolean;
+  dataTable: boolean;
+  contextMenu: boolean;
+  menubar: boolean;
+  messageScroller: boolean;
+  chart: boolean;
 }
 
 async function main(): Promise<void> {
@@ -207,11 +223,143 @@ async function captureScreenshot(
       },
       sessionId
     );
+    const commandEvaluated = await client.send<{ result: { value: CommandMetrics } }>(
+      "Runtime.evaluate",
+      {
+        expression: `(() => {
+          const command = document.querySelector('.command');
+          const search = command?.querySelector('.command-search');
+          const input = command?.querySelector('.command-input');
+          const empty = command?.querySelector('.command-empty');
+          const items = command === null ? [] : [...command.querySelectorAll('.menu-item')];
+          if (!(search instanceof HTMLElement) || !(input instanceof HTMLInputElement) || !(empty instanceof HTMLElement) || items.length === 0) {
+            return { enhanced: false, filters: false, restores: false };
+          }
+          const enhanced = command.classList.contains('is-enhanced') && !search.hidden;
+          input.value = '__mds_no_matching_command__';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          const filters = items.every((item) => item.hidden) && !empty.hidden;
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          const restores = items.every((item) => !item.hidden) && empty.hidden;
+          return { enhanced, filters, restores };
+        })()`,
+        returnByValue: true
+      },
+      sessionId
+    );
+    const command = commandEvaluated.result.value;
+    if (!command.enhanced || !command.filters || !command.restores) {
+      throw new Error(
+        `Command enhancement failed for ${screenshotPath}: ${JSON.stringify(command)}.`
+      );
+    }
+    const remainingEvaluated = await client.send<{ result: { value: RemainingBlockMetrics } }>(
+      "Runtime.evaluate",
+      {
+        expression: `(() => {
+          const calendarRoot = document.querySelector('.calendar');
+          const calendarNative = calendarRoot?.querySelector('.calendar-native');
+          const calendarTarget = [...(calendarRoot?.querySelectorAll('.calendar-day') ?? [])]
+            .find((button) => !button.disabled && button.dataset.outside === 'false' && button.getAttribute('aria-selected') !== 'true');
+          const calendarBefore = calendarRoot?.getAttribute('data-value');
+          calendarTarget?.click();
+          const calendar = calendarRoot instanceof HTMLElement &&
+            calendarRoot.classList.contains('is-enhanced') &&
+            calendarNative instanceof HTMLElement && calendarNative.hidden &&
+            calendarTarget instanceof HTMLButtonElement &&
+            calendarRoot.getAttribute('data-value') !== calendarBefore;
+
+          const tableShell = document.querySelector('.data-table-shell');
+          const table = tableShell?.querySelector('.data-table');
+          const tableToolbar = tableShell?.querySelector('.data-table-toolbar');
+          const tableFilter = tableShell?.querySelector('.data-table-filter-input');
+          const tableEmpty = tableShell?.querySelector('.data-table-empty');
+          const tablePager = tableShell?.querySelector('.data-table-pagination');
+          const tableSort = tableShell?.querySelector('.data-table-sort');
+          let filters = false;
+          let restoresTable = false;
+          if (tableFilter instanceof HTMLInputElement && table instanceof HTMLTableElement && tableEmpty instanceof HTMLElement) {
+            tableFilter.value = '__mds_no_matching_row__';
+            tableFilter.dispatchEvent(new Event('input', { bubbles: true }));
+            filters = table.hidden && !tableEmpty.hidden;
+            tableFilter.value = '';
+            tableFilter.dispatchEvent(new Event('input', { bubbles: true }));
+            restoresTable = !table.hidden && tableEmpty.hidden;
+            if (tableSort instanceof HTMLButtonElement) tableSort.click();
+          }
+          const dataTable = tableShell instanceof HTMLElement &&
+            tableShell.classList.contains('is-enhanced') &&
+            tableToolbar instanceof HTMLElement && !tableToolbar.hidden &&
+            tablePager instanceof HTMLElement && !tablePager.hidden &&
+            filters && restoresTable;
+
+          const contextRoot = document.querySelector('.context-menu');
+          const contextTrigger = contextRoot?.querySelector('.context-menu-trigger');
+          if (contextTrigger instanceof HTMLElement) {
+            contextTrigger.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 40, clientY: 40 }));
+          }
+          const contextMenu = contextRoot instanceof HTMLDetailsElement &&
+            contextRoot.classList.contains('is-enhanced') && contextRoot.open &&
+            contextRoot.classList.contains('is-context-open');
+          if (contextRoot instanceof HTMLDetailsElement) contextRoot.open = false;
+
+          const menubarRoot = document.querySelector('.menubar');
+          const menubarTriggers = [...(menubarRoot?.querySelectorAll('.dropdown-menu > summary') ?? [])];
+          let menubarKeyboard = false;
+          if (menubarTriggers[0] instanceof HTMLElement && menubarTriggers[1] instanceof HTMLElement) {
+            menubarTriggers[0].focus();
+            menubarTriggers[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+            menubarKeyboard = document.activeElement === menubarTriggers[1];
+            menubarTriggers[1].blur();
+          }
+          const menubar = menubarRoot instanceof HTMLElement &&
+            menubarRoot.classList.contains('is-enhanced') && menubarKeyboard;
+
+          const scroller = document.querySelector('.message-scroller');
+          const viewport = scroller?.querySelector('.message-scroller-viewport');
+          const content = scroller?.querySelector('.message-scroller-content');
+          const latest = scroller?.querySelector('.message-scroller-button');
+          let scrollControl = false;
+          if (viewport instanceof HTMLElement && content instanceof HTMLElement && latest instanceof HTMLButtonElement) {
+            const additions = Array.from({ length: 16 }, (_, index) => {
+              const row = document.createElement('p');
+              row.textContent = 'Temporary transcript row ' + index;
+              content.append(row);
+              return row;
+            });
+            viewport.scrollTop = 0;
+            viewport.dispatchEvent(new Event('scroll'));
+            scrollControl = viewport.scrollHeight > viewport.clientHeight && !latest.hidden;
+            additions.forEach((row) => row.remove());
+            viewport.scrollTop = viewport.scrollHeight;
+            viewport.dispatchEvent(new Event('scroll'));
+          }
+          const messageScroller = scroller instanceof HTMLElement &&
+            scroller.classList.contains('is-enhanced') &&
+            content?.getAttribute('role') === 'log' && scrollControl;
+
+          const chart = document.querySelectorAll('.chart-point-meter').length >= 4 &&
+            [...document.querySelectorAll('.chart-point-meter')].every((meter) => meter instanceof HTMLMeterElement);
+
+          window.scrollTo(0, 0);
+          return { calendar, dataTable, contextMenu, menubar, messageScroller, chart };
+        })()`,
+        returnByValue: true
+      },
+      sessionId
+    );
+    const remaining = remainingEvaluated.result.value;
+    if (Object.values(remaining).some((value) => !value)) {
+      throw new Error(
+        `Remaining block enhancement failed for ${screenshotPath}: ${JSON.stringify(remaining)}.`
+      );
+    }
     const evaluated = await client.send<{ result: { value: LayoutMetrics } }>(
       "Runtime.evaluate",
       {
         expression:
-          "({innerWidth,innerHeight,scrollWidth:Math.max(document.documentElement.scrollWidth,document.body.scrollWidth),scrollHeight:Math.max(document.documentElement.scrollHeight,document.body.scrollHeight),overflowElements:[...document.querySelectorAll('*')].map((element)=>{const rect=element.getBoundingClientRect();return {selector:element.tagName.toLowerCase()+(element.id?'#'+element.id:'')+(typeof element.className==='string'&&element.className.trim()?'.'+element.className.trim().split(/\\s+/).join('.'):''),left:Math.round(rect.left),right:Math.round(rect.right),width:Math.round(rect.width)}}).filter((entry)=>entry.right>innerWidth+1||entry.left<-1).slice(0,12)})",
+          "({innerWidth,innerHeight,scrollWidth:Math.max(document.documentElement.scrollWidth,document.body.scrollWidth),scrollHeight:Math.max(document.documentElement.scrollHeight,document.body.scrollHeight),overflowElements:[...document.querySelectorAll('*')].map((element)=>{const rect=element.getBoundingClientRect();return {selector:element.tagName.toLowerCase()+(element.id?'#'+element.id:'')+(typeof element.className==='string'&&element.className.trim()?'.'+element.className.trim().split(/\\s+/).join('.'):''),left:Math.round(rect.left),right:Math.round(rect.right),width:Math.round(rect.width)}}).filter((entry)=>entry.right>innerWidth+1||entry.left<-1).slice(0,12),overflowingContents:[...document.querySelectorAll('*')].map((element)=>({selector:element.tagName.toLowerCase()+(element.id?'#'+element.id:'')+(typeof element.className==='string'&&element.className.trim()?'.'+element.className.trim().split(/\\s+/).join('.'):''),clientWidth:element.clientWidth,scrollWidth:element.scrollWidth,overflowX:getComputedStyle(element).overflowX})).filter((entry)=>entry.scrollWidth>entry.clientWidth+1&&entry.overflowX==='visible').slice(0,12)})",
         returnByValue: true
       },
       sessionId
@@ -225,6 +373,8 @@ async function captureScreenshot(
         `Horizontal overflow in ${screenshotPath}: scrollWidth=${layout.scrollWidth}, innerWidth=${layout.innerWidth}. ` +
           `Offenders: ${layout.overflowElements
             .map((entry) => `${entry.selector}[${entry.left},${entry.right};w=${entry.width}]`)
+            .join(", ")}. Overflowing contents: ${layout.overflowingContents
+            .map((entry) => `${entry.selector}[${entry.clientWidth}->${entry.scrollWidth};${entry.overflowX}]`)
             .join(", ")}.`
       );
     }

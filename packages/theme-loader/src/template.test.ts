@@ -62,6 +62,53 @@ describe("theme template escaping", () => {
     expect(html).not.toContain("<script>alert(1)</script>");
     expect(html).not.toContain("<img src=x onerror=alert(1)>");
   });
+
+  it("renders safe optional and boolean native attributes", () => {
+    const renderer = createTemplateBlockRenderer(
+      '<input{{ optional:name:name }}{{ optional:action:data-action }}{{ bool:required }}{{ bool:disabled }}{{ optional:onclick:onfocus }}>'
+    );
+    const html = renderer(
+      {
+        type: "block",
+        blockType: "input",
+        attrs: {
+          name: 'profile" autofocus="true',
+          action: "lead.submit",
+          required: true,
+          disabled: "false",
+          onclick: "alert(1)"
+        },
+        children: [],
+        slots: []
+      },
+      createContext()
+    );
+
+    expect(html).toBe(
+      '<input name="profile&quot; autofocus=&quot;true" data-action="lead.submit" required>'
+    );
+    expect(html).not.toContain("onfocus");
+  });
+
+  it("renders attribute fallbacks containing spaces, punctuation, and colons", () => {
+    const renderer = createTemplateBlockRenderer(
+      '<label aria-label="{{ attr:label:Choose one }}"><input placeholder="{{ attr:placeholder:Type a command or search... }}"><span>{{ attr:url:https://example.com/path }}</span></label>'
+    );
+    const html = renderer(
+      {
+        type: "block",
+        blockType: "input",
+        children: [],
+        slots: []
+      },
+      createContext()
+    );
+
+    expect(html).toBe(
+      '<label aria-label="Choose one"><input placeholder="Type a command or search..."><span>https://example.com/path</span></label>'
+    );
+    expect(html).not.toContain("{{");
+  });
 });
 
 function createContext(): HtmlRenderContext {

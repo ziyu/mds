@@ -28,6 +28,7 @@ document.addEventListener("click", (event: MouseEvent) => {
       controlled.removeAttribute("open");
     } else if (action === "toggle") {
       toggleAttribute(controlled, "open");
+      togglePressedState(command);
     }
     return;
   }
@@ -38,8 +39,17 @@ document.addEventListener("click", (event: MouseEvent) => {
     setControlledVisibility(controlled, false);
   } else if (action === "toggle") {
     setControlledVisibility(controlled, controlled.hasAttribute("hidden"));
+    togglePressedState(command);
   }
 }, { capture: true });
+
+function togglePressedState(command: Element): void {
+  if (!command.hasAttribute("aria-pressed")) {
+    return;
+  }
+
+  command.setAttribute("aria-pressed", command.getAttribute("aria-pressed") === "true" ? "false" : "true");
+}
 
 function queryElement(selector: string): Element | null {
   try {

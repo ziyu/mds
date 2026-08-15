@@ -56,6 +56,9 @@
       if (target instanceof HTMLDetailsElement) {
         target.open = !target.open;
       }
+      if (control.hasAttribute("aria-pressed")) {
+        control.setAttribute("aria-pressed", control.getAttribute("aria-pressed") === "true" ? "false" : "true");
+      }
     }
 
     if ((action === "show" || action === "open") && target) {
@@ -101,4 +104,5 @@
       panel.classList.toggle("is-active", panel.id === panelId);
     });
   }
+
 })();

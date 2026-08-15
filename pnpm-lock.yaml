@@ -310,6 +310,9 @@ importers:
 
   themes/canvas:
     dependencies:
+      '@mds-crate/blocks':
+        specifier: workspace:*
+        version: link:../../packages/blocks
       '@mds-crate/theme-sdk-react':
         specifier: workspace:*
         version: link:../../packages/theme-sdk-react

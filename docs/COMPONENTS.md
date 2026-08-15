@@ -138,6 +138,13 @@ For the shared blocks layer that turns this vocabulary into reusable block packs
 | Block | Purpose | Recommended Content |
 | --- | --- | --- |
 | `table` | Tabular data. | Markdown table or rendered children. |
+| `data-table` | Filterable, sortable, paged native table. | `columns`, `rows`, and `empty` slots. |
+| `data-column` | Data-table column definition. | `key`, `label`, optional `sortable`. |
+| `data-row` | Data-table row. | Nested `data-cell` blocks. |
+| `data-cell` | Data-table cell. | `column` key and cell Markdown. |
+| `chart` | Accessible chart surface. | Nested `chart-series` blocks and description/legend slots. |
+| `chart-series` | Named chart series. | Nested `chart-point` blocks. |
+| `chart-point` | Native meter-backed numeric value. | `label`, `value`, and `max`. |
 | `comparison` | Compare options/features. | Nested cards or markdown table. |
 | `metric` | Highlighted metric. | `value`, `label`, optional body. |
 | `progress` | Progress indicator. | `value`, `max`, optional label. |
@@ -167,6 +174,9 @@ For the shared blocks layer that turns this vocabulary into reusable block packs
 | `drawer` | Theme side drawer. | Content and close action. |
 | `popover` | Small contextual panel. | Short content. |
 | `tooltip` | Lightweight hover/focus explanation. | Short text only. |
+| `command` | Searchable menu composition. | Existing menu blocks. |
+| `context-menu` | Right-click menu with disclosure fallback. | Existing menu blocks. |
+| `menubar` | Persistent application menu bar. | Nested dropdown/menu blocks. |
 
 ### Forms And Inputs
 
@@ -175,12 +185,26 @@ For the shared blocks layer that turns this vocabulary into reusable block packs
 | `form` | Native form container. | Field shorthand and actions. |
 | `fieldset` | Group related fields. | Fields and legend heading. |
 | `input` | Text-like input. | Attributes for type/name/label. |
+| `input-group` | Input with addons/actions/help. | Named slots. |
+| `input-otp` | Native one-time-code field. | Help and error slots. |
+| `combobox` | Native autocomplete selection. | Nested `option` blocks. |
+| `calendar` | Single, range, or multiple date selection. | Attributes for mode/value/limits/locale. |
 | `select` | Select control. | Options as list items. |
 | `textarea` | Long text input. | Label/placeholder. |
 | `checkbox` | Boolean input. | Label text. |
 | `radio` | Single option in a group. | Label text. |
 | `switch` | Toggle-like checkbox. | Label text. |
 | `button-group` | Related actions. | Action links/buttons. |
+
+### Conversation
+
+| Block | Purpose | Recommended Content |
+| --- | --- | --- |
+| `attachment` | File/image attachment with state. | Metadata attrs plus media/description/actions slots. |
+| `bubble` | Conversational content surface. | Markdown and optional reactions slot. |
+| `marker` | Status note or separator. | Label/content and optional icon slot. |
+| `message` | Conversation row. | Avatar/header/body/footer slots. |
+| `message-scroller` | Focusable live transcript. | Nested messages, markers, attachments. |
 
 ### Technical Documentation
 
@@ -468,6 +492,192 @@ themes/canvas
 :::
 ```
 
+### Foundation Display And Navigation
+
+```mds
+::: breadcrumb label="Project location"
+::: breadcrumb-item label="Home" href="/"
+:::
+::: breadcrumb-item label="MDS" href="/projects/mds" current="page"
+:::
+:::
+
+::: item
+--- media
+::: avatar src="/avatar.png" alt="MDS project" fallback="MD"
+:::
+
+--- title
+## MDS project
+
+--- description
+A reusable content row.
+:::
+
+::: pagination label="Results" current=1 pages=4
+[Previous -> ?page=1]
+[Next -> ?page=2]
+:::
+```
+
+`avatar`, `empty`, and `item` are display semantics. `breadcrumb` and `pagination` use native navigation landmarks and remain usable without a client component runtime.
+
+### Foundation Controls
+
+The shared block layer provides native HTML fallbacks for buttons, toggles, form controls, sliders, and menus. Themes style these structures and may override them, but do not need to reimplement their basic behavior.
+
+```mds
+::: button label="Save" type="submit" form="profile"
+:::
+
+::: toggle label="Pin panel" pressed=false action="toggle" target="panel"
+:::
+
+::: slider label="Volume" name="volume" min=0 max=100 step=5 value=50
+:::
+
+::: select label="Workspace" name="workspace" required
+::: option label="Personal" value="personal" selected
+:::
+::: option label="Team" value="team"
+:::
+:::
+
+::: switch label="Email notifications" name="notifications" checked
+:::
+```
+
+Input composition remains native-first:
+
+```mds
+::: input-group label="Project URL" name="projectUrl" placeholder="mds"
+--- prefix
+https://
+
+--- suffix
+.dev
+
+--- help
+Choose a public project URL.
+:::
+
+::: input-otp label="Verification code" name="code" length=6 pattern="[0-9]*" required
+--- help
+Paste the six-digit code from your authenticator.
+:::
+
+::: combobox label="Framework" name="framework" list="framework-options" placeholder="Choose a framework"
+::: option label="React" value="react"
+:::
+::: option label="Vue" value="vue"
+:::
+:::
+```
+
+`input-group` keeps the native input before its visual addons in DOM focus order. `input-otp` uses one native input so browser autofill, copy, paste, form submission, and accessibility do not depend on a JavaScript slot implementation. `combobox` uses native `input` plus `datalist`, preserving keyboard input, form submission, and a useful fallback without theme JavaScript.
+
+Calendar selection is also native-first:
+
+```mds
+::: calendar label="Review window" mode="range" name="reviewWindow" value="2026-08-18..2026-08-22" month="2026-08" weekstart=1
+:::
+```
+
+Without enhancement, the block exposes a date input. The shared pack runtime upgrades it to an inline grid with single, `range`, or `multiple` value serialization, min/max limits, locale-aware labels, configurable week start, and arrow-key navigation.
+
+`toggle` is a pressed/unpressed button; `switch` is a form value. `select` chooses a value; `dropdown` contains commands. This distinction keeps the generated HTML and accessibility semantics predictable.
+
+### Dropdown Menu
+
+```mds
+::: dropdown label="File actions"
+::: menu label="File actions"
+::: menu-item label="Open" action="open" target="document"
+:::
+::: menu-item label="Close" action="close" target="document"
+:::
+::: menu-separator
+:::
+::: menu-item label="Toggle preview" action="toggle" target="previewPanel"
+:::
+:::
+:::
+```
+
+The fallback is a native disclosure. `menu-item` reuses the existing `data-action` and `data-target` bridge; it does not replace or redefine command-link actions.
+
+### Command Palette
+
+```mds
+::: command label="Commands" placeholder="Search commands..." empty="No matching commands."
+::: menu label="Commands"
+::: menu-group label="Navigation"
+::: menu-item label="Open dialog" keywords="modal preview" shortcut="⌘1" action="open" target="dialog"
+:::
+::: menu-item label="Show drawer" keywords="panel sidebar" shortcut="⌘2" action="show" target="drawer"
+:::
+:::
+:::
+:::
+```
+
+Without JavaScript, every command remains visible as an ordinary menu. Theme enhancement reveals the search field and filters existing `menu-item` elements by label, keywords, and visible text. The command actions still use the unchanged `data-action` contract.
+
+`context-menu` and `menubar` reuse the same menu children and action bridge. Context menus retain a clickable native `<details>` fallback; menubars add horizontal arrow navigation without defining new action names.
+
+### Data Table And Chart
+
+```mds
+::: chart label="Weekly builds"
+::: chart-series label="Builds"
+::: chart-point label="Monday" value=42 max=80
+:::
+::: chart-point label="Tuesday" value=58 max=80
+:::
+:::
+:::
+
+::: data-table label="Releases" filter="Filter releases" page-size=10 selectable
+--- columns
+::: data-column key="package" label="Package" sortable
+:::
+::: data-column key="version" label="Version" sortable
+:::
+
+--- rows
+::: data-row
+::: data-cell column="package"
+@mds-crate/blocks
+:::
+::: data-cell column="version"
+0.2.0
+:::
+:::
+:::
+```
+
+Charts remain readable through native `<meter>` elements. Data tables emit a complete native `<table>` first; the pack runtime adds search, stable text/number sorting, pagination, optional selection, and live result summaries.
+
+### Conversation Blocks
+
+```mds
+::: message-scroller label="Conversation" follow=true height="24rem"
+::: message align="start" sender="MDS" status="Delivered"
+--- body
+::: bubble variant="secondary"
+All checks passed.
+:::
+:::
+
+::: attachment title="manifest.json" href="/manifest.json" type="JSON" size="18 KB" state="done" download
+--- description
+Package versions and integrity hashes.
+:::
+:::
+```
+
+The chat profile owns presentation and scroll behavior only. Transport, persistence, streaming state, branching, and model state remain application responsibilities.
+
 ### Scene And Reveal
 
 ```mds
@@ -595,19 +805,22 @@ The editor `Components` example should become a broad showcase with stable secti
    figure, gallery, caption
 
 5. Interactive
-   tabs, accordion, carousel, dialog, drawer
+   tabs, accordion, carousel, dialog, drawer, command, calendar, context-menu, menubar
 
-6. Forms
-   form, fieldset, checkbox, select, textarea
+6. Forms And Data
+   form, fieldset, checkbox, select, combobox, input-group, input-otp, textarea, data-table, chart
 
-7. Technical Docs
+7. Conversation
+   message-scroller, message, bubble, marker, attachment
+
+8. Technical Docs
    code-group, terminal, file-tree, api, endpoint
 
-8. Pricing And CTA
+9. Pricing And CTA
    pricing, pricing-plan, testimonials, cta
 ```
 
-The example should use realistic copy but stay compact enough to scan in the editor. It should include at least one instance of each Phase 1 and Phase 2 block.
+The implemented editor example uses realistic copy and includes every shared foundation, data, and chat family before optional presentation blocks.
 
 ## Testing Expectations
 

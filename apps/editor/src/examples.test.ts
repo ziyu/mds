@@ -76,8 +76,8 @@ describe("editor examples", () => {
 
       expect(result.diagnostics, theme.name).toEqual([]);
       expect(inspection.diagnostics, theme.name).toEqual([]);
-      expect(inspection.blocks, theme.name).toHaveLength(72);
-      expect(inspection.blockPacks, theme.name).toHaveLength(9);
+      expect(inspection.blocks, theme.name).toHaveLength(113);
+      expect(inspection.blockPacks, theme.name).toHaveLength(14);
       expect(
         inspection.templateSources.filter((entry) => entry.source === "theme"),
         theme.name
@@ -85,6 +85,31 @@ describe("editor examples", () => {
       expect(result.html, theme.name).toContain('class="pricing-plan"');
       expect(result.html, theme.name).toContain('class="terminal"');
       expect(result.html, theme.name).toContain('class="popover"');
+      expect(result.html, theme.name).toContain('class="action control-button"');
+      expect(result.html, theme.name).toContain('class="form-field input-group"');
+      expect(result.html, theme.name).toContain('class="form-field input-otp"');
+      expect(result.html, theme.name).toContain('autocomplete="one-time-code"');
+      expect(result.html, theme.name).toContain('class="form-field combobox-field"');
+      expect(result.html, theme.name).toContain('<datalist id="framework-options">');
+      expect(result.html, theme.name).toContain('class="command"');
+      expect(result.html, theme.name).toContain('class="command-input"');
+      expect(result.html, theme.name).toContain('class="menu-item-shortcut">⌘1</kbd>');
+      expect(result.html, theme.name).toContain('class="calendar-days"');
+      expect(result.html, theme.name).toContain('class="data-table-shell"');
+      expect(result.html, theme.name).toContain('class="chart-point-meter"');
+      expect(result.html, theme.name).toContain('class="context-menu"');
+      expect(result.html, theme.name).toContain('class="menubar"');
+      expect(result.html, theme.name).toContain('class="message-scroller"');
+      expect(result.html, theme.name).toContain('class="attachment"');
+      expect(result.html, theme.name).not.toContain("{{ attr:");
+      expect(result.html, theme.name).toContain('class="avatar"');
+      expect(result.html, theme.name).toContain('class="breadcrumb"');
+      expect(result.html, theme.name).toContain('class="empty"');
+      expect(result.html, theme.name).toContain('class="item"');
+      expect(result.html, theme.name).toContain('class="pagination"');
+      expect(result.html, theme.name).toContain('type="range"');
+      expect(result.html, theme.name).toContain('class="dropdown-menu"');
+      expect(result.html, theme.name).toContain('class="action menu-item-control"');
       expect(result.html, theme.name).not.toContain('data-fallback="true"');
     }
   });

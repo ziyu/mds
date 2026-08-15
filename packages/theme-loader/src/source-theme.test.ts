@@ -205,6 +205,51 @@ describe("theme source normalization", () => {
     expect(theme.blockRenderers?.note).toBeDefined();
   });
 
+  it("composes and de-duplicates progressive enhancement scripts before theme JavaScript", () => {
+    const styles = ".calendar { display: grid; }";
+    const runtime = "document.documentElement.dataset.blocks = 'ready';";
+    const source = composeThemeSource(
+      {
+        manifest: {
+          name: "scripted",
+          css: "theme.css",
+          js: "theme.js"
+        },
+        files: {
+          "theme.css": ".page { color: canvastext; }",
+          "theme.js": "document.documentElement.dataset.theme = 'ready';"
+        }
+      },
+      {
+        blockPacks: [
+          {
+            name: "forms",
+            css: "runtime.css",
+            js: "runtime.js",
+            files: { "runtime.css": styles, "runtime.js": runtime }
+          },
+          {
+            name: "data",
+            css: "runtime.css",
+            js: "runtime.js",
+            files: { "runtime.css": styles, "runtime.js": runtime }
+          }
+        ]
+      }
+    );
+
+    expect(source.manifest.css).toEqual(["assets/mds-blocks.css", "theme.css"]);
+    expect(source.manifest.js).toEqual(["assets/mds-blocks.js", "theme.js"]);
+    expect(source.files["assets/mds-blocks.css"]).toBe(styles);
+    expect(source.files["assets/mds-blocks.js"]).toBe(runtime);
+    expect(createThemeFromSources(source).css).toBe(
+      `${styles}\n.page { color: canvastext; }`
+    );
+    expect(createThemeFromSources(source).js).toBe(
+      `${runtime}\ndocument.documentElement.dataset.theme = 'ready';`
+    );
+  });
+
   it("turns grouped pack templates into final block files", () => {
     const source = composeThemeSource(
       {

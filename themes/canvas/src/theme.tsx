@@ -1,4 +1,13 @@
 import React from "react";
+import {
+  chatBlocks,
+  controlBlocks,
+  dataBlocks,
+  displayBlocks,
+  formsBlocks,
+  menuBlocks,
+  navigationBlocks
+} from "@mds-crate/blocks";
 import { Content, Slot, Slots, defineReactTheme } from "@mds-crate/theme-sdk-react";
 import { Badge, Card, Flow, Panel, Surface } from "./components/ui.js";
 
@@ -9,6 +18,7 @@ export default defineReactTheme({
   author: "MDS",
   preview: "preview.svg",
   tags: ["tailwind", "react", "canvas", "package"],
+  blockPacks: [displayBlocks, navigationBlocks, controlBlocks, formsBlocks, menuBlocks, dataBlocks, chatBlocks],
   supportedBlocks: [
     "page",
     "nav",
@@ -55,6 +65,7 @@ export default defineReactTheme({
     "progress",
     "popover",
     "tooltip",
+    "command",
     "terminal",
     "code-group",
     "file-tree",
@@ -359,6 +370,24 @@ export default defineReactTheme({
       <Surface block={block} as="div" className="tooltip" tabIndex={0}>
         <span className="tooltip-label">{block.attr("label", "Tip")}</span>
         <Flow block={block} className="tooltip-body" />
+      </Surface>
+    ),
+    command: (block) => (
+      <Surface block={block} as="section" className="command">
+        <label className="command-search" hidden>
+          <span className="field-label">{block.attr("label", "Commands")}</span>
+          <input
+            className="command-input"
+            type="search"
+            placeholder={block.attr("placeholder", "Type a command or search...")}
+            autoComplete="off"
+          />
+        </label>
+        <div className="command-list">
+          <Content block={block} />
+          <Slots block={block} />
+        </div>
+        <p className="command-empty" hidden>{block.attr("empty", "No results found.")}</p>
       </Surface>
     ),
     terminal: (block) => (

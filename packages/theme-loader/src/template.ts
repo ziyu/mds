@@ -78,12 +78,61 @@ function renderSlots(
 }
 
 function renderTemplate(template: string, values: Record<string, string>): string {
-  return template.replace(/\{\{\s*([A-Za-z][A-Za-z0-9_:-]*)\s*\}\}/g, (_match, key: string) => {
+  return template.replace(/\{\{\s*([^{}]*?\S)\s*\}\}/g, (_match, rawKey: string) => {
+    const key = rawKey.trim();
     if (key.startsWith("attr:")) {
-      return escapeAttribute(getBlockAttrFromValues(values, key.slice("attr:".length)));
+      const declaration = key.slice("attr:".length);
+      const separator = declaration.indexOf(":");
+      const name = separator === -1 ? declaration : declaration.slice(0, separator);
+      return isSafeNativeAttributeName(name)
+        ? escapeAttribute(getBlockAttrFromValues(values, declaration))
+        : "";
     }
-    return values[key] ?? "";
+    if (key.startsWith("bool:")) {
+      return renderBooleanAttribute(values, key.slice("bool:".length));
+    }
+    if (key.startsWith("optional:")) {
+      return renderOptionalAttribute(values, key.slice("optional:".length));
+    }
+    return /^[A-Za-z][A-Za-z0-9_:-]*$/.test(key) ? values[key] ?? "" : "";
   });
+}
+
+function renderBooleanAttribute(values: Record<string, string>, name: string): string {
+  if (!isSafeNativeAttributeName(name)) {
+    return "";
+  }
+
+  const value = values[`__attr:${name}`];
+  return isTruthyAttributeValue(value) ? ` ${name}` : "";
+}
+
+function renderOptionalAttribute(values: Record<string, string>, declaration: string): string {
+  const separator = declaration.indexOf(":");
+  if (separator === -1) {
+    return "";
+  }
+
+  const sourceName = declaration.slice(0, separator);
+  const outputName = declaration.slice(separator + 1);
+  if (!isSafeNativeAttributeName(outputName)) {
+    return "";
+  }
+
+  const value = values[`__attr:${sourceName}`];
+  return value === undefined || value === "" ? "" : ` ${outputName}="${escapeAttribute(value)}"`;
+}
+
+function isTruthyAttributeValue(value: string | undefined): boolean {
+  if (value === undefined || value === "") {
+    return false;
+  }
+
+  return !["false", "0", "off", "no"].includes(value.trim().toLowerCase());
+}
+
+function isSafeNativeAttributeName(name: string): boolean {
+  return /^[A-Za-z][A-Za-z0-9-]*$/.test(name) && !/^on/i.test(name);
 }
 
 function getBlockAttrFromValues(values: Record<string, string>, name: string): string {
