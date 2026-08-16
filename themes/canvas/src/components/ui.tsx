@@ -15,6 +15,9 @@ export function Surface(props: {
   stagger?: number | string;
   once?: boolean | string;
   tabIndex?: number;
+  role?: React.AriaRole | undefined;
+  ariaLabel?: string | undefined;
+  ariaModal?: boolean | undefined;
   children?: React.ReactNode;
 }) {
   const hiddenProps = props.hidden === undefined ? {} : { hidden: props.hidden };
@@ -31,6 +34,9 @@ export function Surface(props: {
       data-motion-stagger={attrFallback(props.block, "stagger", props.stagger)}
       data-motion-once={attrFallback(props.block, "once", props.once)}
       tabIndex={props.tabIndex}
+      role={props.role}
+      aria-label={props.ariaLabel}
+      aria-modal={props.ariaModal}
       {...hiddenProps}
     >
       {props.children ?? <Flow block={props.block} />}
@@ -87,7 +93,15 @@ export function Badge(props: { children: React.ReactNode; tone?: "default" | "mu
   );
 }
 
-export function Panel(props: { block: ReactThemeBlock; className?: string; hidden?: boolean; children?: React.ReactNode }) {
+export function Panel(props: {
+  block: ReactThemeBlock;
+  className?: string;
+  hidden?: boolean;
+  role?: React.AriaRole | undefined;
+  ariaLabel?: string | undefined;
+  ariaModal?: boolean | undefined;
+  children?: React.ReactNode;
+}) {
   const hiddenProps = props.hidden === undefined ? {} : { hidden: props.hidden };
   return (
     <Surface
@@ -95,6 +109,9 @@ export function Panel(props: { block: ReactThemeBlock; className?: string; hidde
       motion="fade-up"
       duration={620}
       className={cn("rounded-xl border border-border bg-card p-5 shadow-xs", props.className)}
+      role={props.role}
+      ariaLabel={props.ariaLabel}
+      ariaModal={props.ariaModal}
       {...hiddenProps}
     >
       {props.children ?? <Flow block={props.block} />}

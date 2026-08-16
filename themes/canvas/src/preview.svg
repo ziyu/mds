@@ -1,20 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" role="img" aria-label="Canvas theme preview">
-  <rect width="720" height="420" fill="#faf7f0"/>
-  <path d="M0 0h720v420H0z" fill="url(#grid)" opacity=".75"/>
-  <rect x="70" y="58" width="580" height="304" rx="26" fill="#fff" stroke="#ded7ca"/>
-  <rect x="104" y="94" width="96" height="25" rx="8" fill="#e9f3ee" stroke="#cbded4"/>
-  <rect x="104" y="148" width="282" height="25" rx="8" fill="#1f2823"/>
-  <rect x="104" y="185" width="230" height="25" rx="8" fill="#1f2823" opacity=".92"/>
-  <rect x="104" y="236" width="152" height="18" rx="9" fill="#6f756f"/>
-  <rect x="104" y="292" width="118" height="38" rx="11" fill="#407c65"/>
-  <rect x="236" y="292" width="118" height="38" rx="11" fill="#f2eee6" stroke="#ded7ca"/>
-  <rect x="414" y="106" width="168" height="188" rx="18" fill="#f2eee6" stroke="#ded7ca"/>
-  <circle cx="454" cy="148" r="20" fill="#dbeae3"/>
-  <rect x="436" y="188" width="108" height="12" rx="6" fill="#6f756f"/>
-  <rect x="436" y="214" width="84" height="12" rx="6" fill="#9aa097"/>
+  <rect width="720" height="420" fill="#eeeae1"/>
+  <path d="M0 0h720v420H0z" fill="url(#grid)" opacity=".72"/>
+  <rect x="48" y="32" width="624" height="356" rx="8" fill="#fbfaf5" stroke="#bdb7ab"/>
+  <path d="M78 58h46" stroke="#ac6043" stroke-width="3"/>
+  <text x="78" y="93" fill="#316c59" font-family="ui-monospace, monospace" font-size="11" font-weight="700" letter-spacing="1.8">CANVAS / MDS</text>
+  <text x="78" y="145" fill="#201f1b" font-family="Avenir Next, sans-serif" font-size="37" font-weight="700">Compose intent.</text>
+  <text x="78" y="183" fill="#201f1b" font-family="Avenir Next, sans-serif" font-size="37" font-weight="700">Ship structure.</text>
+  <rect x="78" y="210" width="272" height="8" rx="4" fill="#74736c" opacity=".72"/>
+  <rect x="78" y="230" width="216" height="8" rx="4" fill="#929087" opacity=".58"/>
+  <rect x="78" y="274" width="322" height="44" rx="4" fill="#f5f1e8" stroke="#c8c1b5"/>
+  <rect x="90" y="284" width="86" height="24" rx="3" fill="#316c59"/>
+  <rect x="184" y="284" width="74" height="24" rx="3" fill="#e8e4da"/>
+  <rect x="266" y="284" width="88" height="24" rx="3" fill="#e8e4da"/>
+  <rect x="430" y="91" width="182" height="192" rx="5" fill="#f3f0e8" stroke="#c8c1b5"/>
+  <rect x="448" y="111" width="146" height="74" rx="4" fill="#fffefa" stroke="#c8c1b5"/>
+  <path d="M448 111v74" stroke="#58a6ca" stroke-width="4"/>
+  <rect x="463" y="128" width="44" height="14" rx="3" fill="#e8e4da" stroke="#c8c1b5"/>
+  <rect x="463" y="156" width="105" height="7" rx="3.5" fill="#53534e"/>
+  <rect x="448" y="207" width="68" height="54" rx="4" fill="#fffefa" stroke="#c8c1b5"/>
+  <rect x="526" y="207" width="68" height="54" rx="4" fill="#fffefa" stroke="#c8c1b5"/>
+  <rect x="78" y="348" width="564" height="1" fill="#c8c1b5"/>
+  <path d="M637 344l5 5-5 5-5-5z" fill="#fbfaf5" stroke="#ac6043"/>
   <defs>
-    <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse">
-      <path d="M36 0H0v36" fill="none" stroke="#d8d1c4" stroke-width="1"/>
+    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M30 0H0v30" fill="none" stroke="#cfc8bb" stroke-width="1"/>
     </pattern>
   </defs>
 </svg>

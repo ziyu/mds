@@ -1,3 +1,5 @@
+const overlayTriggers = new WeakMap<HTMLElement, HTMLElement>();
+
 document.addEventListener("click", (event: MouseEvent) => {
   const target = getEventElement(event.target);
   if (target === null) {
@@ -34,11 +36,11 @@ document.addEventListener("click", (event: MouseEvent) => {
   }
 
   if (action === "open" || action === "show") {
-    setControlledVisibility(controlled, true);
+    setControlledVisibility(controlled, true, command instanceof HTMLElement ? command : undefined);
   } else if (action === "close" || action === "hide") {
     setControlledVisibility(controlled, false);
   } else if (action === "toggle") {
-    setControlledVisibility(controlled, controlled.hasAttribute("hidden"));
+    setControlledVisibility(controlled, controlled.hasAttribute("hidden"), command instanceof HTMLElement ? command : undefined);
     togglePressedState(command);
   }
 }, { capture: true });
@@ -112,20 +114,58 @@ document.addEventListener("submit", (event: SubmitEvent) => {
   setFormStatus(form, "success", "Form captured locally.");
 });
 
-function setControlledVisibility(controlled: Element, visible: boolean): void {
+function setControlledVisibility(controlled: Element, visible: boolean, trigger?: HTMLElement): void {
   if (visible) {
     controlled.removeAttribute("hidden");
   } else {
     controlled.setAttribute("hidden", "");
   }
 
-  if (isOverlay(controlled)) {
-    controlled.setAttribute("data-overlay-open", visible ? "true" : "false");
+  if (!isOverlay(controlled) || !(controlled instanceof HTMLElement)) {
+    return;
   }
+
+  controlled.setAttribute("data-overlay-open", visible ? "true" : "false");
+  controlled.setAttribute("aria-hidden", visible ? "false" : "true");
+
+  if (visible) {
+    if (trigger !== undefined) {
+      overlayTriggers.set(controlled, getOverlayReturnTarget(trigger));
+    }
+    document.body.classList.add("has-overlay");
+    requestAnimationFrame(() => focusOverlay(controlled));
+    return;
+  }
+
+  updateOverlayLock();
+  overlayTriggers.get(controlled)?.focus();
 }
 
 function isOverlay(element: Element): boolean {
   return element.classList.contains("mds-dialog") || element.classList.contains("mds-drawer");
+}
+
+function focusOverlay(overlay: HTMLElement): void {
+  const focusTarget = overlay.querySelector<HTMLElement>(
+    "[autofocus], button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex='-1'])"
+  );
+  if (focusTarget !== null) {
+    focusTarget.focus();
+    return;
+  }
+  overlay.tabIndex = -1;
+  overlay.focus();
+}
+
+function updateOverlayLock(): void {
+  const hasOpenOverlay = document.querySelector(".mds-dialog:not([hidden]), .mds-drawer:not([hidden])") !== null;
+  document.body.classList.toggle("has-overlay", hasOpenOverlay);
+}
+
+function getOverlayReturnTarget(trigger: HTMLElement): HTMLElement {
+  const disclosure = trigger.closest<HTMLDetailsElement>("details");
+  const summary = disclosure?.querySelector<HTMLElement>(":scope > summary");
+  return summary ?? trigger;
 }
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -138,6 +178,7 @@ function setupMotion(): void {
   }
 
   prepareMotion(motionBlocks);
+  setupMotionReplay(motionBlocks);
 
   if (reduceMotion) {
     for (const element of motionBlocks) {
@@ -147,6 +188,29 @@ function setupMotion(): void {
   }
 
   scheduleMotionEnter(motionBlocks);
+}
+
+function setupMotionReplay(motionBlocks: HTMLElement[]): void {
+  const replayBlocks = motionBlocks.filter((element) => element.dataset.motionOnce === "false");
+  if (replayBlocks.length === 0) return;
+
+  let frame: number | undefined;
+  const update = (): void => {
+    frame = undefined;
+    for (const element of replayBlocks) {
+      if (isElementInReplayViewport(element)) {
+        enterMotion(element);
+      } else {
+        delete element.dataset.motionState;
+      }
+    }
+  };
+  const schedule = (): void => {
+    if (frame !== undefined) return;
+    frame = requestAnimationFrame(update);
+  };
+
+  window.addEventListener("scroll", schedule, { passive: true });
 }
 
 function getMotionBlocks(): HTMLElement[] {
@@ -159,7 +223,14 @@ function prepareMotion(motionBlocks: HTMLElement[]): void {
   document.documentElement.classList.add("motion-ready");
 
   for (const [index, element] of motionBlocks.entries()) {
+    normalizeMotionBooleans(element);
     applyMotionTiming(element, index);
+  }
+}
+
+function normalizeMotionBooleans(element: HTMLElement): void {
+  if ((element.dataset.motionOnce ?? "").trim() === "" && element.dataset.attrOnce !== undefined) {
+    element.dataset.motionOnce = element.dataset.attrOnce;
   }
 }
 
@@ -172,6 +243,9 @@ function scheduleMotionEnter(motionBlocks: HTMLElement[]): void {
       for (const element of motionBlocks) {
         if (element.dataset.motionTrigger === "load" || isElementInViewport(element)) {
           enterMotion(element);
+          if (element.dataset.motionOnce === "false") {
+            motionObserver.observe(element);
+          }
           continue;
         }
         motionObserver.observe(element);
@@ -184,7 +258,13 @@ function createMotionObserver(): IntersectionObserver {
   const observer = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
-        if (!entry.isIntersecting || !(entry.target instanceof HTMLElement)) {
+        if (!(entry.target instanceof HTMLElement)) {
+          continue;
+        }
+        if (!entry.isIntersecting) {
+          if (entry.target.dataset.motionOnce === "false") {
+            delete entry.target.dataset.motionState;
+          }
           continue;
         }
         enterMotion(entry.target);
@@ -194,8 +274,8 @@ function createMotionObserver(): IntersectionObserver {
       }
     },
     {
-      rootMargin: "0px 0px -12% 0px",
-      threshold: 0.12
+      rootMargin: "-34% 0px -34% 0px",
+      threshold: 0
     }
   );
 
@@ -230,6 +310,11 @@ function isElementInViewport(element: HTMLElement): boolean {
   return rect.bottom >= 0 && rect.right >= 0 && rect.top <= window.innerHeight && rect.left <= window.innerWidth;
 }
 
+function isElementInReplayViewport(element: HTMLElement): boolean {
+  const rect = element.getBoundingClientRect();
+  return rect.bottom >= window.innerHeight * 0.35 && rect.top <= window.innerHeight * 0.65;
+}
+
 function setMsVariable(element: HTMLElement, name: string, value: string | undefined): void {
   const parsed = parseNumber(value);
   if (parsed !== undefined) {
@@ -254,10 +339,177 @@ if (document.readyState === "loading") {
 
 function setupCanvasEnhancements(): void {
   setupMotion();
+  setupDetails();
+  setupTabs();
+  setupAccordions();
+  setupCarousels();
+  setupOverlays();
   setupCodeGroups();
   setupGalleryLightbox();
   setupForms();
   setupVideos();
+}
+
+function setupDetails(): void {
+  for (const details of Array.from(document.querySelectorAll<HTMLDetailsElement>(".mds-details"))) {
+    details.open = details.dataset.attrOpen === "true" || details.dataset.attrOpen === "";
+  }
+}
+
+function setupTabs(): void {
+  const roots = Array.from(document.querySelectorAll<HTMLElement>(".mds-tabs")).filter(
+    (root) => root.dataset.enhanced !== "true"
+  );
+
+  roots.forEach((root, rootIndex) => {
+    const panels = Array.from(root.querySelectorAll<HTMLElement>(":scope > .tabs-item"));
+    if (panels.length === 0) {
+      return;
+    }
+
+    root.dataset.enhanced = "true";
+    const baseId = root.id || `canvas-tabs-${rootIndex + 1}`;
+    const tablist = document.createElement("div");
+    tablist.className = "canvas-tablist";
+    tablist.setAttribute("role", "tablist");
+    tablist.setAttribute("aria-label", root.dataset.attrLabel || "Sections");
+    root.prepend(tablist);
+
+    const tabs = panels.map((panel, index) => {
+      const tab = document.createElement("button");
+      const tabId = `${baseId}-tab-${index + 1}`;
+      const panelId = panel.id || `${baseId}-panel-${index + 1}`;
+      tab.id = tabId;
+      tab.type = "button";
+      tab.className = "canvas-tab";
+      tab.setAttribute("role", "tab");
+      tab.setAttribute("aria-controls", panelId);
+      tab.textContent = panel.dataset.slot || `Tab ${index + 1}`;
+      panel.id = panelId;
+      panel.classList.add("canvas-tab-panel");
+      panel.setAttribute("role", "tabpanel");
+      panel.setAttribute("aria-labelledby", tabId);
+      tab.addEventListener("click", () => selectTab(tabs, panels, index));
+      tab.addEventListener("keydown", (event) => handleTabKeydown(event, tabs, panels, index));
+      tablist.append(tab);
+      return tab;
+    });
+
+    selectTab(tabs, panels, 0, false);
+  });
+}
+
+function selectTab(tabs: HTMLButtonElement[], panels: HTMLElement[], selectedIndex: number, focus = true): void {
+  tabs.forEach((tab, index) => {
+    const selected = index === selectedIndex;
+    tab.setAttribute("aria-selected", selected ? "true" : "false");
+    tab.tabIndex = selected ? 0 : -1;
+    panels[index]!.hidden = !selected;
+  });
+  if (focus) {
+    tabs[selectedIndex]?.focus();
+  }
+}
+
+function handleTabKeydown(
+  event: KeyboardEvent,
+  tabs: HTMLButtonElement[],
+  panels: HTMLElement[],
+  currentIndex: number
+): void {
+  let nextIndex: number | undefined;
+  if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % tabs.length;
+  if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+  if (event.key === "Home") nextIndex = 0;
+  if (event.key === "End") nextIndex = tabs.length - 1;
+  if (nextIndex === undefined) return;
+  event.preventDefault();
+  selectTab(tabs, panels, nextIndex);
+}
+
+function setupAccordions(): void {
+  const roots = Array.from(document.querySelectorAll<HTMLElement>(".mds-accordion")).filter(
+    (root) => root.dataset.enhanced !== "true"
+  );
+
+  roots.forEach((root, rootIndex) => {
+    const panels = Array.from(root.querySelectorAll<HTMLElement>(":scope > .accordion-item"));
+    if (panels.length === 0) return;
+
+    root.dataset.enhanced = "true";
+    const baseId = root.id || `canvas-accordion-${rootIndex + 1}`;
+    const triggers = panels.map((panel, index) => {
+      const trigger = document.createElement("button");
+      const triggerId = `${baseId}-trigger-${index + 1}`;
+      const panelId = panel.id || `${baseId}-panel-${index + 1}`;
+      trigger.id = triggerId;
+      trigger.type = "button";
+      trigger.className = "accordion-trigger";
+      trigger.setAttribute("aria-controls", panelId);
+      trigger.innerHTML = `<span>${panel.dataset.slot || `Section ${index + 1}`}</span><span aria-hidden="true">+</span>`;
+      panel.id = panelId;
+      panel.classList.add("accordion-panel");
+      panel.setAttribute("role", "region");
+      panel.setAttribute("aria-labelledby", triggerId);
+      trigger.addEventListener("click", () => selectAccordion(triggers, panels, index));
+      root.insertBefore(trigger, panel);
+      return trigger;
+    });
+
+    selectAccordion(triggers, panels, 0, false);
+  });
+}
+
+function selectAccordion(
+  triggers: HTMLButtonElement[],
+  panels: HTMLElement[],
+  selectedIndex: number,
+  focus = true
+): void {
+  triggers.forEach((trigger, index) => {
+    const expanded = index === selectedIndex;
+    trigger.setAttribute("aria-expanded", expanded ? "true" : "false");
+    const marker = trigger.lastElementChild;
+    if (marker !== null) marker.textContent = expanded ? "−" : "+";
+    panels[index]!.hidden = !expanded;
+  });
+  if (focus) triggers[selectedIndex]?.focus();
+}
+
+function setupCarousels(): void {
+  const roots = Array.from(document.querySelectorAll<HTMLElement>(".mds-carousel")).filter(
+    (root) => root.dataset.enhanced !== "true"
+  );
+
+  for (const root of roots) {
+    const track = root.querySelector<HTMLElement>(":scope > .carousel-track");
+    const previous = root.querySelector<HTMLButtonElement>(":scope > .carousel-controls > .carousel-previous");
+    const next = root.querySelector<HTMLButtonElement>(":scope > .carousel-controls > .carousel-next");
+    const status = root.querySelector<HTMLElement>(":scope > .carousel-controls > .carousel-status");
+    const items = Array.from(track?.children ?? []).filter((item): item is HTMLElement => item instanceof HTMLElement);
+    if (track === null || previous === null || next === null || status === null || items.length === 0) continue;
+
+    root.dataset.enhanced = "true";
+    items.forEach((item) => item.classList.add("canvas-carousel-item"));
+    let currentIndex = 0;
+    const show = (index: number): void => {
+      currentIndex = Math.min(Math.max(index, 0), items.length - 1);
+      items[currentIndex]!.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest", inline: "start" });
+      status.textContent = `${currentIndex + 1} / ${items.length}`;
+      previous.disabled = currentIndex === 0;
+      next.disabled = currentIndex === items.length - 1;
+    };
+    previous.addEventListener("click", () => show(currentIndex - 1));
+    next.addEventListener("click", () => show(currentIndex + 1));
+    show(0);
+  }
+}
+
+function setupOverlays(): void {
+  for (const overlay of Array.from(document.querySelectorAll<HTMLElement>(".mds-dialog, .mds-drawer"))) {
+    overlay.setAttribute("aria-hidden", overlay.hidden ? "true" : "false");
+  }
+  updateOverlayLock();
 }
 
 function setupCodeGroups(): void {

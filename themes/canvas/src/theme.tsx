@@ -1,16 +1,23 @@
 import React from "react";
-import { controlBlocks, displayBlocks, formsBlocks, menuBlocks, navigationBlocks } from "@mds-crate/blocks";
+import {
+  controlBlocks,
+  displayBlocks,
+  formsBlocks,
+  interactiveBlocks,
+  menuBlocks,
+  navigationBlocks
+} from "@mds-crate/blocks";
 import { Content, Slot, Slots, defineReactTheme } from "@mds-crate/theme-sdk-react";
 import { Badge, Card, Flow, Panel, Surface } from "./components/ui.js";
 
 export default defineReactTheme({
   name: "canvas",
   label: "Canvas",
-  description: "A polished package theme for spacious MDS previews and standalone pages.",
+  description: "An architectural editorial canvas for spacious MDS previews and standalone pages.",
   author: "MDS",
   preview: "preview.svg",
   tags: ["tailwind", "react", "canvas", "package"],
-  blockPacks: [displayBlocks, navigationBlocks, controlBlocks, formsBlocks, menuBlocks],
+  blockPacks: [displayBlocks, navigationBlocks, controlBlocks, formsBlocks, interactiveBlocks, menuBlocks],
   supportedBlocks: [
     "page",
     "header",
@@ -24,6 +31,7 @@ export default defineReactTheme({
     "grid-auto",
     "cards",
     "card",
+    "callout",
     "note",
     "info",
     "warning",
@@ -75,7 +83,7 @@ export default defineReactTheme({
       <Surface
         block={block}
         as="main"
-        className="mx-auto grid min-h-screen w-full max-w-6xl gap-12 px-6 py-12 sm:px-8 sm:py-14 lg:px-10 lg:py-16"
+        className="canvas-page mx-auto grid min-h-screen w-full max-w-6xl gap-10 px-6 py-10 sm:px-8 sm:py-12 lg:gap-12 lg:px-10 lg:py-16"
       >
         <Content block={block} />
       </Surface>
@@ -86,7 +94,7 @@ export default defineReactTheme({
         as="header"
         motion="drop-in"
         duration={560}
-        className="grid gap-5 border-b border-border pb-7 sm:pb-9"
+        className="canvas-header grid gap-5 border-b border-border pb-7 sm:pb-9"
       >
         <Flow block={block} />
       </Surface>
@@ -95,9 +103,10 @@ export default defineReactTheme({
       <Surface
         block={block}
         as="nav"
+        ariaLabel={block.attr("label", "Navigation")}
         motion="drop-in"
         duration={520}
-        className="sticky top-4 z-20 mx-auto flex w-[min(100%,72rem)] flex-wrap items-center gap-3 rounded-xl border border-border/80 bg-background/88 px-4 py-3 text-sm shadow-sm backdrop-blur sm:px-5"
+        className="canvas-nav sticky top-4 z-20 mx-auto flex w-[min(100%,72rem)] flex-wrap items-center gap-2 border border-border/80 bg-background/92 px-3 py-2.5 text-sm shadow-sm backdrop-blur sm:gap-3 sm:px-4"
       >
         <Content block={block} />
       </Surface>
@@ -108,7 +117,7 @@ export default defineReactTheme({
         motion="hero-rise"
         duration={920}
         stagger={90}
-        className="mds-hero grid gap-8 rounded-2xl border border-border bg-card p-7 shadow-sm sm:p-10 lg:grid-cols-[1fr_0.82fr] lg:items-center lg:p-12"
+        className="mds-hero canvas-hero grid gap-8 border border-border bg-card p-7 shadow-sm sm:p-10 lg:grid-cols-[1fr_0.82fr] lg:items-center lg:p-12"
       >
         <div className="grid gap-6">
           <div className="grid gap-4">
@@ -132,7 +141,7 @@ export default defineReactTheme({
       </Surface>
     ),
     section: (block) => (
-      <Surface block={block} motion="fade-up" duration={680} className="grid gap-6 rounded-xl border border-border bg-background p-6 sm:p-7">
+      <Surface block={block} motion="fade-up" duration={680} className="canvas-section grid gap-6 border border-border bg-background p-6 sm:p-7">
         <Flow block={block} />
       </Surface>
     ),
@@ -147,7 +156,7 @@ export default defineReactTheme({
       </Surface>
     ),
     reveal: (block) => (
-      <Surface block={block} motion={block.attr("preset", "reveal")} duration={block.attr("duration", "760")} className="reveal-block">
+      <Surface block={block} motionAttr="preset" motion="reveal" duration={760} className="reveal-block">
         <Flow block={block} />
       </Surface>
     ),
@@ -182,9 +191,16 @@ export default defineReactTheme({
       </Surface>
     ),
     card: (block) => <Card block={block} className="p-6" />,
-    "note info warning danger success": (block) => (
-      <Surface block={block} as="aside" motion="slide-left" duration={620} className={`mds-callout ${block.type} rounded-xl border bg-card p-5 shadow-xs`}>
-        <Badge tone="muted">{block.type}</Badge>
+    "callout note info warning danger success": (block) => (
+      <Surface
+        block={block}
+        as="aside"
+        role="note"
+        motion="slide-left"
+        duration={620}
+        className={`mds-callout ${block.type} border bg-card p-5 shadow-xs`}
+      >
+        <Badge tone="muted">{block.attr("label", "Note")}</Badge>
         <Flow block={block} className="mt-3" />
       </Surface>
     ),
@@ -351,36 +367,43 @@ export default defineReactTheme({
       </Surface>
     ),
     details: (block) => (
-      <Surface block={block} as="details" motion="fade-up" duration={620} className="group rounded-xl border border-border bg-card p-5 shadow-xs">
-        <summary className="cursor-pointer select-none font-medium text-foreground">{block.summary}</summary>
+      <Surface block={block} as="details" motion="fade-up" duration={620} className="mds-details group border border-border bg-card p-5 shadow-xs">
+        <summary className="cursor-pointer select-none font-medium text-foreground">{block.attr("label", "Details")}</summary>
         <Flow block={block} className="mt-3" />
       </Surface>
     ),
     accordion: (block) => (
-      <Surface block={block} motion="fade-up" duration={680} stagger={70} className="mds-accordion divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+      <Surface block={block} motion="fade-up" duration={680} stagger={70} className="mds-accordion overflow-hidden border border-border bg-card">
         <Slots block={block} />
         <Content block={block} />
       </Surface>
     ),
     tabs: (block) => (
-      <Surface block={block} motion="scale-in" duration={620} className="mds-tabs rounded-xl border border-border bg-card p-3 shadow-xs">
+      <Surface block={block} motion="scale-in" duration={620} className="mds-tabs border border-border bg-card p-3 shadow-xs">
         <Slots block={block} />
         <Content block={block} />
       </Surface>
     ),
     carousel: (block) => (
-      <Surface block={block} motion="fade-up" duration={700} stagger={80} className="mds-carousel flex snap-x gap-5 overflow-x-auto rounded-xl border border-border bg-card p-5 shadow-xs">
-        <Slots block={block} />
-        <Content block={block} />
+      <Surface block={block} motion="fade-up" duration={700} stagger={80} className="mds-carousel border border-border bg-card p-4 shadow-xs sm:p-5">
+        <div className="carousel-track">
+          <Slots block={block} />
+          <Content block={block} />
+        </div>
+        <div className="carousel-controls" aria-label="Carousel controls">
+          <button className="carousel-previous" type="button" aria-label="Previous item">←</button>
+          <span className="carousel-status" aria-live="polite">1 / 1</span>
+          <button className="carousel-next" type="button" aria-label="Next item">→</button>
+        </div>
       </Surface>
     ),
     dialog: (block) => (
-      <Panel block={block} className="mds-dialog mx-auto max-w-2xl ring-1 ring-ring/15" hidden>
+      <Panel block={block} className="mds-dialog mx-auto max-w-2xl ring-1 ring-ring/15" hidden role="dialog" ariaLabel={block.attr("label", "Dialog")} ariaModal>
         <Flow block={block} />
       </Panel>
     ),
     drawer: (block) => (
-      <Surface block={block} as="aside" className="mds-drawer rounded-xl border border-border bg-card p-6 shadow-sm md:ml-auto md:max-w-sm" hidden>
+      <Surface block={block} as="aside" className="mds-drawer border border-border bg-card p-6 shadow-sm md:ml-auto md:max-w-sm" hidden role="dialog" ariaLabel={block.attr("label", "Drawer")} ariaModal>
         <Flow block={block} />
       </Surface>
     ),

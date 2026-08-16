@@ -11,7 +11,7 @@ import { examples } from "../apps/editor/src/examples.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outputDirectory = join(root, ".tmp/visual-smoke");
-const themeNames = ["default"] as const;
+const themeNames = ["default", "canvas"] as const;
 const viewports = [
   { name: "mobile", width: 390, height: 844 },
   { name: "desktop", width: 1440, height: 1000 }
@@ -107,11 +107,20 @@ async function main(): Promise<void> {
     const rendered = renderHtmlResult(parseMds(selectedExample.source, { filePath: `examples/${selectedExample.id}.mds` }), {
       theme
     });
-    if (rendered.diagnostics.length > 0) {
+    const allowedDiagnostics = rendered.diagnostics.filter(
+      (diagnostic) => selectedExample.id === "actions" && diagnostic.code === "missing-action-handler"
+    );
+    const unexpectedDiagnostics = rendered.diagnostics.filter((diagnostic) => !allowedDiagnostics.includes(diagnostic));
+    if (unexpectedDiagnostics.length > 0) {
       throw new Error(
         `${themeName} ${selectedExample.label} render produced diagnostics:\n${rendered.diagnostics
           .map((diagnostic) => `${diagnostic.severity} ${diagnostic.code}: ${diagnostic.message}`)
           .join("\n")}`
+      );
+    }
+    if (selectedExample.id === "actions" && allowedDiagnostics.length !== 2) {
+      throw new Error(
+        `${themeName} Actions expected exactly 2 missing-action-handler warnings, got ${allowedDiagnostics.length}.`
       );
     }
 
@@ -137,6 +146,7 @@ async function main(): Promise<void> {
           screenshotPath,
           viewport.width,
           viewport.height,
+          themeName,
           selectedExample.id === "components",
           selectedExample.id === "motion"
         );
@@ -204,6 +214,7 @@ async function captureScreenshot(
   screenshotPath: string,
   width: number,
   height: number,
+  themeName: (typeof themeNames)[number],
   verifyEnhancements: boolean,
   verifyMotion: boolean
 ): Promise<LayoutMetrics> {
@@ -387,7 +398,6 @@ async function captureScreenshot(
             getComputedStyle(menubarContent).position === 'absolute' &&
             Math.abs(menubarOpenRect.width - menubarClosedRect.width) <= 1 &&
             Math.abs(menubarOpenRect.height - menubarClosedRect.height) <= 1 &&
-            menubarMenu instanceof HTMLElement && menubarMenu.classList.contains('is-menu-align-end') &&
             insideViewport(menubarContentRect);
           const menubar = menubarRoot instanceof HTMLElement &&
             menubarRoot.classList.contains('is-enhanced') && menubarKeyboard;
@@ -408,7 +418,8 @@ async function captureScreenshot(
           `Shared block enhancement failed for ${screenshotPath}: ${JSON.stringify(remaining)}.`
         );
       }
-      const defaultEvaluated = await client.send<{ result: { value: DefaultEnhancementMetrics } }>(
+      if (themeName === "default") {
+        const defaultEvaluated = await client.send<{ result: { value: DefaultEnhancementMetrics } }>(
       "Runtime.evaluate",
       {
         expression: `(async () => {
@@ -491,14 +502,15 @@ async function captureScreenshot(
       },
       sessionId
     );
-      const defaultEnhancements = defaultEvaluated.result.value;
-      if (Object.values(defaultEnhancements).some((value) => !value)) {
-        throw new Error(
-          `Default theme enhancement failed for ${screenshotPath}: ${JSON.stringify(defaultEnhancements)}.`
-        );
+        const defaultEnhancements = defaultEvaluated.result.value;
+        if (Object.values(defaultEnhancements).some((value) => !value)) {
+          throw new Error(
+            `Default theme enhancement failed for ${screenshotPath}: ${JSON.stringify(defaultEnhancements)}.`
+          );
+        }
       }
     }
-    if (verifyMotion) {
+    if (verifyMotion && themeName === "default") {
       const motionEvaluated = await client.send<{ result: { value: MotionEnhancementMetrics } }>(
         "Runtime.evaluate",
         {

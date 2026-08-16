@@ -100,6 +100,34 @@ describe("editor examples", () => {
     expect(result.html).not.toContain('class="terminal"');
     expect(result.html).not.toContain("{{ attr:");
   });
+
+  it("renders every example through Canvas without unsupported block fallbacks", async () => {
+    const themeDirectory = fileURLToPath(new URL("../../../themes/canvas", import.meta.url));
+    const build = await buildPackageTheme(themeDirectory);
+    const inspection = await inspectThemeArtifact(build.outputDirectory);
+    const theme = await loadThemeDirectory(build.outputDirectory);
+
+    expect(inspection.diagnostics).toEqual([]);
+
+    for (const example of examples) {
+      const result = renderHtmlResult(parseMds(example.source), { theme });
+      expect(result.html, example.id).not.toContain('data-fallback="true"');
+      expect(
+        result.diagnostics.filter((diagnostic) => diagnostic.code === "missing-block-renderer"),
+        example.id
+      ).toEqual([]);
+    }
+
+    const components = examples.find((item) => item.id === "components");
+    const result = renderHtmlResult(parseMds(components!.source), { theme });
+    expect(result.diagnostics).toEqual([]);
+    expect(result.html).toContain("mds-callout callout");
+    expect(result.html).toContain("mds-tabs");
+    expect(result.html).toContain("mds-accordion");
+    expect(result.html).toContain('class="carousel-track"');
+    expect(result.html).toContain("mds-block command");
+    expect(result.html).not.toContain("{{ attr:");
+  });
 });
 
 function collectBlockTypes(source: string): string[] {
