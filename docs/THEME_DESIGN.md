@@ -681,7 +681,7 @@ pnpm build:theme:clarity
 mds-theme inspect ./themes/clarity
 ```
 
-`themes/default`, `themes/rich`, `themes/folio`, and `themes/atelier` all separate authoring source under `src/` from the complete generated artifact under `dist/theme`. They compose explicit primitive packs and own only the templates that need theme-specific structure or behavior. Rich is the official broad-content theme: it composes all 63 shared primitives and owns the 38 higher-level data, documentation, guidance, gallery, and conversation names.
+`themes/default`, `themes/rich`, `themes/folio`, and `themes/atelier` all separate authoring source under `src/` from the complete generated artifact under `dist/theme`. They compose explicit primitive packs and own only the templates that need theme-specific structure or behavior. Rich is the official broad-content theme: it composes all 64 shared primitives and owns the 38 higher-level data, documentation, guidance, gallery, and conversation names.
 
 `themes/clarity` keeps source files under `src/`, imports a local component module, bundles CSS imports, bundles `src/script.ts` to artifact JavaScript, and commits the built `dist/theme` artifact. Runtime loading resolves the package directory to `package.json#mdsTheme.dist`.
 

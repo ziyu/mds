@@ -72,7 +72,7 @@ describe("editor examples", () => {
     const theme = await loadThemeDirectory(build.outputDirectory);
 
     expect(inspection.diagnostics).toEqual([]);
-    expect(inspection.blocks).toHaveLength(66);
+    expect(inspection.blocks).toHaveLength(67);
     expect(inspection.blockPacks).toHaveLength(9);
     expect(inspection.templateSources.filter((entry) => entry.source === "theme")).toHaveLength(6);
 

@@ -1,6 +1,17 @@
 # @mds-crate/theme-default
 
-Official portable default theme for MDS.
+Official portable default theme for MDS. Default is a quiet editorial baseline: content typography uses a book-like rhythm, interface primitives share one compact control system, and accessible interaction states work without external assets or runtime dependencies.
+
+The theme composes the 64 shared blocks from `@mds-crate/blocks` and adds only three layout-level blocks: `hero`, `float`, and `sticky`. High-level content patterns belong in `@mds-crate/theme-rich` or a custom theme.
+
+Default implements the shared motion contract as progressive enhancement:
+
+- `motion` coordinates child blocks and supports `stagger`.
+- `reveal` animates one content region.
+- `scene` provides `spotlight` and `contrast` staging variants.
+- Normal blocks can opt in with `motion="..."`.
+
+Supported presets are `fade-in`, `fade-up`, `slide-left`, `slide-right`, `scale-in`, `blur-in`, and `reveal`. Triggers support `load`, `view`, `hover`, and application-controlled `state`; timing uses milliseconds. Content remains visible without JavaScript, and `prefers-reduced-motion` disables transitions.
 
 Use the browser-safe module with the renderer:
 

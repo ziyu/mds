@@ -72,7 +72,7 @@ For the shared blocks layer that turns this vocabulary into reusable block packs
 
 ## Component Coverage Matrix
 
-This matrix is the authoring vocabulary, not a promise that every name lives in the shared package. The 63 portable primitives come from `@mds-crate/blocks`. Richer layout aliases, data systems, technical-documentation structures, guided sequences, galleries, and conversation blocks are implemented by `@mds-crate/theme-rich`; other themes may implement their own subsets or extensions.
+This matrix is the authoring vocabulary, not a promise that every name lives in the shared package. The 64 portable primitives come from `@mds-crate/blocks`. Richer layout aliases, data systems, technical-documentation structures, guided sequences, galleries, and conversation blocks are implemented by `@mds-crate/theme-rich`; other themes may implement their own subsets or extensions.
 
 ### Page Structure
 
@@ -207,9 +207,9 @@ This matrix is the authoring vocabulary, not a promise that every name lives in 
 
 | Block | Purpose | Recommended Content |
 | --- | --- | --- |
-| `motion` | Motion wrapper. | Child blocks. |
-| `scene` | Rich visual or immersive section. | Theme-defined composition. |
-| `reveal` | Theme reveal effect. | Child content. |
+| `motion` | Coordinates a preset across a group. | Multiple child blocks, optionally using `stagger`. |
+| `reveal` | Reveals one content region as a unit. | A heading, paragraph, media item, or composed region. |
+| `scene` | Establishes a visually distinct stage. | Theme-defined composition selected through `variant`; not a timeline. |
 
 ## Priority Plan
 
@@ -666,9 +666,11 @@ These attribute names are recommended across themes:
 | `alt` | Image alternative text. | `alt="Product screenshot"` |
 | `motion` | Motion preset. | `motion="fade-up"` |
 | `preset` | Motion/reveal preset for wrapper blocks. | `preset="reveal"` |
+| `trigger` | Motion activation policy. | `trigger="view"` or `trigger="load"` |
 | `delay` | Motion delay in ms. | `delay=120` |
 | `duration` | Motion duration in ms. | `duration=640` |
 | `stagger` | Child stagger in ms. | `stagger=80` |
+| `once` | Whether view-triggered motion should run only once. | `once=false` |
 
 Avoid attributes that duplicate large content. Prefer slots or child Markdown for anything human-readable and long-form.
 
@@ -698,11 +700,11 @@ Implementation guidelines:
 
 ## Components Example Plan
 
-The editor `Components` example is the canonical shared-package showcase. It must contain every `@mds-crate/blocks` name exactly within the 63-block vocabulary and no theme-owned extension:
+The editor `Components` example is the canonical shared-package showcase. It must contain every `@mds-crate/blocks` name exactly within the 64-block vocabulary and no theme-owned extension:
 
 ```txt
 1. Foundation
-   page, section, split, aside, card, grid, callout, display, and navigation blocks
+   page, header, section, split, aside, footer, card, grid, callout, display, and navigation blocks
 
 2. Controls And Forms
    buttons, toggles, fields, inputs, selection controls, calendar, and validation messages

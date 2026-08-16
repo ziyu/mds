@@ -1,10 +1,10 @@
 {
   "name": "default",
   "label": "Default",
-  "description": "A balanced starter theme for readable standalone MDS pages.",
+  "description": "A quiet editorial theme with rigorous typography and accessible interface primitives.",
   "author": "MDS",
   "preview": "preview.svg",
-  "tags": ["starter", "docs", "responsive"],
+  "tags": ["starter", "editorial", "docs", "accessible", "responsive"],
   "supportedBlocks": ["hero", "float", "sticky"],
   "css": "style.css",
   "js": "script.js",

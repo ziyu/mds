@@ -7,6 +7,11 @@ export const coreVocabulary = [
     purpose: "Top-level page body."
   },
   {
+    name: "header",
+    profile: "core",
+    purpose: "Introductory page or section landmark."
+  },
+  {
     name: "nav",
     profile: "core",
     purpose: "Navigation group of links or actions.",
@@ -59,6 +64,7 @@ export const coreVocabulary = [
   {
     name: "details",
     profile: "core",
-    purpose: "Native expandable detail."
+    purpose: "Native expandable detail.",
+    attrs: ["label", "open"]
   }
 ] as const satisfies readonly BlockVocabularyEntry[];

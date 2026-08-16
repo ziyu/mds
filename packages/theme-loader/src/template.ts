@@ -153,7 +153,7 @@ function getBlockAttr(block: MdsBlockNode, name: string): string {
 }
 
 function isSafeBlockAttribute(name: string, value: string | number | boolean): boolean {
-  if (/^on/i.test(name)) {
+  if (/^on/i.test(name) && name.toLowerCase() !== "once") {
     return false;
   }
 

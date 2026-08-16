@@ -116,9 +116,7 @@ Plain Markdown stays valid.
 [Start -> /docs]
 :::
 
-::: details faq
-# What is MDS?
-
+::: details faq label="What is MDS?"
 MDS is a semantic layer on top of Markdown.
 :::
 `
@@ -128,19 +126,21 @@ MDS is a semantic layer on top of Markdown.
     label: "Components",
     source: `---
 title: Shared Block Gallery
-description: The 63 portable blocks exported by @mds-crate/blocks, with native-first structure, controls, forms, menus, media, actions, and motion.
+description: The 64 portable blocks exported by @mds-crate/blocks, with native-first structure, controls, forms, menus, media, actions, and motion.
 ---
 
 ::: page componentGallery
+::: header componentHeader
 # UI blocks
 
-This gallery is intentionally limited to the 63 portable primitives exported by \`@mds-crate/blocks\`. Theme-owned extensions belong in theme-specific examples.
+This gallery is intentionally limited to the 64 portable primitives exported by \`@mds-crate/blocks\`. Theme-owned extensions belong in theme-specific examples.
 
 ::: nav label="Component gallery"
 [Explore controls -> #foundationControls]
 [See interactions -> #interactions]
 [Review structure -> #structure]
 [Open media -> #mediaBlocks]
+:::
 :::
 
 ::: callout tone="info" label="Scope"
@@ -209,7 +209,7 @@ Create a preset when the default foundation is not enough.
 :::
 
 ::: toggle-group label="Preview options"
-::: toggle label="Pin details" pressed=true action="toggle" target="componentDetails"
+::: toggle label="Pin details" pressed=false action="toggle" target="componentDetails"
 :::
 ::: toggle label="Compact mode" pressed=false action="toggle" target="foundationControls"
 :::
@@ -218,16 +218,17 @@ Create a preset when the default foundation is not enough.
 ::: form foundationForm method="post"
 ::: fieldset legend="Profile"
 ::: field invalid=true
-::: label text="Workspace handle" for="workspaceHandle"
-:::
-::: input label="Workspace handle" name="workspaceHandle" placeholder="mds-core" required invalid=true
+::: label text="Validation anatomy"
 :::
 ::: help
-Use lowercase letters and hyphens.
+Supporting guidance belongs next to its control.
 :::
 ::: error
 This example shows the shared validation-message structure.
 :::
+:::
+
+::: input label="Workspace handle" name="workspaceHandle" placeholder="mds-core" required invalid=true
 :::
 
 ::: input label="Display name" name="displayName" placeholder="Ada Lovelace" autocomplete="name" required
@@ -363,9 +364,7 @@ Paste the six-digit code from your authenticator.
 ::: section interactions
 ## 2. Interaction and disclosure
 
-::: details componentDetails
-# Native details target
-
+::: details componentDetails label="Native details target"
 The toggle control above uses the existing action contract to open and close this native disclosure.
 :::
 
@@ -449,7 +448,7 @@ Shared blocks cover structure, native controls, forms, menus, compact status, me
 :::
 
 --- right
-::: details componentBoundary
+::: details componentBoundary label="Primitive boundary details"
 # What stays outside?
 
 Data systems, documentation layouts, guided sequences, galleries, and conversation UI remain theme or application extensions.
@@ -495,7 +494,7 @@ Do not use a switch where a one-time action button is intended.
 Choose semantic intent first; let the selected theme own presentation.
 :::
 
-::: progress value=63 max=63 label="Shared primitive coverage"
+::: progress value=64 max=64 label="Shared primitive coverage"
 The example covers the complete shared vocabulary boundary without pulling in a richer theme pack.
 :::
 :::
@@ -518,27 +517,27 @@ Video blocks use native playback controls.
 :::
 
 ::: section advancedMotion
-## 5. Motion contract
+## 5. Motion primitives
 
-Action and motion contracts remain separate from the new foundation blocks.
+Motion stays declarative: the document describes intent and the theme owns timing, easing, and reduced-motion behavior.
 
 ::: scene variant="spotlight"
-## Scene variant
-Scene blocks describe richer composed sections without adding runtime concepts to the parser.
+## Scene: a visual stage
+Use Scene to create a distinct editorial moment. Its variant changes atmosphere; Scene is not an animation timeline.
 
-::: reveal preset="reveal" duration=720
-Reveal preserves motion intent for themes that choose to implement it.
+::: reveal preset="reveal" delay=120 duration=820
+Reveal treats this nested content as one region entering the viewport.
 :::
 :::
 
-::: motion preset="fade-up" trigger="view" stagger=80
+::: motion preset="fade-up" trigger="view" stagger=140 once=false
 ::: card
-## First motion item
-The content remains readable if motion is disabled.
+## Motion: grouped choreography
+The first child starts when the wrapper enters the viewport.
 :::
 ::: card
-## Second motion item
-Reduced-motion preferences remain a theme responsibility.
+## Staggered child
+The second child follows 140 milliseconds later.
 :::
 :::
 :::
@@ -553,41 +552,57 @@ Foundation first. Presentation when needed. Standalone HTML at the end.
     id: "motion",
     label: "Motion",
     source: `---
-title: Motion And Attributes
+title: Motion Primitives
+description: Three small contracts for grouped choreography, single-region reveals, and visual staging.
 ---
 
-# Motion And Attributes
-
-::: hero motion="fade-up" delay=80
+::: hero motion="fade-up" trigger="load" delay=120 duration=900
 --- title
-# Motion is an MDS block capability
+# Motion belongs to the theme
 
 --- body
-MDS keeps animation declarative while the output stays standalone HTML.
+MDS preserves motion intent. The selected theme decides how movement feels, while the content stays readable without animation.
 :::
 
-::: motion preset="fade-up" trigger="view" stagger=90
+::: section
+## Reveal one region
+
+::: reveal preset="blur-in" delay=80 duration=760
+This whole region enters together. Use Reveal for a single message, image, or composed piece of content.
+:::
+:::
+
+::: section
+## Choreograph a group
+
+::: motion preset="fade-up" trigger="view" stagger=160 once=false
 
 ::: card
 ## First card
-This card is inside a motion wrapper.
+The wrapper begins when it enters the viewport.
 :::
 
 ::: card
 ## Second card
-The wrapper can stagger its children.
+This child follows 160 milliseconds later.
 :::
 
 ::: card
 ## Third card
-No animation runtime belongs to MDS core.
+Scroll away and return: \`once=false\` allows the sequence to replay.
 :::
 
 :::
+:::
 
-::: section customSection tone="quiet" columns=3
-## Custom block attrs
-Attributes are preserved for renderers and advanced components.
+::: scene variant="spotlight"
+## Stage a scene
+
+Scene creates a visually distinct editorial surface. It may animate on entry, but its primary job is staging—not sequencing children.
+
+::: reveal preset="slide-left" delay=180 duration=820
+This nested Reveal remains an independent motion region inside the scene.
+:::
 :::
 `
   },

@@ -5,6 +5,7 @@ export const coreBlocks: ThemeBlockPackSource = {
   profiles: ["core"],
   supportedBlocks: [
     "page",
+    "header",
     "nav",
     "section",
     "aside",
@@ -22,6 +23,10 @@ export const coreBlocks: ThemeBlockPackSource = {
   {{ children }}
   {{ slots }}
 </main>`,
+    "blocks/header.html": `<header{{ attrs }} class="header">
+  {{ children }}
+  {{ slots }}
+</header>`,
     "blocks/nav.html": `<nav{{ attrs }} class="nav" aria-label="{{ attr:label:Navigation }}">
   {{ children }}
   {{ slots }}
@@ -50,7 +55,6 @@ export const coreBlocks: ThemeBlockPackSource = {
   <div class="split-pane" data-slot="left">{{ slot:left }}</div>
   <div class="split-pane" data-slot="right">{{ slot:right }}</div>
   <div class="split-content">{{ children }}</div>
-  {{ slots }}
 </section>`,
     "blocks/callout.html": `<aside{{ attrs }} class="callout {{ attr:tone:note }}" role="note">
   <strong class="callout-label">{{ attr:label:Note }}</strong>
@@ -61,8 +65,8 @@ export const coreBlocks: ThemeBlockPackSource = {
   {{ children }}
   {{ slots }}
 </blockquote>`,
-    "blocks/details.html": `<details{{ attrs }} class="details">
-  <summary>{{ summary }}</summary>
+    "blocks/details.html": `<details{{ attrs }} class="details"{{ bool:open }}>
+  <summary>{{ attr:label:Details }}</summary>
   <div class="details-body">{{ children }}</div>
   {{ slots }}
 </details>`

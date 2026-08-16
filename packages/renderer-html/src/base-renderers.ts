@@ -6,6 +6,8 @@ import { sanitizeUrl, type UrlPurpose } from "./url.js";
 export const baseBlockRenderers: HtmlBlockRenderers = {
   page: (block, context) =>
     `<main${renderBlockAttrs(block)} class="page">${context.renderChildren(context.getContentChildren(block))}</main>`,
+  header: (block, context) =>
+    `<header${renderBlockAttrs(block)} class="header">${context.renderChildren(context.getContentChildren(block))}</header>`,
   section: renderSectionLikeBlock,
   hero: renderSectionLikeBlock,
   scene: renderSectionLikeBlock,
@@ -228,7 +230,7 @@ export function getBlockAttr(block: MdsBlockNode, name: string): string {
 }
 
 function isSafeBlockAttribute(name: string, value: string | number | boolean): boolean {
-  if (/^on/i.test(name)) {
+  if (/^on/i.test(name) && name.toLowerCase() !== "once") {
     return false;
   }
 

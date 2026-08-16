@@ -9,7 +9,7 @@ export default defineJsxTheme({
   author: "MDS",
   preview: "preview.svg",
   tags: ["package", "example", "clean"],
-  supportedBlocks: ["page", "hero", "section", "cards", "card", "note", "info", "warning", "footer"],
+  supportedBlocks: ["page", "header", "hero", "section", "cards", "card", "note", "info", "warning", "footer"],
   actions: ["toggle"],
   blocks: {
     page: (block) => (
@@ -17,6 +17,7 @@ export default defineJsxTheme({
         <Flow block={block} />
       </Surface>
     ),
+    header: (block) => <Surface block={block} as="header" className="header" />,
     hero: (block) => (
       <Surface block={block} className="hero">
         <div className="hero-title">

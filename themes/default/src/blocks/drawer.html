@@ -1,8 +1,10 @@
-<!-- Default structural override. -->
-<template data-block="drawer"><aside{{ attrs }} class="drawer">
-  <div class="drawer-panel">
-    <button class="drawer-close" type="button" aria-label="Close">×</button>
+<!-- Default accessible drawer structure. -->
+<template data-block="drawer"><aside{{ attrs }} class="drawer" role="dialog" aria-modal="true" aria-hidden="true" aria-label="{{ attr:label:Drawer }}">
+  <button class="drawer-backdrop" type="button" tabindex="-1" aria-label="Close drawer" data-overlay-close></button>
+  <div class="drawer-panel" tabindex="-1">
+    <button class="drawer-close" type="button" aria-label="Close drawer" data-overlay-close>×</button>
     {{ children }}
+    {{ slots }}
   </div>
 </aside>
 </template>

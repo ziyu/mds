@@ -55,6 +55,13 @@ ol {
   padding: clamp(1.2rem, 3vw, 3rem);
 }
 
+.header {
+  display: grid;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: clamp(1.5rem, 4vw, 2.5rem);
+}
+
 .hero {
   display: grid;
   gap: 1rem;

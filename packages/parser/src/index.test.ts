@@ -158,6 +158,21 @@ inside code
     });
   });
 
+  it("allows the motion once attribute without allowing event handlers", () => {
+    const document = parseMds(`::: motion once=false onclick="bad"
+content
+:::
+`);
+
+    expect(document.children[0]).toMatchObject({
+      type: "block",
+      attrs: { once: false, onclick: "bad" }
+    });
+    expect(document.diagnostics.filter((diagnostic) => diagnostic.code === "unsafe-block-attribute")).toEqual([
+      expect.objectContaining({ message: expect.stringContaining('"onclick"') })
+    ]);
+  });
+
   it("parses slots, action links, media, forms, state, lists, and comments", () => {
     const document = parseMds(`@state liked false
 @list features

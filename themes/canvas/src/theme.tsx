@@ -13,6 +13,7 @@ export default defineReactTheme({
   blockPacks: [displayBlocks, navigationBlocks, controlBlocks, formsBlocks, menuBlocks],
   supportedBlocks: [
     "page",
+    "header",
     "nav",
     "hero",
     "section",
@@ -77,6 +78,17 @@ export default defineReactTheme({
         className="mx-auto grid min-h-screen w-full max-w-6xl gap-12 px-6 py-12 sm:px-8 sm:py-14 lg:px-10 lg:py-16"
       >
         <Content block={block} />
+      </Surface>
+    ),
+    header: (block) => (
+      <Surface
+        block={block}
+        as="header"
+        motion="drop-in"
+        duration={560}
+        className="grid gap-5 border-b border-border pb-7 sm:pb-9"
+      >
+        <Flow block={block} />
       </Surface>
     ),
     nav: (block) => (

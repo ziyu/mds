@@ -1,6 +1,85 @@
 import { createEnhancementScript } from "./create-script.js";
 
-const implementation = String.raw`  function setupContextMenus() {
+const implementation = String.raw`  function setupFloatingMenus() {
+    for (const menu of document.querySelectorAll(".dropdown-menu, .context-menu")) {
+      if (!(menu instanceof HTMLDetailsElement) || menu.dataset.mdsFloatingMenu === "true") {
+        continue;
+      }
+      const trigger = menu.querySelector(":scope > summary");
+      const content = menu.querySelector(":scope > .dropdown-menu-content, :scope > .context-menu-content");
+      if (!(trigger instanceof HTMLElement) || !(content instanceof HTMLElement)) {
+        continue;
+      }
+
+      menu.dataset.mdsFloatingMenu = "true";
+      menu.classList.add("is-floating-menu");
+      trigger.setAttribute("aria-haspopup", "menu");
+      trigger.setAttribute("aria-expanded", menu.open ? "true" : "false");
+
+      const position = () => {
+        if (!menu.open || menu.classList.contains("is-context-open")) {
+          return;
+        }
+        menu.classList.remove("is-menu-align-end", "is-menu-drop-up");
+        content.style.removeProperty("--mds-menu-available-height");
+
+        requestAnimationFrame(() => {
+          if (!menu.open || menu.classList.contains("is-context-open")) {
+            return;
+          }
+          const triggerRect = trigger.getBoundingClientRect();
+          const initialRect = content.getBoundingClientRect();
+          const viewportPadding = 8;
+
+          if (initialRect.right > window.innerWidth - viewportPadding) {
+            menu.classList.add("is-menu-align-end");
+          }
+
+          const availableBelow = window.innerHeight - triggerRect.bottom - viewportPadding;
+          const availableAbove = triggerRect.top - viewportPadding;
+          if (initialRect.height > availableBelow && availableAbove > availableBelow) {
+            menu.classList.add("is-menu-drop-up");
+            content.style.setProperty("--mds-menu-available-height", Math.max(96, availableAbove - 8) + "px");
+          } else {
+            content.style.setProperty("--mds-menu-available-height", Math.max(96, availableBelow - 8) + "px");
+          }
+        });
+      };
+
+      menu.addEventListener("toggle", () => {
+        trigger.setAttribute("aria-expanded", menu.open ? "true" : "false");
+        if (menu.open) {
+          position();
+        } else {
+          menu.classList.remove("is-menu-align-end", "is-menu-drop-up");
+          content.style.removeProperty("--mds-menu-available-height");
+        }
+      });
+      content.addEventListener("click", (event) => {
+        if (event.target instanceof Element && event.target.closest(".menu-item-control") !== null) {
+          menu.open = false;
+        }
+      });
+      document.addEventListener("pointerdown", (event) => {
+        if (menu.open && event.target instanceof Node && !menu.contains(event.target)) {
+          menu.open = false;
+        }
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && menu.open) {
+          menu.open = false;
+          trigger.focus();
+        }
+      });
+      window.addEventListener("resize", position, { passive: true });
+
+      if (menu.open) {
+        position();
+      }
+    }
+  }
+
+  function setupContextMenus() {
     for (const contextMenu of document.querySelectorAll(".context-menu")) {
       if (!(contextMenu instanceof HTMLDetailsElement) || contextMenu.dataset.mdsContextMenu === "true") {
         continue;
@@ -35,22 +114,6 @@ const implementation = String.raw`  function setupContextMenus() {
         if (!contextMenu.open) {
           contextMenu.classList.remove("is-context-open");
           content.removeAttribute("style");
-        }
-      });
-      content.addEventListener("click", (event) => {
-        if (event.target instanceof Element && event.target.closest(".menu-item-control") !== null) {
-          contextMenu.open = false;
-        }
-      });
-      document.addEventListener("pointerdown", (event) => {
-        if (contextMenu.open && event.target instanceof Node && !contextMenu.contains(event.target)) {
-          contextMenu.open = false;
-        }
-      });
-      document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && contextMenu.open) {
-          contextMenu.open = false;
-          trigger.focus();
         }
       });
     }
@@ -98,16 +161,6 @@ const implementation = String.raw`  function setupContextMenus() {
           }
         });
       });
-      menubar.addEventListener("click", (event) => {
-        if (event.target instanceof Element && event.target.closest(".menu-item-control") !== null) {
-          closeSiblingMenus(menus, null);
-        }
-      });
-      document.addEventListener("pointerdown", (event) => {
-        if (event.target instanceof Node && !menubar.contains(event.target)) {
-          closeSiblingMenus(menus, null);
-        }
-      });
     }
   }
 
@@ -119,4 +172,4 @@ const implementation = String.raw`  function setupContextMenus() {
     }
   }`;
 
-export const menuEnhancementsScript = createEnhancementScript(["setupContextMenus","setupMenubars"], implementation);
+export const menuEnhancementsScript = createEnhancementScript(["setupFloatingMenus","setupContextMenus","setupMenubars"], implementation);

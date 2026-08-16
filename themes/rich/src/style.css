@@ -200,6 +200,17 @@ pre code {
   color: inherit;
 }
 
+.header {
+  display: grid;
+  gap: 1rem;
+  border-block: 2px solid var(--line-strong);
+  padding: clamp(1.25rem, 4vw, 2.5rem) 0;
+}
+
+.header > .nav {
+  border-bottom: 0;
+}
+
 .nav {
   display: flex;
   flex-wrap: wrap;
@@ -287,6 +298,7 @@ pre code {
   display: none;
 }
 
+.header,
 .section,
 .aside,
 .footer,

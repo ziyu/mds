@@ -229,6 +229,16 @@ A theme might render it as:
 
 The theme JavaScript can then implement the behavior with CSS, `IntersectionObserver`, Web Animations API, Motion One, GSAP, or any other library. MDS core does not care.
 
+The three shared motion blocks have intentionally different scopes:
+
+| Block | Meaning | Use it for |
+| --- | --- | --- |
+| `motion` | Group choreography. | Multiple child blocks that share a preset, especially staggered cards or list items. |
+| `reveal` | One-region reveal. | A single content region that should enter as one visual unit. |
+| `scene` | Visual staging surface. | A distinct editorial section whose `variant` changes atmosphere; it is not a timeline or animation engine. |
+
+These blocks preserve intent only. A theme may implement them with different visual language, or render all content without motion when reduced motion is requested.
+
 ## Motion As Component Attributes
 
 Themes can also let normal blocks opt into motion:

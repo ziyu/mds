@@ -91,6 +91,21 @@ Markdown 内容。
     expect(html).toContain('<a class="action secondary" href="/docs">Docs</a>');
   });
 
+  it("renders header and footer as semantic landmarks", () => {
+    const document = parseMds(`::: header siteHeader
+# MDS
+:::
+
+::: footer siteFooter
+Built with MDS.
+:::
+`);
+    const html = renderHtml(document);
+
+    expect(html).toContain('<header id="siteHeader" class="header"><h1>MDS</h1></header>');
+    expect(html).toContain('<footer id="siteFooter" class="footer"><p>Built with MDS.</p></footer>');
+  });
+
   it("preserves command actions as HTML metadata without a runtime script", () => {
     const document = parseMds(`::: details faq
 FAQ
@@ -244,13 +259,13 @@ title: Shell
   });
 
   it("renders resolved block ids and safe block attributes", () => {
-    const document = parseMds(`::: card motion="fade-up" delay=120 onclick="bad"
+    const document = parseMds(`::: card motion="fade-up" delay=120 once=false onclick="bad"
 # Feature Card
 :::
 `);
     const result = renderHtmlResult(document);
 
-    expect(result.html).toContain('<article id="feature-card" data-attr-motion="fade-up" data-attr-delay="120" class="card">');
+    expect(result.html).toContain('<article id="feature-card" data-attr-motion="fade-up" data-attr-delay="120" data-attr-once="false" class="card">');
     expect(result.html).not.toContain("onclick");
     expect(result.diagnostics).toContainEqual(
       expect.objectContaining({

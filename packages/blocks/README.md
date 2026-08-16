@@ -4,9 +4,19 @@ Shared MDS block vocabulary, capability metadata, profiles, and reusable structu
 
 The package exports nine focused primitive packs and `foundationBlocks`. `foundationBlocks` composes core layout, display, navigation, controls, native forms, interactive containers, and menus; themes may add the separate media and motion packs. Themes can override only the templates whose structure or behavior must differ.
 
-Foundation controls render as usable native HTML without a browser component runtime. The 63-block shared vocabulary includes calendar selection, context menus, menubars, native form controls, media semantics, and the existing action and motion contracts. Packs carry de-duplicated structural CSS and progressive enhancement before theme-owned assets, so external themes get functional fallbacks and retain full styling control.
+Foundation controls render as usable native HTML without a browser component runtime. The 64-block shared vocabulary includes semantic page landmarks, calendar selection, context menus, menubars, native form controls, media semantics, and the existing action and motion contracts. Packs carry de-duplicated structural CSS and progressive enhancement before theme-owned assets, so external themes get functional fallbacks and retain full styling control.
 
 Data tables, charts, documentation systems, guided sequences, galleries, conversation layouts, and similar compositions are intentionally not shared primitives. Themes can implement them as extensions; `@mds-crate/theme-rich` is the official package that preserves broad built-in coverage.
+
+## Motion primitives
+
+The optional `@mds-crate/blocks/motion` pack preserves three small, theme-owned contracts:
+
+- `motion` is a group orchestrator. Use it around multiple child blocks when they should share a preset or enter with `stagger` timing.
+- `reveal` is a single-region convenience wrapper. Use it when one heading, paragraph, image, or composed region should reveal as a unit.
+- `scene` is a visually distinct stage, not an animation timeline. Its `variant` lets a theme establish atmosphere; the theme may also animate the stage as it enters.
+
+The shared layer preserves `preset`, `trigger`, `delay`, `duration`, `stagger`, and `once` as portable authoring intent. It deliberately does not ship an animation engine. Themes must map those attributes to CSS or JavaScript, keep the page readable without enhancement, and honor `prefers-reduced-motion`.
 
 ## Source layout
 

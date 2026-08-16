@@ -196,7 +196,7 @@ The shared package intentionally stops at portable primitives:
 
 | Profile | Purpose | Example Blocks |
 | --- | --- | --- |
-| `core` | Basic page structure and content containers. | `page`, `section`, `nav`, `footer`, `card`, `grid`, `split`, `callout`, `details` |
+| `core` | Basic page structure and content containers. | `page`, `header`, `section`, `nav`, `footer`, `card`, `grid`, `split`, `callout`, `details` |
 | `display` | Reusable identity and compact status presentation. | `avatar`, `empty`, `item`, `badge`, `progress` |
 | `navigation` | Hierarchical and paged navigation. | `breadcrumb`, `breadcrumb-item`, `pagination` |
 | `controls` | Universal buttons and two-state controls. | `button`, `toggle`, `toggle-group` |
@@ -204,11 +204,11 @@ The shared package intentionally stops at portable primitives:
 | `interactive` | Native-first interactive containers. | `tabs`, `accordion`, `carousel`, `dialog`, `drawer`, `popover`, `tooltip`, `command` |
 | `menus` | Commands, disclosure menus, context menus, and application menubars. | `dropdown`, `context-menu`, `menubar`, `menu`, `menu-group`, `menu-item`, `menu-separator` |
 | `media` | Native media semantics that do not imply a gallery system. | `video`, `figure`, `caption` |
-| `motion` | Motion wrappers and reveal semantics. | `motion`, `reveal`, `scene` |
+| `motion` | Theme-owned entry choreography: grouped motion, single-region reveal, and visual staging. | `motion`, `reveal`, `scene` |
 
 Themes may opt into multiple profiles. A theme should only publish profiles whose output has been visually checked with its CSS.
 
-`foundationBlocks` composes `core`, `display`, `navigation`, `controls`, `forms`, `interactive`, and `menus`. Themes add `media` and `motion` explicitly when needed. The complete shared layer is 63 blocks across nine packs. Packs may include de-duplicated structural CSS and progressive-enhancement JavaScript; those assets compose before theme-owned assets so external themes work immediately and can override presentation.
+`foundationBlocks` composes `core`, `display`, `navigation`, `controls`, `forms`, `interactive`, and `menus`. Themes add `media` and `motion` explicitly when needed. The complete shared layer is 64 blocks across nine packs. Packs may include de-duplicated structural CSS and progressive-enhancement JavaScript; those assets compose before theme-owned assets so external themes work immediately and can override presentation.
 
 Higher-level patterns are theme capabilities. The official `@mds-crate/theme-rich` package owns 38 such names: hero/card collections and layout aliases, semantic callout aliases, data tables and charts, documentation structures, guided sequences, gallery composition, and conversation layouts. This preserves useful built-in coverage without making every theme or application inherit those opinions.
 
@@ -298,7 +298,7 @@ For editor development mode, the dev server may compose pack sources before send
 
 4. **Move existing themes gradually**
 
-   Status: implemented for `default`, `folio`, `atelier`, and `rich`. Themes explicitly compose `foundation`, `media`, and `motion` as needed, keep source under `src/`, and materialize complete plain runtime artifacts under `dist/theme`. The shared vocabulary contains 63 blocks across nine packs. Rich adds 38 higher-level names and exposes 101 capabilities in its final artifact.
+   Status: implemented for `default`, `folio`, `atelier`, and `rich`. Themes explicitly compose `foundation`, `media`, and `motion` as needed, keep source under `src/`, and materialize complete plain runtime artifacts under `dist/theme`. The shared vocabulary contains 64 blocks across nine packs. Rich adds 38 higher-level names and exposes 102 capabilities in its final artifact.
 
 5. **Update package SDKs**
 
@@ -310,7 +310,7 @@ For editor development mode, the dev server may compose pack sources before send
 
 7. **Add visual smoke tests**
 
-   Status: implemented through `pnpm test:visual`. The Components gallery covers exactly the 63 shared blocks and renders through `default` at 390x844 and 1440x1000. Chrome DevTools Protocol captures PNGs and fails on horizontal overflow, missing shared enhancement behavior, or render diagnostics.
+   Status: implemented through `pnpm test:visual`. The Components gallery covers exactly the 64 shared blocks and renders through `default` at 390x844 and 1440x1000. Chrome DevTools Protocol captures PNGs and fails on horizontal overflow, missing shared enhancement behavior, or render diagnostics.
 
 ## Compatibility
 

@@ -38,7 +38,7 @@ export const interactiveBlocks: ThemeBlockPackSource = {
   <div class="popover-body">{{ children }}</div>
   {{ slots }}
 </details>`,
-    "blocks/tooltip.html": `<span{{ attrs }} class="tooltip" data-tooltip="{{ attr:label }}">
+    "blocks/tooltip.html": `<span{{ attrs }} class="tooltip" data-tooltip="{{ attr:label }}" tabindex="0" aria-description="{{ attr:label }}">
   {{ children }}
 </span>`,
     "blocks/command.html": `<section{{ attrs }} class="command" aria-label="{{ attr:label:Commands }}">

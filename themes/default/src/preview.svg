@@ -1,12 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-label="Default theme preview">
-  <!-- Default theme preview source. -->
-  <rect width="1200" height="720" fill="#f7f4ec"/>
-  <rect x="72" y="64" width="1056" height="592" rx="28" fill="#fffdf8" stroke="#d8cfc0"/>
-  <text x="112" y="160" fill="#1d4f8f" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="700">Default</text>
-  <text x="112" y="230" fill="#151515" font-family="Inter, Arial, sans-serif" font-size="88" font-weight="800">Readable pages</text>
-  <rect x="112" y="304" width="460" height="18" rx="9" fill="#d9d2c5"/>
-  <rect x="112" y="344" width="620" height="18" rx="9" fill="#e5ded2"/>
-  <rect x="112" y="420" width="276" height="120" rx="14" fill="#f1ebe0" stroke="#d8cfc0"/>
-  <rect x="424" y="420" width="276" height="120" rx="14" fill="#f1ebe0" stroke="#d8cfc0"/>
-  <rect x="736" y="420" width="276" height="120" rx="14" fill="#f1ebe0" stroke="#d8cfc0"/>
+  <!-- Quiet editorial preview for the Default theme. -->
+  <rect width="1200" height="720" fill="#ece8df"/>
+  <rect x="56" y="36" width="1088" height="648" fill="#fbfaf6" stroke="#d8d3c8"/>
+  <rect x="56" y="36" width="1088" height="6" fill="#285474"/>
+  <line x1="112" y1="104" x2="1088" y2="104" stroke="#d8d3c8"/>
+  <text x="112" y="86" fill="#686b65" font-family="Avenir Next, Segoe UI, sans-serif" font-size="15" font-weight="700" letter-spacing="2.4">MDS / DEFAULT</text>
+  <text x="112" y="214" fill="#20221f" font-family="Iowan Old Style, Palatino, Georgia, serif" font-size="76" font-weight="600">A clearer starting point.</text>
+  <text x="115" y="260" fill="#686b65" font-family="Charter, Georgia, serif" font-size="23">Quiet typography, deliberate hierarchy, and dependable interface primitives.</text>
+  <rect x="112" y="313" width="128" height="44" rx="5" fill="#285474"/>
+  <text x="142" y="341" fill="#ffffff" font-family="Avenir Next, Segoe UI, sans-serif" font-size="14" font-weight="700">Read guide</text>
+  <rect x="252" y="313" width="128" height="44" rx="5" fill="#fffefa" stroke="#aaa69c"/>
+  <text x="281" y="341" fill="#20221f" font-family="Avenir Next, Segoe UI, sans-serif" font-size="14" font-weight="700">View source</text>
+  <line x1="112" y1="417" x2="1088" y2="417" stroke="#d8d3c8"/>
+  <text x="112" y="455" fill="#285474" font-family="Avenir Next, Segoe UI, sans-serif" font-size="13" font-weight="700" letter-spacing="1.5">FOUNDATIONS</text>
+  <rect x="112" y="482" width="292" height="142" rx="6" fill="#fffefa" stroke="#d8d3c8"/>
+  <text x="136" y="518" fill="#20221f" font-family="Avenir Next, Segoe UI, sans-serif" font-size="16" font-weight="700">Document rhythm</text>
+  <rect x="136" y="544" width="198" height="7" rx="3.5" fill="#cbc7be"/>
+  <rect x="136" y="563" width="236" height="7" rx="3.5" fill="#dedad1"/>
+  <rect x="136" y="582" width="160" height="7" rx="3.5" fill="#dedad1"/>
+  <rect x="432" y="482" width="292" height="142" rx="6" fill="#fffefa" stroke="#d8d3c8"/>
+  <text x="456" y="518" fill="#20221f" font-family="Avenir Next, Segoe UI, sans-serif" font-size="16" font-weight="700">Interface states</text>
+  <rect x="456" y="544" width="244" height="40" rx="5" fill="#fffefa" stroke="#aaa69c"/>
+  <text x="470" y="569" fill="#686b65" font-family="Avenir Next, Segoe UI, sans-serif" font-size="13">Search documents…</text>
+  <rect x="752" y="482" width="336" height="142" rx="6" fill="#e1ebf0"/>
+  <text x="776" y="518" fill="#285474" font-family="Avenir Next, Segoe UI, sans-serif" font-size="13" font-weight="700" letter-spacing="1.2">NOTE</text>
+  <text x="776" y="552" fill="#20221f" font-family="Charter, Georgia, serif" font-size="17">Designed to hold attention</text>
+  <text x="776" y="578" fill="#686b65" font-family="Charter, Georgia, serif" font-size="15">without competing with content.</text>
 </svg>

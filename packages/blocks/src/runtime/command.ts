@@ -1,7 +1,7 @@
 import { createEnhancementScript } from "./create-script.js";
 
 const implementation = String.raw`  function setupCommands() {
-    for (const command of document.querySelectorAll(".command")) {
+    for (const command of document.querySelectorAll("section.command")) {
       if (!(command instanceof HTMLElement) || command.dataset.mdsCommand === "true") {
         continue;
       }

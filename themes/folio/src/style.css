@@ -486,6 +486,17 @@ td {
   gap: 0.35rem;
 }
 
+.header {
+  display: grid;
+  gap: 1rem;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.header > .nav {
+  margin-top: 0.5rem;
+}
+
 .nav {
   display: flex;
   flex-wrap: wrap;
@@ -1157,7 +1168,7 @@ figcaption {
   text-align: center;
 }
 
-.command {
+section.command {
   display: grid;
   gap: 0.75rem;
   width: min(100%, 36rem);

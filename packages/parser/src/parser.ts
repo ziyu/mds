@@ -709,7 +709,7 @@ function normalizeBlockAttributeValue(value: string): string | number | boolean 
 }
 
 function isUnsafeBlockAttribute(name: string, value: string | number | boolean): boolean {
-  if (/^on/i.test(name)) {
+  if (/^on/i.test(name) && name.toLowerCase() !== "once") {
     return true;
   }
 

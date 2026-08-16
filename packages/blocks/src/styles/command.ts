@@ -1,4 +1,4 @@
-export const commandStyles = String.raw`:where(.command) {
+export const commandStyles = String.raw`:where(section.command) {
   display: grid;
   gap: 0.75rem;
   width: min(100%, 36rem);

@@ -18,6 +18,7 @@ const viewports = [
 ] as const;
 
 interface VisualSmokeArtifact {
+  example: string;
   theme: string;
   viewport: string;
   width: number;
@@ -46,13 +47,41 @@ interface CommandMetrics {
 
 interface SharedEnhancementMetrics {
   calendar: boolean;
+  dropdownFloating: boolean;
   contextMenu: boolean;
+  contextMenuFloating: boolean;
   menubar: boolean;
+  menubarFloating: boolean;
+}
+
+interface DefaultEnhancementMetrics {
+  tabs: boolean;
+  accordion: boolean;
+  detailsToggle: boolean;
+  commandActions: boolean;
+  dialogClass: boolean;
+  dialogAria: boolean;
+  dialogBodyLock: boolean;
+  dialogFocus: boolean;
+  dialogClose: boolean;
+  drawerOpen: boolean;
+  drawerClose: boolean;
+}
+
+interface MotionEnhancementMetrics {
+  normalBlockAttrs: boolean;
+  revealPreset: boolean;
+  scenePreset: boolean;
+  staggerConfigured: boolean;
+  entersViewport: boolean;
+  staggerCompletes: boolean;
+  replays: boolean;
 }
 
 async function main(): Promise<void> {
   const htmlOnly = process.argv.includes("--html-only");
   const requestedTheme = process.argv.find((argument) => argument.startsWith("--theme="))?.slice("--theme=".length);
+  const requestedExample = process.argv.find((argument) => argument.startsWith("--example="))?.slice("--example=".length) ?? "components";
   const selectedThemes =
     requestedTheme === undefined
       ? [...themeNames]
@@ -61,9 +90,9 @@ async function main(): Promise<void> {
     throw new Error(`Unknown visual smoke theme: ${requestedTheme}. Expected one of ${themeNames.join(", ")}.`);
   }
   const chrome = htmlOnly ? undefined : await resolveChromeExecutable();
-  const components = examples.find((example) => example.id === "components");
-  if (components === undefined) {
-    throw new Error("The editor Components example is missing.");
+  const selectedExample = examples.find((example) => example.id === requestedExample);
+  if (selectedExample === undefined) {
+    throw new Error(`Unknown editor example: ${requestedExample}.`);
   }
 
   await mkdir(outputDirectory, { recursive: true });
@@ -75,23 +104,24 @@ async function main(): Promise<void> {
     await rm(themeOutput, { recursive: true, force: true });
     const build = await buildPackageTheme(themeDirectory);
     const theme = await loadThemeDirectory(build.outputDirectory);
-    const rendered = renderHtmlResult(parseMds(components.source, { filePath: "examples/components.mds" }), {
+    const rendered = renderHtmlResult(parseMds(selectedExample.source, { filePath: `examples/${selectedExample.id}.mds` }), {
       theme
     });
     if (rendered.diagnostics.length > 0) {
       throw new Error(
-        `${themeName} Components render produced diagnostics:\n${rendered.diagnostics
+        `${themeName} ${selectedExample.label} render produced diagnostics:\n${rendered.diagnostics
           .map((diagnostic) => `${diagnostic.severity} ${diagnostic.code}: ${diagnostic.message}`)
           .join("\n")}`
       );
     }
 
-    const htmlPath = join(themeOutput, "components.html");
+    const htmlPath = join(themeOutput, `${selectedExample.id}.html`);
     await mkdir(themeOutput, { recursive: true });
     await writeFile(htmlPath, rendered.html, "utf8");
 
     for (const viewport of viewports) {
       const artifact: VisualSmokeArtifact = {
+        example: selectedExample.id,
         theme: themeName,
         viewport: viewport.name,
         width: viewport.width,
@@ -100,8 +130,16 @@ async function main(): Promise<void> {
       };
 
       if (chrome !== undefined) {
-        const screenshotPath = join(themeOutput, `components-${viewport.name}.png`);
-        const layout = await captureScreenshot(chrome, htmlPath, screenshotPath, viewport.width, viewport.height);
+        const screenshotPath = join(themeOutput, `${selectedExample.id}-${viewport.name}.png`);
+        const layout = await captureScreenshot(
+          chrome,
+          htmlPath,
+          screenshotPath,
+          viewport.width,
+          viewport.height,
+          selectedExample.id === "components",
+          selectedExample.id === "motion"
+        );
         const screenshotStat = await stat(screenshotPath);
         if (screenshotStat.size === 0) {
           throw new Error(`Chrome produced an empty screenshot: ${screenshotPath}`);
@@ -124,7 +162,7 @@ async function main(): Promise<void> {
     manifestPath,
     `${JSON.stringify(
       {
-        example: "components",
+        example: selectedExample.id,
         generatedAt: new Date().toISOString(),
         chrome: chrome ?? null,
         artifacts
@@ -134,7 +172,7 @@ async function main(): Promise<void> {
     )}\n`,
     "utf8"
   );
-  console.log(`Visual smoke passed: ${selectedThemes.length} themes x ${viewports.length} viewports.`);
+  console.log(`Visual smoke passed: ${selectedExample.id}, ${selectedThemes.length} themes x ${viewports.length} viewports.`);
   console.log(`Artifacts: ${outputDirectory}`);
 }
 
@@ -165,7 +203,9 @@ async function captureScreenshot(
   htmlPath: string,
   screenshotPath: string,
   width: number,
-  height: number
+  height: number,
+  verifyEnhancements: boolean,
+  verifyMotion: boolean
 ): Promise<LayoutMetrics> {
   const profileDirectory = `${screenshotPath}.chrome-profile`;
   await rm(profileDirectory, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
@@ -220,11 +260,12 @@ async function captureScreenshot(
       },
       sessionId
     );
-    const commandEvaluated = await client.send<{ result: { value: CommandMetrics } }>(
+    if (verifyEnhancements) {
+      const commandEvaluated = await client.send<{ result: { value: CommandMetrics } }>(
       "Runtime.evaluate",
       {
         expression: `(() => {
-          const command = document.querySelector('.command');
+          const command = document.querySelector('section.command');
           const search = command?.querySelector('.command-search');
           const input = command?.querySelector('.command-input');
           const empty = command?.querySelector('.command-empty');
@@ -245,16 +286,20 @@ async function captureScreenshot(
       },
       sessionId
     );
-    const command = commandEvaluated.result.value;
-    if (!command.enhanced || !command.filters || !command.restores) {
-      throw new Error(
-        `Command enhancement failed for ${screenshotPath}: ${JSON.stringify(command)}.`
-      );
-    }
-    const remainingEvaluated = await client.send<{ result: { value: SharedEnhancementMetrics } }>(
+      const command = commandEvaluated.result.value;
+      if (!command.enhanced || !command.filters || !command.restores) {
+        throw new Error(
+          `Command enhancement failed for ${screenshotPath}: ${JSON.stringify(command)}.`
+        );
+      }
+      const remainingEvaluated = await client.send<{ result: { value: SharedEnhancementMetrics } }>(
       "Runtime.evaluate",
       {
-        expression: `(() => {
+        expression: `(async () => {
+          const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+          const insideViewport = (rect) => rect.left >= -1 && rect.right <= innerWidth + 1 && rect.top >= -1 && rect.bottom <= innerHeight + 1;
+          document.documentElement.style.scrollBehavior = 'auto';
+
           const calendarRoot = document.querySelector('.calendar');
           const calendarNative = calendarRoot?.querySelector('.calendar-native');
           const calendarTarget = [...(calendarRoot?.querySelectorAll('.calendar-day') ?? [])]
@@ -267,18 +312,62 @@ async function captureScreenshot(
             calendarTarget instanceof HTMLButtonElement &&
             calendarRoot.getAttribute('data-value') !== calendarBefore;
 
+          const standaloneDropdown = [...document.querySelectorAll('.dropdown-menu')]
+            .find((menu) => menu.closest('.menubar') === null);
+          const standaloneTrigger = standaloneDropdown?.querySelector(':scope > summary');
+          const standaloneContent = standaloneDropdown?.querySelector(':scope > .dropdown-menu-content');
+          standaloneDropdown?.scrollIntoView({ block: 'center' });
+          if (standaloneDropdown instanceof HTMLDetailsElement) standaloneDropdown.open = true;
+          await nextFrame();
+          await nextFrame();
+          const standaloneRootRect = standaloneDropdown?.getBoundingClientRect();
+          const standaloneTriggerRect = standaloneTrigger?.getBoundingClientRect();
+          const standaloneContentRect = standaloneContent?.getBoundingClientRect();
+          const dropdownFloating = standaloneDropdown instanceof HTMLDetailsElement &&
+            standaloneTrigger instanceof HTMLElement && standaloneContent instanceof HTMLElement &&
+            standaloneRootRect !== undefined && standaloneTriggerRect !== undefined && standaloneContentRect !== undefined &&
+            getComputedStyle(standaloneContent).position === 'absolute' &&
+            standaloneRootRect.height <= standaloneTriggerRect.height + 4 &&
+            standaloneContentRect.width <= Math.min(374, innerWidth - 8) + 1 &&
+            insideViewport(standaloneContentRect);
+          if (standaloneDropdown instanceof HTMLDetailsElement) standaloneDropdown.open = false;
+
           const contextRoot = document.querySelector('.context-menu');
           const contextTrigger = contextRoot?.querySelector('.context-menu-trigger');
+          const contextContent = contextRoot?.querySelector('.context-menu-content');
+          contextRoot?.scrollIntoView({ block: 'center' });
+          if (contextRoot instanceof HTMLDetailsElement) contextRoot.open = true;
+          await nextFrame();
+          await nextFrame();
+          const contextRootRect = contextRoot?.getBoundingClientRect();
+          const contextTriggerRect = contextTrigger?.getBoundingClientRect();
+          const contextAnchoredRect = contextContent?.getBoundingClientRect();
+          const contextMenuFloating = contextRoot instanceof HTMLDetailsElement &&
+            contextTrigger instanceof HTMLElement && contextContent instanceof HTMLElement &&
+            contextRootRect !== undefined && contextTriggerRect !== undefined && contextAnchoredRect !== undefined &&
+            getComputedStyle(contextContent).position === 'absolute' &&
+            contextRootRect.height <= contextTriggerRect.height + 4 &&
+            insideViewport(contextAnchoredRect);
+          if (contextRoot instanceof HTMLDetailsElement) contextRoot.open = false;
           if (contextTrigger instanceof HTMLElement) {
             contextTrigger.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 40, clientY: 40 }));
           }
+          await nextFrame();
+          await nextFrame();
+          const contextFixedRect = contextContent?.getBoundingClientRect();
           const contextMenu = contextRoot instanceof HTMLDetailsElement &&
             contextRoot.classList.contains('is-enhanced') && contextRoot.open &&
-            contextRoot.classList.contains('is-context-open');
+            contextRoot.classList.contains('is-context-open') &&
+            contextContent instanceof HTMLElement && getComputedStyle(contextContent).position === 'fixed' &&
+            contextFixedRect !== undefined && insideViewport(contextFixedRect);
           if (contextRoot instanceof HTMLDetailsElement) contextRoot.open = false;
 
           const menubarRoot = document.querySelector('.menubar');
           const menubarTriggers = [...(menubarRoot?.querySelectorAll('.dropdown-menu > summary') ?? [])];
+          if (menubarRoot instanceof HTMLElement) menubarRoot.style.marginLeft = 'auto';
+          menubarRoot?.scrollIntoView({ block: 'center' });
+          await nextFrame();
+          const menubarClosedRect = menubarRoot?.getBoundingClientRect();
           let menubarKeyboard = false;
           if (menubarTriggers[0] instanceof HTMLElement && menubarTriggers[1] instanceof HTMLElement) {
             menubarTriggers[0].focus();
@@ -286,21 +375,184 @@ async function captureScreenshot(
             menubarKeyboard = document.activeElement === menubarTriggers[1];
             menubarTriggers[1].blur();
           }
+          const menubarMenu = menubarTriggers[1]?.closest('.dropdown-menu');
+          const menubarContent = menubarMenu?.querySelector(':scope > .dropdown-menu-content');
+          if (menubarMenu instanceof HTMLDetailsElement) menubarMenu.open = true;
+          await nextFrame();
+          await nextFrame();
+          const menubarOpenRect = menubarRoot?.getBoundingClientRect();
+          const menubarContentRect = menubarContent?.getBoundingClientRect();
+          const menubarFloating = menubarRoot instanceof HTMLElement && menubarContent instanceof HTMLElement &&
+            menubarClosedRect !== undefined && menubarOpenRect !== undefined && menubarContentRect !== undefined &&
+            getComputedStyle(menubarContent).position === 'absolute' &&
+            Math.abs(menubarOpenRect.width - menubarClosedRect.width) <= 1 &&
+            Math.abs(menubarOpenRect.height - menubarClosedRect.height) <= 1 &&
+            menubarMenu instanceof HTMLElement && menubarMenu.classList.contains('is-menu-align-end') &&
+            insideViewport(menubarContentRect);
           const menubar = menubarRoot instanceof HTMLElement &&
             menubarRoot.classList.contains('is-enhanced') && menubarKeyboard;
+          if (menubarMenu instanceof HTMLDetailsElement) menubarMenu.open = false;
+          if (menubarRoot instanceof HTMLElement) menubarRoot.style.removeProperty('margin-left');
 
           window.scrollTo(0, 0);
-          return { calendar, contextMenu, menubar };
+          return { calendar, dropdownFloating, contextMenu, contextMenuFloating, menubar, menubarFloating };
         })()`,
+        awaitPromise: true,
         returnByValue: true
       },
       sessionId
     );
-    const remaining = remainingEvaluated.result.value;
-    if (Object.values(remaining).some((value) => !value)) {
-      throw new Error(
-        `Shared block enhancement failed for ${screenshotPath}: ${JSON.stringify(remaining)}.`
+      const remaining = remainingEvaluated.result.value;
+      if (Object.values(remaining).some((value) => !value)) {
+        throw new Error(
+          `Shared block enhancement failed for ${screenshotPath}: ${JSON.stringify(remaining)}.`
+        );
+      }
+      const defaultEvaluated = await client.send<{ result: { value: DefaultEnhancementMetrics } }>(
+      "Runtime.evaluate",
+      {
+        expression: `(async () => {
+          const tabsRoot = document.querySelector('.tabs');
+          const tabButtons = [...(tabsRoot?.querySelectorAll('.tab-button') ?? [])];
+          const tabPanels = [...(tabsRoot?.querySelectorAll('.tabs-item') ?? [])];
+          let tabs = tabButtons.length > 1 && tabButtons.length === tabPanels.length &&
+            tabButtons.every((button, index) => button.id === \`tabs-1-\${index + 1}-tab\`) &&
+            tabPanels.every((panel, index) => panel.id === \`tabs-1-\${index + 1}-panel\`);
+          if (tabs && tabButtons[0] instanceof HTMLElement && tabButtons[1] instanceof HTMLElement) {
+            tabButtons[0].focus();
+            tabButtons[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+            tabs = document.activeElement === tabButtons[1] &&
+              tabButtons[1].getAttribute('aria-selected') === 'true' &&
+              tabPanels[0] instanceof HTMLElement && tabPanels[0].hidden &&
+              tabPanels[1] instanceof HTMLElement && !tabPanels[1].hidden;
+          }
+
+          const accordionRoot = document.querySelector('.accordion');
+          const accordionButtons = [...(accordionRoot?.querySelectorAll('.accordion-button') ?? [])];
+          const accordionPanels = [...(accordionRoot?.querySelectorAll('.accordion-panel') ?? [])];
+          let accordion = accordionRoot instanceof HTMLElement && accordionRoot.classList.contains('is-enhanced') &&
+            accordionButtons.length > 1 && accordionButtons.length === accordionPanels.length &&
+            accordionButtons[0]?.getAttribute('aria-expanded') === 'true' &&
+            accordionPanels[0] instanceof HTMLElement && !accordionPanels[0].hidden;
+          if (accordion && accordionButtons[1] instanceof HTMLButtonElement) {
+            accordionButtons[1].click();
+            accordion = accordionButtons[0]?.getAttribute('aria-expanded') === 'false' &&
+              accordionButtons[1].getAttribute('aria-expanded') === 'true' &&
+              accordionPanels[0] instanceof HTMLElement && accordionPanels[0].hidden &&
+              accordionPanels[1] instanceof HTMLElement && !accordionPanels[1].hidden;
+          }
+
+          const detailsControl = document.querySelector('.toggle-control[data-target="componentDetails"]');
+          const detailsTarget = document.querySelector('#componentDetails');
+          let detailsToggle = detailsControl instanceof HTMLButtonElement && detailsTarget instanceof HTMLDetailsElement;
+          detailsControl?.click();
+          detailsToggle = detailsToggle && detailsTarget instanceof HTMLDetailsElement && detailsTarget.open &&
+            detailsControl?.getAttribute('aria-pressed') === 'true';
+          detailsControl?.click();
+          detailsToggle = detailsToggle && detailsTarget instanceof HTMLDetailsElement && !detailsTarget.open &&
+            detailsControl?.getAttribute('aria-pressed') === 'false';
+
+          const commandAction = document.querySelector('button.action.command');
+          const commandActions = commandAction instanceof HTMLButtonElement &&
+            getComputedStyle(commandAction).display === 'inline-flex' &&
+            commandAction.closest('section.command') === null;
+
+          const dialogTrigger = document.querySelector('[data-action="open"][data-target="componentDialog"]');
+          const dialogRoot = document.querySelector('#componentDialog');
+          dialogTrigger?.click();
+          await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          const dialogClass = dialogRoot instanceof HTMLElement && dialogRoot.classList.contains('is-open');
+          const dialogAria = dialogRoot instanceof HTMLElement && dialogRoot.getAttribute('aria-hidden') === 'false';
+          const dialogBodyLock = document.body.classList.contains('has-overlay');
+          const dialogFocus = dialogTrigger instanceof HTMLElement && dialogRoot instanceof HTMLElement &&
+            dialogRoot.contains(document.activeElement);
+          dialogRoot?.querySelector('[data-overlay-close]')?.click();
+          const dialogClose = dialogRoot instanceof HTMLElement && !dialogRoot.classList.contains('is-open') &&
+            dialogRoot.getAttribute('aria-hidden') === 'true' && !document.body.classList.contains('has-overlay') &&
+            document.activeElement === dialogTrigger;
+
+          const drawerTrigger = document.querySelector('[data-action="show"][data-target="componentDrawer"]');
+          const drawerRoot = document.querySelector('#componentDrawer');
+          drawerTrigger?.click();
+          await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          const drawerOpen = drawerTrigger instanceof HTMLElement && drawerRoot instanceof HTMLElement &&
+            drawerRoot.classList.contains('is-open') && drawerRoot.getAttribute('aria-hidden') === 'false' &&
+            document.body.classList.contains('has-overlay') && drawerRoot.contains(document.activeElement);
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+          const drawerClose = drawerRoot instanceof HTMLElement && !drawerRoot.classList.contains('is-open') &&
+            drawerRoot.getAttribute('aria-hidden') === 'true' && !document.body.classList.contains('has-overlay') &&
+            document.activeElement === drawerTrigger;
+
+          window.scrollTo(0, 0);
+          return { tabs, accordion, detailsToggle, commandActions, dialogClass, dialogAria, dialogBodyLock, dialogFocus, dialogClose, drawerOpen, drawerClose };
+        })()`,
+        awaitPromise: true,
+        returnByValue: true
+      },
+      sessionId
+    );
+      const defaultEnhancements = defaultEvaluated.result.value;
+      if (Object.values(defaultEnhancements).some((value) => !value)) {
+        throw new Error(
+          `Default theme enhancement failed for ${screenshotPath}: ${JSON.stringify(defaultEnhancements)}.`
+        );
+      }
+    }
+    if (verifyMotion) {
+      const motionEvaluated = await client.send<{ result: { value: MotionEnhancementMetrics } }>(
+        "Runtime.evaluate",
+        {
+          expression: `(async () => {
+            const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+            const hero = document.querySelector('.hero[data-attr-motion]');
+            const reveal = document.querySelector('.reveal');
+            const scene = document.querySelector('.scene');
+            const group = document.querySelector('.motion');
+            const items = [...(group?.children ?? [])];
+
+            const normalBlockAttrs = hero instanceof HTMLElement &&
+              hero.hasAttribute('data-motion-ready') &&
+              hero.dataset.motionPreset === 'fade-up' &&
+              hero.dataset.motionTrigger === 'load' &&
+              hero.style.getPropertyValue('--motion-delay') === '120ms' &&
+              hero.style.getPropertyValue('--motion-duration') === '900ms';
+            const revealPreset = reveal instanceof HTMLElement &&
+              reveal.dataset.motionPreset === 'blur-in' &&
+              reveal.style.getPropertyValue('--motion-delay') === '80ms' &&
+              reveal.style.getPropertyValue('--motion-duration') === '760ms';
+            const scenePreset = scene instanceof HTMLElement &&
+              scene.dataset.motionPreset === 'scene' &&
+              scene.getAttribute('data-attr-variant') === 'spotlight';
+            const staggerConfigured = group instanceof HTMLElement &&
+              group.classList.contains('has-stagger') &&
+              group.dataset.motionOnce === 'false' &&
+              items.length === 3 &&
+              items.every((item, index) => item instanceof HTMLElement &&
+                item.classList.contains('motion-item') &&
+                item.style.getPropertyValue('--motion-item-delay') === String(index * 160) + 'ms');
+
+            group?.scrollIntoView({ block: 'center' });
+            await wait(450);
+            const entersViewport = group instanceof HTMLElement && group.classList.contains('is-visible');
+            await wait(1_050);
+            const staggerCompletes = items.length === 3 &&
+              items.every((item) => Number.parseFloat(getComputedStyle(item).opacity) > 0.98);
+
+            document.documentElement.style.scrollBehavior = 'auto';
+            window.scrollTo(0, 0);
+            await wait(220);
+            const replays = group instanceof HTMLElement && !group.classList.contains('is-visible');
+            return { normalBlockAttrs, revealPreset, scenePreset, staggerConfigured, entersViewport, staggerCompletes, replays };
+          })()`,
+          awaitPromise: true,
+          returnByValue: true
+        },
+        sessionId
       );
+      const motion = motionEvaluated.result.value;
+      if (Object.values(motion).some((value) => !value)) {
+        throw new Error(`Default motion enhancement failed for ${screenshotPath}: ${JSON.stringify(motion)}.`);
+      }
     }
     const evaluated = await client.send<{ result: { value: LayoutMetrics } }>(
       "Runtime.evaluate",

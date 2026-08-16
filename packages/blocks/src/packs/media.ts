@@ -9,12 +9,10 @@ export const mediaBlocks: ThemeBlockPackSource = {
     "blocks/video.html": `<figure{{ attrs }} class="video">
   <video src="{{ attr:src }}" controls>{{ children }}</video>
   <figcaption>{{ slot:caption }}</figcaption>
-  {{ slots }}
 </figure>`,
     "blocks/figure.html": `<figure{{ attrs }} class="figure">
   {{ children }}
   <figcaption>{{ slot:caption }}</figcaption>
-  {{ slots }}
 </figure>`,
     "blocks/caption.html": `<figcaption{{ attrs }} class="caption">
   {{ children }}

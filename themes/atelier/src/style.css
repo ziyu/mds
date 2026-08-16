@@ -167,6 +167,17 @@ td {
 .split-content:empty {
   display: none;
 }
+.header {
+  display: grid;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: clamp(1.5rem, 4vw, 2.5rem);
+}
+.header > .nav {
+  margin-top: 0.5rem;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
 .nav {
   display: flex;
   flex-wrap: wrap;
@@ -779,7 +790,7 @@ figcaption {
   text-align: center;
 }
 
-.command {
+section.command {
   display: grid;
   gap: 0.75rem;
   width: min(100%, 36rem);

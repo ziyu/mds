@@ -79,7 +79,7 @@ describe("MDS block packs", () => {
       },
       {
         pack: menuBlocks,
-        setupFunctions: ["setupContextMenus", "setupMenubars"],
+        setupFunctions: ["setupFloatingMenus", "setupContextMenus", "setupMenubars"],
         selector: ".context-menu-content",
         unrelatedSetup: "setupCommands"
       }
@@ -104,15 +104,20 @@ describe("MDS block packs", () => {
     }
   });
 
+  it("scopes command enhancement to command blocks instead of command actions", () => {
+    expect(interactiveBlocks.files["runtime.js"]).toContain('querySelectorAll("section.command")');
+    expect(interactiveBlocks.files["runtime.css"]).toContain(":where(section.command)");
+  });
+
   it("exports only the nine reusable packs", () => {
     const supportedBlocks = sharedBlocks.flatMap((pack) => pack.supportedBlocks ?? []);
     const missingVocabulary = supportedBlocks.filter((block) => blockVocabularyByName[block] === undefined);
 
-    expect(blockVocabulary).toHaveLength(63);
+    expect(blockVocabulary).toHaveLength(64);
     expect(sharedBlocks).toHaveLength(9);
     expect(Object.keys(blockPacksByName)).toHaveLength(9);
-    expect(supportedBlocks).toHaveLength(63);
-    expect(new Set(supportedBlocks).size).toBe(63);
+    expect(supportedBlocks).toHaveLength(64);
+    expect(new Set(supportedBlocks).size).toBe(64);
     expect(missingVocabulary).toEqual([]);
     expect(new Set(blockVocabulary.map((block) => block.name)).size).toBe(blockVocabulary.length);
   });
@@ -120,6 +125,7 @@ describe("MDS block packs", () => {
   it("keeps the primitive profiles focused", () => {
     expect(coreBlocks.supportedBlocks).toEqual([
       "page",
+      "header",
       "nav",
       "section",
       "aside",
@@ -141,10 +147,22 @@ describe("MDS block packs", () => {
     );
   });
 
+  it("never renders named slots again through the aggregate slots placeholder", () => {
+    for (const pack of sharedBlocks) {
+      for (const [path, source] of Object.entries(pack.files)) {
+        if (!path.startsWith("blocks/") || !source.includes("{{ slot:")) {
+          continue;
+        }
+        expect(source, `${pack.name}/${path}`).not.toContain("{{ slots }}");
+      }
+    }
+  });
+
   it("preserves the action and motion contracts", () => {
     expect(interactiveBlocks.actions).toEqual(["open", "close", "show", "hide", "toggle"]);
     expect(motionBlocks.supportedBlocks).toEqual(["motion", "reveal", "scene"]);
     expect(blockVocabularyByName.callout).toMatchObject({ profile: "core", attrs: ["tone", "label"] });
+    expect(blockVocabularyByName.details?.attrs).toEqual(["label", "open"]);
     expect(blockVocabularyByName.badge).toMatchObject({ profile: "display" });
     expect(blockVocabularyByName.motion?.attrs).toEqual(["preset", "trigger", "delay", "duration", "stagger", "once"]);
     expect(blockVocabularyByName.reveal?.attrs).toEqual(["preset", "delay", "duration"]);
