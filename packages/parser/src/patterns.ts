@@ -1,5 +1,6 @@
 export const blockOpenPattern = /^:::\s+(.+?)\s*$/;
 export const blockClosePattern = /^:::\s*$/;
+export const leafBlockPattern = /^::\s+(.+?)\s*$/;
 export const slotPattern = /^---\s+(.+?)\s*$/;
 export const identifierPattern = /^[A-Za-z][A-Za-z0-9_-]*$/;
 export const pathPattern = /^[A-Za-z][A-Za-z0-9_.-]*$/;

@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { markdown } from "@codemirror/lang-markdown";
-import type { EditorState, Extension, Text } from "@codemirror/state";
+import { Prec, type EditorState, type Extension, type Text } from "@codemirror/state";
 import { foldEffect, foldedRanges, unfoldEffect } from "@codemirror/language";
 import {
   Decoration,
@@ -12,6 +12,13 @@ import {
   gutter
 } from "@codemirror/view";
 import { basicSetup } from "codemirror";
+import {
+  createMdsContainerAutoCloseInsertion,
+  isInsideMarkdownCodeFence,
+  isMdsClosingBlockLine,
+  isMdsContainerOpeningLine,
+  matchMdsBlockLine
+} from "./mds-editor-syntax.js";
 
 export interface EditorPaneProps {
   value: string;
@@ -65,6 +72,7 @@ export const EditorPane = forwardRef<EditorPaneHandle, EditorPaneProps>(function
       doc: value,
       parent: hostRef.current,
       extensions: [
+        mdsContainerAutoClose,
         basicSetup,
         markdown(),
         mdsFoldGutter,
@@ -118,6 +126,12 @@ const mdsBlockLine = Decoration.line({
 const mdsClosingBlockLine = Decoration.line({
   attributes: {
     class: "cm-mds-block-line cm-mds-block-close-line"
+  }
+});
+
+const mdsLeafBlockLine = Decoration.line({
+  attributes: {
+    class: "cm-mds-block-line cm-mds-leaf-block-line"
   }
 });
 
@@ -225,6 +239,49 @@ const mdsFoldGutter = gutter({
     }
   }
 });
+
+const mdsContainerAutoClose = Prec.high(EditorView.domEventHandlers({
+  keydown(event, view) {
+    if (
+      event.key !== "Enter" ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.altKey ||
+      event.shiftKey ||
+      view.state.selection.ranges.length !== 1
+    ) {
+      return false;
+    }
+
+    const selection = view.state.selection.main;
+    if (!selection.empty) {
+      return false;
+    }
+
+    const line = view.state.doc.lineAt(selection.head);
+    if (isInsideMarkdownCodeFence(view.state.doc, line.number)) {
+      return false;
+    }
+
+    const insertion = createMdsContainerAutoCloseInsertion(line.text, selection.head - line.from);
+    if (insertion === undefined) {
+      return false;
+    }
+
+    event.preventDefault();
+    view.dispatch({
+      changes: {
+        from: selection.head,
+        insert: insertion.text
+      },
+      selection: {
+        anchor: selection.head + insertion.cursorOffset
+      },
+      scrollIntoView: true
+    });
+    return true;
+  }
+}));
 
 const mdsEditorExtensions: Extension[] = [
   ViewPlugin.fromClass(
@@ -337,7 +394,7 @@ function findMdsFoldRange(document: Text, lineStart: number): MdsFoldRange | nul
     return null;
   }
 
-  if (isMdsOpeningBlockLine(text)) {
+  if (isMdsContainerOpeningLine(text)) {
     return findMdsBlockFoldRange(document, line.number);
   }
 
@@ -361,7 +418,7 @@ function findMdsBlockFoldRange(document: Text, lineNumber: number): MdsFoldRange
   for (let currentLineNumber = lineNumber + 1; currentLineNumber <= document.lines; currentLineNumber += 1) {
     const line = document.line(currentLineNumber);
 
-    if (isMdsOpeningBlockLine(line.text)) {
+    if (isMdsContainerOpeningLine(line.text)) {
       stack.push({
         lineNumber: currentLineNumber,
         start: line.from,
@@ -410,7 +467,7 @@ function findContainingMdsBlockEndLine(document: Text, lineNumber: number): numb
   for (let currentLineNumber = 1; currentLineNumber <= document.lines; currentLineNumber += 1) {
     const line = document.line(currentLineNumber);
 
-    if (isMdsOpeningBlockLine(line.text)) {
+    if (isMdsContainerOpeningLine(line.text)) {
       stack.push(currentLineNumber);
       continue;
     }
@@ -446,14 +503,6 @@ function readFrontmatterLineNumbers(document: Text): { from: number; to: number 
   }
 
   return undefined;
-}
-
-function isMdsOpeningBlockLine(text: string): boolean {
-  return /^\s*:{3,}\s+[A-Za-z][\w-]*(?:\s|$)/.test(text);
-}
-
-function isMdsClosingBlockLine(text: string): boolean {
-  return /^\s*:{3,}\s*$/.test(text);
 }
 
 function isMdsSlotLine(text: string): boolean {
@@ -544,30 +593,35 @@ function decorateMdsLine(ranges: MdsDecorationRange[], lineStart: number, text: 
 }
 
 function decorateBlockLine(ranges: MdsDecorationRange[], lineStart: number, text: string): void {
-  const blockMatch = text.match(/^(\s*)(:{3,})(?:\s+([A-Za-z][\w-]*))?/);
-
-  if (blockMatch === null) {
+  const blockMatch = matchMdsBlockLine(text);
+  if (blockMatch === undefined) {
     return;
   }
 
-  const indentLength = blockMatch[1]?.length ?? 0;
-  const fence = blockMatch[2] ?? "";
-  const type = blockMatch[3];
+  const { indentLength, fence, type } = blockMatch;
   const fenceStart = lineStart + indentLength;
 
-  addLine(ranges, lineStart, type === undefined ? mdsClosingBlockLine : mdsBlockLine);
+  addLine(
+    ranges,
+    lineStart,
+    blockMatch.kind === "close"
+      ? mdsClosingBlockLine
+      : blockMatch.kind === "leaf"
+        ? mdsLeafBlockLine
+        : mdsBlockLine
+  );
   addMark(ranges, fenceStart, fenceStart + fence.length, mdsMark.blockFence);
 
-  if (type !== undefined && blockMatch.index !== undefined) {
+  if (type !== undefined) {
     const typeStart = text.indexOf(type, indentLength + fence.length);
     addMark(ranges, lineStart + typeStart, lineStart + typeStart + type.length, mdsMark.blockType);
   }
 
-  const nameMatch = text.slice(blockMatch[0].length).match(/^\s+([A-Za-z0-9_-]+)(?=\s|$)/);
+  const nameMatch = text.slice(blockMatch.matchedLength).match(/^\s+([A-Za-z0-9_-]+)(?=\s|$)/);
   const name = nameMatch?.[1];
 
   if (name !== undefined && nameMatch?.index !== undefined) {
-    const nameStart = blockMatch[0].length + nameMatch[0].indexOf(name);
+    const nameStart = blockMatch.matchedLength + nameMatch[0].indexOf(name);
     addMark(ranges, lineStart + nameStart, lineStart + nameStart + name.length, mdsMark.blockName);
   }
 

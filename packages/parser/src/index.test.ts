@@ -70,6 +70,69 @@ Dangerous operations need care.
     ]);
   });
 
+  it("parses self-closing leaf blocks without changing the block AST", () => {
+    const document = parseMds(`:: button label="Create" type=submit
+
+::: menu
+:: menu-item open label="Open" action="open" target="document"
+:: menu-separator
+:::
+`);
+
+    expect(document.diagnostics).toEqual([]);
+    expect(document.children).toMatchObject([
+      {
+        type: "block",
+        blockType: "button",
+        children: [],
+        attrs: {
+          label: "Create",
+          type: "submit"
+        }
+      },
+      {
+        type: "block",
+        blockType: "menu",
+        children: [
+          {
+            type: "block",
+            blockType: "menu-item",
+            name: "open",
+            children: [],
+            attrs: {
+              label: "Open",
+              action: "open",
+              target: "document"
+            }
+          },
+          {
+            type: "block",
+            blockType: "menu-separator",
+            children: []
+          }
+        ]
+      }
+    ]);
+  });
+
+  it("requires container syntax for structural control and data blocks", () => {
+    const document = parseMds(`:: if ready
+:: each items
+:: data products
+`);
+
+    expect(document.children).toMatchObject([
+      { type: "conditionBlock", condition: "if", name: "ready", children: [] },
+      { type: "eachBlock", listName: "items", children: [] },
+      { type: "dataBlock", name: "products", value: "", children: [] }
+    ]);
+    expect(document.diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
+      "leaf-block-requires-container",
+      "leaf-block-requires-container",
+      "leaf-block-requires-container"
+    ]);
+  });
+
   it("parses block attributes and generated ids", () => {
     const document = parseMds(`::: hero landing motion="fade up" delay=120 featured
 # Landing Page!
@@ -142,11 +205,13 @@ content
 
   it("does not parse escaped block markers or fenced code markers", () => {
     const document = parseMds(`\\::: hero
+\\:: button label="Safe"
 
 \`\`\`mds
 ::: warning
 inside code
 :::
+:: button label="Inside code"
 \`\`\`
 `);
 
@@ -154,7 +219,7 @@ inside code
     expect(document.children).toHaveLength(1);
     expect(document.children[0]).toMatchObject({
       type: "markdown",
-      value: "::: hero\n\n```mds\n::: warning\ninside code\n:::\n```\n"
+      value: "::: hero\n:: button label=\"Safe\"\n\n```mds\n::: warning\ninside code\n:::\n:: button label=\"Inside code\"\n```\n"
     });
   });
 

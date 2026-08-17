@@ -609,6 +609,10 @@ select {
   background: rgb(238 243 251 / 62%);
 }
 
+.editor-host .cm-mds-leaf-block-line {
+  background: rgb(237 246 243 / 68%);
+}
+
 .editor-host .cm-mds-block-close-line {
   background: rgb(246 241 235 / 62%);
 }

@@ -171,6 +171,25 @@ Body
     expect(html).not.toContain('data-block="x-feature"');
   });
 
+  it("renders leaf and empty container syntax through the same block contract", () => {
+    const leafHtml = renderMds(`:: button label="Create"`, {
+      mode: "fragment",
+      blockRenderers: {
+        button: (block) => `<button>${String(block.attrs?.label)}</button>`
+      }
+    });
+    const containerHtml = renderMds(`::: button label="Create"
+:::`, {
+      mode: "fragment",
+      blockRenderers: {
+        button: (block) => `<button>${String(block.attrs?.label)}</button>`
+      }
+    });
+
+    expect(leafHtml).toContain('<button>Create</button>');
+    expect(leafHtml).toBe(containerHtml);
+  });
+
   it("supports custom themes with css and block renderers", () => {
     const document = parseMds(`::: hero
 # Themed

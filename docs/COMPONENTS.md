@@ -54,19 +54,28 @@ For the shared blocks layer that turns this vocabulary into reusable block packs
    :::
    ```
 
-3. **Attributes are compact configuration**
+3. **Leaf blocks stay on one line**
+
+   Blocks without Markdown content, slots, or child blocks use `::` and need no closing fence:
+
+   ```mds
+   :: button label="Save" type="submit"
+   :: slider label="Volume" min=0 max=100 value=50
+   ```
+
+4. **Attributes are compact configuration**
 
    Attributes should handle small options such as `tone`, `variant`, `columns`, `value`, `motion`, and `duration`.
 
-4. **Themes own presentation**
+5. **Themes own presentation**
 
    MDS core parses and preserves the block. Canvas, Clarity, or a user theme decides the layout, CSS, motion, and progressive enhancement.
 
-5. **Native HTML before custom JavaScript**
+6. **Native HTML before custom JavaScript**
 
    Use native anchors, buttons, forms, details, dialog-like overlays, and media semantics where possible. Theme JavaScript should enhance behavior, not replace basic content.
 
-6. **Fallback must be readable**
+7. **Fallback must be readable**
 
    Unsupported blocks should still render content in a safe container with a diagnostic when appropriate.
 
@@ -405,16 +414,13 @@ themes/canvas
 
 ```mds
 ::: breadcrumb label="Project location"
-::: breadcrumb-item label="Home" href="/"
-:::
-::: breadcrumb-item label="MDS" href="/projects/mds" current="page"
-:::
+:: breadcrumb-item label="Home" href="/"
+:: breadcrumb-item label="MDS" href="/projects/mds" current="page"
 :::
 
 ::: item
 --- media
-::: avatar src="/avatar.png" alt="MDS project" fallback="MD"
-:::
+:: avatar src="/avatar.png" alt="MDS project" fallback="MD"
 
 --- title
 ## MDS project
@@ -436,24 +442,18 @@ A reusable content row.
 The shared block layer provides native HTML fallbacks for buttons, toggles, form controls, sliders, and menus. Themes style these structures and may override them, but do not need to reimplement their basic behavior.
 
 ```mds
-::: button label="Save" type="submit" form="profile"
-:::
+:: button label="Save" type="submit" form="profile"
 
-::: toggle label="Pin panel" pressed=false action="toggle" target="panel"
-:::
+:: toggle label="Pin panel" pressed=false action="toggle" target="panel"
 
-::: slider label="Volume" name="volume" min=0 max=100 step=5 value=50
-:::
+:: slider label="Volume" name="volume" min=0 max=100 step=5 value=50
 
 ::: select label="Workspace" name="workspace" required
-::: option label="Personal" value="personal" selected
-:::
-::: option label="Team" value="team"
-:::
+:: option label="Personal" value="personal" selected
+:: option label="Team" value="team"
 :::
 
-::: switch label="Email notifications" name="notifications" checked
-:::
+:: switch label="Email notifications" name="notifications" checked
 ```
 
 Input composition remains native-first:
@@ -476,10 +476,8 @@ Paste the six-digit code from your authenticator.
 :::
 
 ::: combobox label="Framework" name="framework" list="framework-options" placeholder="Choose a framework"
-::: option label="React" value="react"
-:::
-::: option label="Vue" value="vue"
-:::
+:: option label="React" value="react"
+:: option label="Vue" value="vue"
 :::
 ```
 
@@ -488,8 +486,7 @@ Paste the six-digit code from your authenticator.
 Calendar selection is also native-first:
 
 ```mds
-::: calendar label="Review window" mode="range" name="reviewWindow" value="2026-08-18..2026-08-22" month="2026-08" weekstart=1
-:::
+:: calendar label="Review window" mode="range" name="reviewWindow" value="2026-08-18..2026-08-22" month="2026-08" weekstart=1
 ```
 
 Without enhancement, the block exposes a date input. The shared pack runtime upgrades it to an inline grid with single, `range`, or `multiple` value serialization, min/max limits, locale-aware labels, configurable week start, and arrow-key navigation.
@@ -501,14 +498,10 @@ Without enhancement, the block exposes a date input. The shared pack runtime upg
 ```mds
 ::: dropdown label="File actions"
 ::: menu label="File actions"
-::: menu-item label="Open" action="open" target="document"
-:::
-::: menu-item label="Close" action="close" target="document"
-:::
-::: menu-separator
-:::
-::: menu-item label="Toggle preview" action="toggle" target="previewPanel"
-:::
+:: menu-item label="Open" action="open" target="document"
+:: menu-item label="Close" action="close" target="document"
+:: menu-separator
+:: menu-item label="Toggle preview" action="toggle" target="previewPanel"
 :::
 :::
 ```
@@ -521,10 +514,8 @@ The fallback is a native disclosure. `menu-item` reuses the existing `data-actio
 ::: command label="Commands" placeholder="Search commands..." empty="No matching commands."
 ::: menu label="Commands"
 ::: menu-group label="Navigation"
-::: menu-item label="Open dialog" keywords="modal preview" shortcut="⌘1" action="open" target="dialog"
-:::
-::: menu-item label="Show drawer" keywords="panel sidebar" shortcut="⌘2" action="show" target="drawer"
-:::
+:: menu-item label="Open dialog" keywords="modal preview" shortcut="⌘1" action="open" target="dialog"
+:: menu-item label="Show drawer" keywords="panel sidebar" shortcut="⌘2" action="show" target="drawer"
 :::
 :::
 :::
@@ -539,19 +530,15 @@ Without JavaScript, every command remains visible as an ordinary menu. Theme enh
 ```mds
 ::: chart label="Weekly builds"
 ::: chart-series label="Builds"
-::: chart-point label="Monday" value=42 max=80
-:::
-::: chart-point label="Tuesday" value=58 max=80
-:::
+:: chart-point label="Monday" value=42 max=80
+:: chart-point label="Tuesday" value=58 max=80
 :::
 :::
 
 ::: data-table label="Releases" filter="Filter releases" page-size=10 selectable
 --- columns
-::: data-column key="package" label="Package" sortable
-:::
-::: data-column key="version" label="Version" sortable
-:::
+:: data-column key="package" label="Package" sortable
+:: data-column key="version" label="Version" sortable
 
 --- rows
 ::: data-row

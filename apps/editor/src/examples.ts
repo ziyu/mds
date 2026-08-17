@@ -153,18 +153,14 @@ Every explicit block in this example comes from the shared package. Unknown, com
 Identity, navigation, controls, forms, and menus render as native HTML first. Theme JavaScript may enhance them, but it is not required for basic behavior.
 
 ::: breadcrumb label="Project location"
-::: breadcrumb-item label="Home" href="/"
-:::
-::: breadcrumb-item label="Projects" href="/projects"
-:::
-::: breadcrumb-item label="MDS" href="#foundationControls" current="page"
-:::
+:: breadcrumb-item label="Home" href="/"
+:: breadcrumb-item label="Projects" href="/projects"
+:: breadcrumb-item label="MDS" href="#foundationControls" current="page"
 :::
 
 ::: item variant="outline"
 --- media
-::: avatar src="https://placehold.co/160x160/255c99/ffffff?text=MD" alt="MDS project" fallback="MD"
-:::
+:: avatar src="https://placehold.co/160x160/255c99/ffffff?text=MD" alt="MDS project" fallback="MD"
 
 --- title
 ## MDS project
@@ -173,8 +169,7 @@ Identity, navigation, controls, forms, and menus render as native HTML first. Th
 A portable semantic authoring system with native-first foundation blocks.
 
 --- actions
-::: button label="Open" action="open" target="componentDialog"
-:::
+:: button label="Open" action="open" target="componentDialog"
 
 --- footer
 Updated today
@@ -193,33 +188,26 @@ Updated today
 Create a preset when the default foundation is not enough.
 
 --- actions
-::: button label="Create preset" type="button"
-:::
+:: button label="Create preset" type="button"
 :::
 
 ### Controls, forms, and menus
 
 ::: button-group
-::: button label="Save settings" type="submit" form="foundationForm"
-:::
-::: button label="Reset" type="reset" form="foundationForm"
-:::
-::: button label="Open dialog" action="open" target="componentDialog"
-:::
+:: button label="Save settings" type="submit" form="foundationForm"
+:: button label="Reset" type="reset" form="foundationForm"
+:: button label="Open dialog" action="open" target="componentDialog"
 :::
 
 ::: toggle-group label="Preview options"
-::: toggle label="Pin details" pressed=false action="toggle" target="componentDetails"
-:::
-::: toggle label="Compact mode" pressed=false action="toggle" target="foundationControls"
-:::
+:: toggle label="Pin details" pressed=false action="toggle" target="componentDetails"
+:: toggle label="Compact mode" pressed=false action="toggle" target="foundationControls"
 :::
 
 ::: form foundationForm method="post"
 ::: fieldset legend="Profile"
 ::: field invalid=true
-::: label text="Validation anatomy"
-:::
+:: label text="Validation anatomy"
 ::: help
 Supporting guidance belongs next to its control.
 :::
@@ -228,14 +216,11 @@ This example shows the shared validation-message structure.
 :::
 :::
 
-::: input label="Workspace handle" name="workspaceHandle" placeholder="mds-core" required invalid=true
-:::
+:: input label="Workspace handle" name="workspaceHandle" placeholder="mds-core" required invalid=true
 
-::: input label="Display name" name="displayName" placeholder="Ada Lovelace" autocomplete="name" required
-:::
+:: input label="Display name" name="displayName" placeholder="Ada Lovelace" autocomplete="name" required
 
-::: textarea label="About" name="about" placeholder="What are you building?" rows=4
-:::
+:: textarea label="About" name="about" placeholder="What are you building?" rows=4
 
 ::: input-group label="Project URL" name="projectUrl" placeholder="mds" autocomplete="url"
 --- prefix
@@ -245,8 +230,7 @@ https://
 .dev
 
 --- actions
-::: button label="Check" type="button"
-:::
+:: button label="Check" type="button"
 
 --- help
 Choose a short public project URL.
@@ -258,105 +242,77 @@ Paste the six-digit code from your authenticator.
 :::
 
 ::: combobox label="Framework" name="framework" list="framework-options" placeholder="Choose a framework" autocomplete="off" required
-::: option label="React" value="react"
-:::
-::: option label="Vue" value="vue"
-:::
-::: option label="Svelte" value="svelte"
-:::
+:: option label="React" value="react"
+:: option label="Vue" value="vue"
+:: option label="Svelte" value="svelte"
 :::
 
-::: calendar label="Release date" name="releaseDate" value="2026-08-21" month="2026-08" min="2026-08-01" max="2026-09-30" weekstart=1 required
-:::
+:: calendar label="Release date" name="releaseDate" value="2026-08-21" month="2026-08" min="2026-08-01" max="2026-09-30" weekstart=1 required
 
 ::: select label="Workspace" name="workspace" required
-::: option label="Personal" value="personal" selected
-:::
-::: option label="Team" value="team"
-:::
+:: option label="Personal" value="personal" selected
+:: option label="Team" value="team"
 :::
 :::
 
 ::: fieldset legend="Preferences"
-::: checkbox label="Include release notes" name="releaseNotes" checked
-:::
+:: checkbox label="Include release notes" name="releaseNotes" checked
 
 ::: radio-group legend="Editor density"
-::: radio label="Comfortable" name="density" value="comfortable" checked
-:::
-::: radio label="Compact" name="density" value="compact"
-:::
+:: radio label="Comfortable" name="density" value="comfortable" checked
+:: radio label="Compact" name="density" value="compact"
 :::
 
-::: slider label="Preview scale" name="scale" min=50 max=150 step=10 value=100
-:::
+:: slider label="Preview scale" name="scale" min=50 max=150 step=10 value=100
 
-::: switch label="Email notifications" name="notifications" checked
-:::
+:: switch label="Email notifications" name="notifications" checked
 :::
 :::
 
 ::: command label="Command palette" placeholder="Search commands..." empty="No matching commands."
 ::: menu label="Commands"
 ::: menu-group label="Navigation"
-::: menu-item label="Open dialog" keywords="modal preview" shortcut="⌘1" action="open" target="componentDialog"
+:: menu-item label="Open dialog" keywords="modal preview" shortcut="⌘1" action="open" target="componentDialog"
+:: menu-item label="Show drawer" keywords="panel sidebar" shortcut="⌘2" action="show" target="componentDrawer"
+:: menu-item label="Toggle details" keywords="disclosure notes" shortcut="⌘3" action="toggle" target="componentDetails"
 :::
-::: menu-item label="Show drawer" keywords="panel sidebar" shortcut="⌘2" action="show" target="componentDrawer"
-:::
-::: menu-item label="Toggle details" keywords="disclosure notes" shortcut="⌘3" action="toggle" target="componentDetails"
-:::
-:::
-::: menu-separator
-:::
-::: menu-item label="Close dialog" keywords="dismiss modal" shortcut="Esc" action="close" target="componentDialog"
-:::
+:: menu-separator
+:: menu-item label="Close dialog" keywords="dismiss modal" shortcut="Esc" action="close" target="componentDialog"
 :::
 :::
 
 ::: dropdown label="File actions"
 ::: menu label="File actions"
 ::: menu-group label="Document"
-::: menu-item label="Open dialog" action="open" target="componentDialog"
+:: menu-item label="Open dialog" action="open" target="componentDialog"
+:: menu-item label="Show drawer" action="show" target="componentDrawer"
 :::
-::: menu-item label="Show drawer" action="show" target="componentDrawer"
-:::
-:::
-::: menu-separator
-:::
-::: menu-item label="Close dialog" action="close" target="componentDialog"
-:::
+:: menu-separator
+:: menu-item label="Close dialog" action="close" target="componentDialog"
 :::
 :::
 :::
 
 ::: context-menu label="Right-click file canvas"
 ::: menu label="File canvas actions"
-::: menu-item label="Open dialog" shortcut="↵" action="open" target="componentDialog"
-:::
-::: menu-item label="Show drawer" shortcut="⇧D" action="show" target="componentDrawer"
-:::
-::: menu-separator
-:::
-::: menu-item label="Close dialog" shortcut="Esc" action="close" target="componentDialog"
-:::
+:: menu-item label="Open dialog" shortcut="↵" action="open" target="componentDialog"
+:: menu-item label="Show drawer" shortcut="⇧D" action="show" target="componentDrawer"
+:: menu-separator
+:: menu-item label="Close dialog" shortcut="Esc" action="close" target="componentDialog"
 :::
 :::
 
 ::: menubar label="Editor menu"
 ::: dropdown label="File"
 ::: menu label="File"
-::: menu-item label="Open" shortcut="⌘O" action="open" target="componentDialog"
-:::
-::: menu-item label="Close" shortcut="⌘W" action="close" target="componentDialog"
-:::
+:: menu-item label="Open" shortcut="⌘O" action="open" target="componentDialog"
+:: menu-item label="Close" shortcut="⌘W" action="close" target="componentDialog"
 :::
 :::
 ::: dropdown label="View"
 ::: menu label="View"
-::: menu-item label="Toggle details" shortcut="⌘D" action="toggle" target="componentDetails"
-:::
-::: menu-item label="Show drawer" shortcut="⌘B" action="show" target="componentDrawer"
-:::
+:: menu-item label="Toggle details" shortcut="⌘D" action="toggle" target="componentDetails"
+:: menu-item label="Show drawer" shortcut="⌘B" action="show" target="componentDrawer"
 :::
 :::
 :::
@@ -410,8 +366,7 @@ Popover content is native and readable. Placement can be enhanced without changi
 Short contextual help that appears on hover or focus.
 :::
 
-::: calendar label="Plan a review window" mode="range" name="reviewWindow" value="2026-08-18..2026-08-22" month="2026-08" weekstart=1
-:::
+:: calendar label="Plan a review window" mode="range" name="reviewWindow" value="2026-08-18..2026-08-22" month="2026-08" weekstart=1
 
 ::: dialog componentDialog
 ## Dialog component

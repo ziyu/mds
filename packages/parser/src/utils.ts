@@ -59,6 +59,7 @@ export function updateFence(activeFence: string | undefined, line: string): stri
 export function unescapeSpecialSyntax(value: string): string {
   return value
     .replaceAll("\\:::", ":::")
+    .replaceAll("\\::", "::")
     .replaceAll("\\[", "[")
     .replaceAll("\\!", "!")
     .replaceAll("\\@state", "@state")

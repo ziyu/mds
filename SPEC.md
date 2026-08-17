@@ -154,9 +154,15 @@ console.log("hello mds")
 
 # 4. 语义块 Block
 
-MDS 最重要的扩展是语义块。
+MDS 最重要的扩展是语义块。语义块分成叶子块和容器块，两种写法生成同一个 Block AST。
 
-基本格式：
+没有 Markdown、slot 或子 Block 的叶子块使用双冒号，不需要关闭标记：
+
+```mds
+:: button label="Create" type=submit
+```
+
+包含内容的容器块使用三冒号，并显式关闭：
 
 ```mds
 ::: 类型
@@ -176,7 +182,7 @@ MDS 最重要的扩展是语义块。
 :::
 ```
 
-块的基本语法有三种：
+容器块的基本语法有三种：
 
 ```mds
 ::: 类型
@@ -213,6 +219,21 @@ MDS 最重要的扩展是语义块。
 这里的 `faq` 是块名称，也就是稳定引用用的 block id。
 它不是属性。
 
+叶子块与容器块共享相同的类型、名称和属性规则：
+
+```mds
+:: button primary label="Create" disabled
+```
+
+```txt
+type: button
+name: primary
+attrs: { label: "Create", disabled: true }
+children: []
+```
+
+`if`、`unless`、`each` 和 `data` 必须使用容器语法，因为它们的含义依赖嵌套内容。
+
 属性由主题解释：
 
 ```mds
@@ -234,6 +255,8 @@ attrs: { motion: "fade-up", tone: "dark" }
 # 5. 块名称、显示标题与属性规则
 
 ```txt
+:: button label="Create"
+:: slider label="Volume" min=0 max=100 value=50
 ::: hero
 ::: card
 ::: warning
@@ -247,6 +270,8 @@ attrs: { motion: "fade-up", tone: "dark" }
 
 | 写法                 | 含义                    |
 | ------------------ | --------------------- |
+| `:: button label="Create"` | 一个没有子内容的 button 叶子块 |
+| `:: slider label="Volume"` | 一个没有子内容的 slider 叶子块 |
 | `::: hero`         | 一个 hero 块             |
 | `::: card`         | 一个 card 块             |
 | `::: details faq`  | 一个 id 为 `faq` 的 details 块 |
@@ -262,6 +287,8 @@ attrs: { motion: "fade-up", tone: "dark" }
 块名称只能是一个简单 token，不包含空格。
 属性可选。
 属性支持 key=value、key="value"、key='value'、boolean flag。
+双冒号只用于没有 children 和 slots 的叶子块。
+三冒号用于包含 Markdown、slots 或子 Block 的容器块。
 不使用花括号属性。
 不允许事件处理器属性表达业务逻辑。
 ```
@@ -305,15 +332,13 @@ Product Intro! -> #product-intro
 推荐：
 
 ```mds
-::: warning
-:::
+:: warning
 ```
 
 高级用法：
 
 ```mds
-::: card variant="warning" motion="fade-up"
-:::
+:: card variant="warning" motion="fade-up"
 ```
 
 推荐优先使用语义 block；只有当主题明确暴露组件属性时，再使用 attrs。
@@ -516,14 +541,11 @@ Product Intro! -> #product-intro
 如果需要不同列数，推荐使用固定块类型：
 
 ```mds
-::: grid-2
-:::
+:: grid-2
 
-::: grid-3
-:::
+:: grid-3
 
-::: grid-auto
-:::
+:: grid-auto
 ```
 
 这比下面这种更符合 MDS 的简洁性：
@@ -1247,8 +1269,7 @@ MDS 可以有极简状态，但不要变成编程语言。
 然后组件可以引用：
 
 ```mds
-::: comparison products
-:::
+:: comparison products
 ```
 
 这个意思是：
@@ -1260,8 +1281,7 @@ MDS 可以有极简状态，但不要变成编程语言。
 注意：
 
 ```mds
-::: comparison products
-:::
+:: comparison products
 ```
 
 这里 `products` 是数据名称，不是属性。

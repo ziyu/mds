@@ -10,6 +10,7 @@ Use this guide when generating MDS from a prompt or converting Markdown into MDS
 4. Prefer common blocks from the shared vocabulary.
 5. Use attributes only for compact, theme-defined options.
 6. Do not write HTML, JSX, JavaScript, event handlers, or CSS classes in MDS.
+7. Use `:: block ...` for a leaf block with no content; use `::: block ... :::` only when the block owns Markdown, slots, or child blocks.
 
 ## Safe Defaults
 
@@ -119,8 +120,7 @@ Most documents have been converted.
 Avoid attributes for long content:
 
 ```mds
-::: card title="A long human heading that should be Markdown"
-:::
+:: card title="A long human heading that should be Markdown"
 ```
 
 Prefer:

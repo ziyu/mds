@@ -20,6 +20,7 @@ import {
   formFieldPattern,
   identifierPattern,
   listDeclarationPattern,
+  leafBlockPattern,
   mediaDirectivePattern,
   multilineCommentPattern,
   singleLineCommentPattern,
@@ -173,6 +174,14 @@ function parseLines(
         continue;
       }
 
+      if (leafBlockPattern.test(line)) {
+        flushMarkdown(index);
+        children.push(parseLeafBlock(line, index, baseLine, context));
+        index += 1;
+        markdownStart = index;
+        continue;
+      }
+
       const special = parseSpecialLine(lines, index, baseLine, context);
       if (special !== undefined) {
         flushMarkdown(index);
@@ -202,6 +211,67 @@ function parseLines(
   return {
     children,
     nextIndex: index
+  };
+}
+
+function parseLeafBlock(
+  line: string,
+  startIndex: number,
+  baseLine: number,
+  context: ParseContext
+): MdsNode {
+  const header = line.match(leafBlockPattern)?.[1]?.trim() ?? "";
+  const parsedHeader = parseBlockHeader(header, startIndex, baseLine, context);
+  const { blockType, name, attrs } = parsedHeader;
+  const position = lineRange(baseLine + startIndex, baseLine + startIndex + 1);
+
+  validateBlockHeader(parsedHeader, startIndex, baseLine, context);
+
+  if (["if", "unless", "each", "data"].includes(blockType)) {
+    context.diagnostics.push({
+      code: "leaf-block-requires-container",
+      message: `${blockType} blocks require ::: container syntax because they own nested content.`,
+      severity: "error",
+      position
+    });
+  }
+
+  if (blockType === "if" || blockType === "unless") {
+    return {
+      type: "conditionBlock",
+      condition: blockType,
+      name: name ?? "",
+      children: [],
+      position
+    };
+  }
+
+  if (blockType === "each") {
+    return {
+      type: "eachBlock",
+      listName: name ?? "",
+      children: [],
+      position
+    };
+  }
+
+  if (blockType === "data") {
+    return {
+      type: "dataBlock",
+      name: name ?? "",
+      value: "",
+      children: [],
+      position
+    };
+  }
+
+  return {
+    type: "block",
+    blockType,
+    children: [],
+    position,
+    ...(name === undefined ? {} : { name }),
+    ...(Object.keys(attrs).length === 0 ? {} : { attrs })
   };
 }
 

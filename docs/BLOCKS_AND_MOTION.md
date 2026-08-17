@@ -32,6 +32,26 @@ type BlockNode = {
 };
 ```
 
+MDS has two authoring forms that compile to this same node shape:
+
+```mds
+:: button label="Create" type=submit
+```
+
+Use `::` for a leaf block with no Markdown content, slots, or child blocks. It is complete on one line and does not take a closing fence.
+
+```mds
+::: card featured
+## Card title
+
+Card content.
+:::
+```
+
+Use `:::` for a container block. Containers can own Markdown, named slots, and nested blocks, so they keep an explicit closing `:::` fence. Structural blocks such as `if`, `unless`, `each`, and `data` always require container syntax.
+
+Both forms preserve the existing block, action, motion, renderer, and theme contracts. Existing `::: ... :::` documents remain valid, including empty containers; formatters may shorten empty containers to `::`.
+
 Examples:
 
 ```mds
@@ -132,6 +152,7 @@ Quoted names would collide with attribute parsing and make action targets less p
 Supported forms:
 
 ```mds
+:: button label="Save" disabled
 ::: card variant=featured
 ::: card variant="featured"
 ::: card variant='featured'
