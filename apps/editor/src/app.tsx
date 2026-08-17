@@ -4,6 +4,13 @@ import { renderHtmlResult, type HtmlTheme } from "@mds-crate/renderer-html";
 import { ThemeValidationError, type ThemeSummary } from "@mds-crate/theme-loader/browser";
 import { DiagnosticsPane } from "./diagnostics-pane.js";
 import {
+  editorDocumentLabel,
+  editorDocumentRef,
+  parseEditorDocumentRef,
+  serializeEditorDocumentRef,
+  type EditorDocument
+} from "./editor-document.js";
+import {
   splitRenderDiagnostics,
   withDiagnosticsSource,
   type EditorDiagnostic
@@ -11,6 +18,7 @@ import {
 import { EditorPane, type EditorPaneHandle } from "./editor-pane.js";
 import { examples } from "./examples.js";
 import { PreviewPane, type PreviewSize } from "./preview-pane.js";
+import { PreviewToolbar } from "./preview-toolbar.js";
 import {
   themeDiagnosticToDiagnostic,
   themeErrorToDiagnostic,
@@ -20,10 +28,6 @@ import {
 import {
   createThemeBuildSummary,
   createThemeInspectionSummary,
-  formatThemeBuildOutput,
-  formatThemeBuildSummary,
-  formatThemeInspectionOutput,
-  formatThemeInspectionSummary,
   type ThemeBuildSummary,
   type ThemeInspectionSummary
 } from "./theme-build-status.js";
@@ -46,6 +50,13 @@ import {
   type EditorFileRecord,
   type EditorSessionPayload
 } from "./editor-session.js";
+import {
+  createLocalDraft,
+  openLocalDocument,
+  saveLocalDocument,
+  type LocalEditorDocument
+} from "./local-document.js";
+import { WorkspaceHeader } from "./workspace-header.js";
 
 const initialExample = examples[0]!;
 
@@ -65,7 +76,7 @@ interface ThemeInspectionProgress {
 
 export function App() {
   const [source, setSource] = useState(initialExample.source);
-  const [exampleId, setExampleId] = useState(initialExample.id);
+  const [activeDocument, setActiveDocument] = useState<EditorDocument>({ kind: "example", example: initialExample });
   const [previewSize, setPreviewSize] = useState<PreviewSize>("desktop");
   const [themes, setThemes] = useState<ThemeSummary[]>([]);
   const [previewThemeRef, setPreviewThemeRef] = useState("default");
@@ -79,16 +90,19 @@ export function App() {
   const [themeInspectionSummary, setThemeInspectionSummary] = useState<ThemeInspectionSummary | undefined>();
   const [previewNotice, setPreviewNotice] = useState<string | undefined>();
   const [editorSession, setEditorSession] = useState<EditorSessionPayload | null>(null);
-  const [activeFile, setActiveFile] = useState<EditorFileRecord | null>(null);
-  const [savedSource, setSavedSource] = useState(initialExample.source);
+  const [baselineSource, setBaselineSource] = useState(initialExample.source);
   const [fileOperation, setFileOperation] = useState<"idle" | "opening" | "saving" | "creating">("idle");
   const [fileError, setFileError] = useState<string | undefined>();
   const [fileConflict, setFileConflict] = useState<EditorFileRecord | null | undefined>();
   const [newFilePath, setNewFilePath] = useState("");
   const [showCreateFile, setShowCreateFile] = useState(false);
+  const [localDocuments, setLocalDocuments] = useState<LocalEditorDocument[]>([]);
 
-  const documentMode = editorSession?.mode === "document";
-  const isDirty = documentMode && activeFile !== null && source !== savedSource;
+  const hasProjectSession = editorSession?.mode === "document";
+  const activeFile = activeDocument.kind === "file" ? activeDocument.file : null;
+  const activeLocalDocument = activeDocument.kind === "local" ? activeDocument.document : null;
+  const isDirty = source !== baselineSource;
+  const hasPendingChanges = isDirty || (activeLocalDocument !== null && !activeLocalDocument.persisted);
   const [isPreviewFullscreen, setIsPreviewFullscreen] = useState(false);
   const editorPaneRef = useRef<EditorPaneHandle | null>(null);
 
@@ -114,13 +128,14 @@ export function App() {
           return;
         }
         setEditorSession(session);
-        setActiveFile(session.activeFile);
         if (session.activeFile !== null) {
+          setActiveDocument({ kind: "file", file: session.activeFile });
           setSource(session.activeFile.content);
-          setSavedSource(session.activeFile.content);
+          setBaselineSource(session.activeFile.content);
         } else {
-          setSource("");
-          setSavedSource("");
+          setActiveDocument({ kind: "example", example: initialExample });
+          setSource(initialExample.source);
+          setBaselineSource(initialExample.source);
         }
       })
       .catch((error: unknown) => {
@@ -135,7 +150,7 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (!isDirty) {
+    if (!hasPendingChanges) {
       return;
     }
     const warnBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -144,7 +159,7 @@ export function App() {
     };
     window.addEventListener("beforeunload", warnBeforeUnload);
     return () => window.removeEventListener("beforeunload", warnBeforeUnload);
-  }, [isDirty]);
+  }, [hasPendingChanges]);
 
   useEffect(() => {
     let cancelled = false;
@@ -306,12 +321,26 @@ export function App() {
     }
   }, [document, theme, themeDiagnostics, themeError]);
 
-  const selectedExample = examples.find((example) => example.id === exampleId) ?? initialExample;
+  const activeDocumentValue = serializeEditorDocumentRef(editorDocumentRef(activeDocument));
+  const activeDocumentLabel = editorDocumentLabel(activeDocument);
+
+  const applyExample = useCallback((nextId: string) => {
+    const nextExample = examples.find((example) => example.id === nextId);
+    if (nextExample === undefined) {
+      return;
+    }
+    setActiveDocument({ kind: "example", example: nextExample });
+    setSource(nextExample.source);
+    setBaselineSource(nextExample.source);
+    setFileConflict(undefined);
+    setFileError(undefined);
+    setEditorSession((session) => session === null ? null : { ...session, activeFile: null });
+  }, []);
 
   const applyOpenedFile = useCallback((file: EditorFileRecord, files?: string[]) => {
-    setActiveFile(file);
+    setActiveDocument({ kind: "file", file });
     setSource(file.content);
-    setSavedSource(file.content);
+    setBaselineSource(file.content);
     setFileConflict(undefined);
     setFileError(undefined);
     setEditorSession((session) => session === null ? null : {
@@ -321,11 +350,17 @@ export function App() {
     });
   }, []);
 
+  const applyLocalDocument = useCallback((document: LocalEditorDocument) => {
+    setActiveDocument({ kind: "local", document });
+    setSource(document.content);
+    setBaselineSource(document.content);
+    setFileConflict(undefined);
+    setFileError(undefined);
+    setEditorSession((session) => session === null ? null : { ...session, activeFile: null });
+  }, []);
+
   const handleFileChange = useCallback(async (path: string) => {
     if (activeFile?.path === path) {
-      return;
-    }
-    if (isDirty && !window.confirm("Discard unsaved changes and open another file?")) {
       return;
     }
 
@@ -338,7 +373,29 @@ export function App() {
     } finally {
       setFileOperation("idle");
     }
-  }, [activeFile?.path, applyOpenedFile, isDirty]);
+  }, [activeFile?.path, applyOpenedFile]);
+
+  const handleDocumentChange = useCallback(async (value: string) => {
+    const nextDocument = parseEditorDocumentRef(value);
+    if (nextDocument === undefined || value === activeDocumentValue) {
+      return;
+    }
+    if (hasPendingChanges && !window.confirm("Leave the current unsaved document and open another one?")) {
+      return;
+    }
+    if (nextDocument.kind === "example") {
+      applyExample(nextDocument.id);
+      return;
+    }
+    if (nextDocument.kind === "file") {
+      await handleFileChange(nextDocument.path);
+      return;
+    }
+    const localDocument = localDocuments.find((document) => document.id === nextDocument.id);
+    if (localDocument !== undefined) {
+      applyLocalDocument(localDocument);
+    }
+  }, [activeDocumentValue, applyExample, applyLocalDocument, handleFileChange, hasPendingChanges, localDocuments]);
 
   const handleSaveFile = useCallback(async (overwrite = false) => {
     if (activeFile === null) {
@@ -379,7 +436,7 @@ export function App() {
     if (path.length === 0) {
       return;
     }
-    if (isDirty && !window.confirm("Discard unsaved changes and create a new file?")) {
+    if (hasPendingChanges && !window.confirm("Leave the current unsaved document and create a new project file?")) {
       return;
     }
 
@@ -396,31 +453,97 @@ export function App() {
     } finally {
       setFileOperation("idle");
     }
-  }, [applyOpenedFile, isDirty, newFilePath]);
+  }, [applyOpenedFile, hasPendingChanges, newFilePath]);
+
+  const handleNewDocument = useCallback(() => {
+    if (hasProjectSession) {
+      setShowCreateFile((visible) => !visible);
+      return;
+    }
+    if (hasPendingChanges && !window.confirm("Leave the current unsaved document and create a new draft?")) {
+      return;
+    }
+
+    const draft = createLocalDraft(localDocuments.map((document) => document.name));
+    setLocalDocuments((documents) => [...documents, draft]);
+    applyLocalDocument(draft);
+    setPreviewNotice(`Created local draft: ${draft.name}`);
+  }, [applyLocalDocument, hasPendingChanges, hasProjectSession, localDocuments]);
+
+  const handleOpenLocalDocument = useCallback(async () => {
+    if (hasPendingChanges && !window.confirm("Leave the current unsaved document and open a local file?")) {
+      return;
+    }
+
+    setFileOperation("opening");
+    setFileError(undefined);
+    try {
+      const document = await openLocalDocument();
+      if (document === undefined) {
+        return;
+      }
+      setLocalDocuments((documents) => [...documents, document]);
+      applyLocalDocument(document);
+      setPreviewNotice(`Opened local file: ${document.name}`);
+    } catch (error) {
+      setFileError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setFileOperation("idle");
+    }
+  }, [applyLocalDocument, hasPendingChanges]);
+
+  const handleSaveLocalDocument = useCallback(async () => {
+    if (activeLocalDocument === null) {
+      return;
+    }
+
+    setFileOperation("saving");
+    setFileError(undefined);
+    try {
+      const result = await saveLocalDocument(activeLocalDocument, source);
+      if (result === undefined) {
+        return;
+      }
+      setLocalDocuments((documents) => documents.map((document) => (
+        document.id === result.document.id ? result.document : document
+      )));
+      setActiveDocument({ kind: "local", document: result.document });
+      setBaselineSource(source);
+      setPreviewNotice(
+        result.method === "download"
+          ? `Downloaded ${result.document.name}`
+          : `Saved ${result.document.name}`
+      );
+    } catch (error) {
+      setFileError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setFileOperation("idle");
+    }
+  }, [activeLocalDocument, source]);
+
+  const handleSaveDocument = useCallback(async () => {
+    if (activeDocument.kind === "file") {
+      await handleSaveFile();
+      return;
+    }
+    if (activeDocument.kind === "local") {
+      await handleSaveLocalDocument();
+    }
+  }, [activeDocument.kind, handleSaveFile, handleSaveLocalDocument]);
 
   useEffect(() => {
-    if (!documentMode) {
+    if (activeDocument.kind === "example") {
       return;
     }
     const saveShortcut = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
         event.preventDefault();
-        void handleSaveFile();
+        void handleSaveDocument();
       }
     };
     window.addEventListener("keydown", saveShortcut);
     return () => window.removeEventListener("keydown", saveShortcut);
-  }, [documentMode, handleSaveFile]);
-
-  const handleExampleChange = useCallback((nextId: string) => {
-    const nextExample = examples.find((example) => example.id === nextId);
-    if (nextExample === undefined) {
-      return;
-    }
-
-    setExampleId(nextExample.id);
-    setSource(nextExample.source);
-  }, []);
+  }, [activeDocument.kind, handleSaveDocument]);
 
   const handleThemeChange = useCallback((nextThemeRef: string) => {
     setPreviewThemeRef(nextThemeRef);
@@ -482,11 +605,15 @@ export function App() {
   const handleDownloadHtml = useCallback(() => {
     const blob = new Blob([renderState.html], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const filename = activeFile === null ? `${selectedExample.id}.html` : `${activeFile.path.replace(/\.mds$/i, "")}.html`;
+    const filename = activeDocument.kind === "example"
+      ? `${activeDocument.example.id}.html`
+      : activeDocument.kind === "file"
+        ? `${activeDocument.file.path.replace(/\.mds$/i, "")}.html`
+        : `${activeDocument.document.name.replace(/\.mds$/i, "")}.html`;
     const link = documentCreateDownloadLink(url, filename);
     link.click();
     URL.revokeObjectURL(url);
-  }, [activeFile, renderState.html, selectedExample.id]);
+  }, [activeDocument, renderState.html]);
 
   const handleFoldAllMds = useCallback(() => {
     editorPaneRef.current?.foldAllMds();
@@ -502,133 +629,40 @@ export function App() {
 
   return (
     <main className="app-shell">
-      <header className="topbar">
-        <div className="brand">
-          <span>MDS</span>
-          <strong>Editor</strong>
-        </div>
-        {documentMode ? (
-          <>
-            <label className="toolbar-field file-picker" title={editorSession.projectRoot}>
-              <span>File</span>
-              <select
-                value={activeFile?.path ?? ""}
-                onChange={(event) => void handleFileChange(event.target.value)}
-                disabled={fileOperation !== "idle" || editorSession.files.length === 0}
-              >
-                {editorSession.files.length === 0 ? <option value="">No .mds files</option> : null}
-                {editorSession.files.map((path) => <option key={path} value={path}>{path}</option>)}
-              </select>
-            </label>
-            <span className={`file-state ${isDirty ? "file-state-dirty" : ""}`}>
-              {fileOperation === "opening" ? "Opening" : isDirty ? "Unsaved" : "Saved"}
-            </span>
-            <button type="button" onClick={() => setShowCreateFile((visible) => !visible)}>
-              New file
-            </button>
-          </>
-        ) : (
-          <label className="toolbar-field">
-            <span>Example</span>
-            <select value={exampleId} onChange={(event) => handleExampleChange(event.target.value)}>
-              {examples.map((example) => (
-                <option key={example.id} value={example.id}>
-                  {example.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        <div className="toolbar-field theme-toolbar-field">
-          <label className="theme-select-field">
-            <span>Theme</span>
-            <select value={previewThemeRef} onChange={(event) => handleThemeChange(event.target.value)}>
-              {themeOptions(themes, previewThemeRef).map((availableTheme) => (
-                <option key={availableTheme.name} value={availableTheme.name}>
-                  {availableTheme.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          {!documentMode || editorSession?.themeDevelopment === true ? (
-            <details className="theme-toolbelt">
-              <summary
-                className="theme-toolbelt-summary"
-                title={
-                  frontmatterThemeRef === undefined
-                    ? `Using selected theme "${effectiveThemeRef}"`
-                    : `Using frontmatter theme "${effectiveThemeRef}"`
-                }
-              >
-                Theme tools
-              </summary>
-              <div className="theme-toolbelt-body">
-                <div className="theme-toolbelt-actions">
-                  <button
-                    type="button"
-                    onClick={handleBuildTheme}
-                    disabled={!canBuildEffectiveTheme || isBuildingEffectiveTheme}
-                    title={canBuildEffectiveTheme ? "Build this package theme" : "This theme is a static artifact and does not need build"}
-                  >
-                    {isBuildingEffectiveTheme ? "Building..." : "Build"}
-                  </button>
-                  <button type="button" onClick={handleInspectTheme} disabled={isInspectingEffectiveTheme}>
-                    {isInspectingEffectiveTheme ? "Inspecting..." : "Inspect"}
-                  </button>
-                </div>
-                {themeBuildSummary?.ref === effectiveThemeRef ? (
-                  <div className="theme-build-status" role="status">
-                    <strong>Last build</strong>
-                    <span>{formatThemeBuildSummary(themeBuildSummary)}</span>
-                    <code>{formatThemeBuildOutput(themeBuildSummary)}</code>
-                  </div>
-                ) : null}
-                {themeInspectionSummary?.ref === effectiveThemeRef ? (
-                  <div className="theme-build-status" role="status">
-                    <strong>Last inspect</strong>
-                    <span>{formatThemeInspectionSummary(themeInspectionSummary)}</span>
-                    <code>{formatThemeInspectionOutput(themeInspectionSummary)}</code>
-                  </div>
-                ) : null}
-              </div>
-            </details>
-          ) : null}
-        </div>
-        <div className="segmented" role="group" aria-label="Preview size">
-          {(["desktop", "tablet", "mobile"] satisfies PreviewSize[]).map((size) => (
-            <button
-              key={size}
-              type="button"
-              className={previewSize === size ? "active" : ""}
-              onClick={() => setPreviewSize(size)}
-            >
-              {size}
-            </button>
-          ))}
-        </div>
-        <div className="toolbar-actions">
-          {documentMode ? (
-            <button
-              type="button"
-              className="primary-action"
-              onClick={() => void handleSaveFile()}
-              disabled={!isDirty || fileOperation !== "idle"}
-              title="Save (Cmd/Ctrl+S)"
-            >
-              {fileOperation === "saving" ? "Saving..." : "Save"}
-            </button>
-          ) : null}
-          <button type="button" onClick={handleCopyHtml}>
-            Copy HTML
-          </button>
-          <button type="button" onClick={handleDownloadHtml}>
-            Download
-          </button>
-        </div>
-      </header>
+      <WorkspaceHeader
+        activeDocumentValue={activeDocumentValue}
+        activeKind={activeDocument.kind}
+        activeLabel={activeDocumentLabel}
+        busyLabel={
+          fileOperation === "opening"
+            ? "Opening"
+            : fileOperation === "saving"
+              ? "Saving"
+              : fileOperation === "creating"
+                ? "Creating"
+                : undefined
+        }
+        canSaveDocument={
+          activeDocument.kind !== "example" &&
+          hasPendingChanges &&
+          fileOperation === "idle"
+        }
+        examples={examples}
+        files={editorSession?.files ?? []}
+        isDirty={hasPendingChanges}
+        localDocuments={localDocuments}
+        projectRoot={editorSession?.projectRoot}
+        onCopyHtml={() => void handleCopyHtml()}
+        onNewDocument={handleNewDocument}
+        onOpenDocument={() => void handleOpenLocalDocument()}
+        onDocumentChange={(value) => void handleDocumentChange(value)}
+        onDownloadHtml={handleDownloadHtml}
+        onResetExample={() => setSource(baselineSource)}
+        onSaveDocument={() => void handleSaveDocument()}
+      />
 
       <div className="status-stack">
-        {documentMode && showCreateFile ? (
+        {hasProjectSession && showCreateFile ? (
           <form className="create-file-bar" onSubmit={(event) => { event.preventDefault(); void handleCreateFile(); }}>
             <strong>New document</strong>
             <input
@@ -663,9 +697,10 @@ export function App() {
 
       <section className="workspace">
         <div className="panel editor-panel">
-          <div className="panel-title">
-            <span className="panel-title-copy">
-              <span>{activeFile?.path ?? "Source"}</span>
+          <div className="panel-title editor-panel-title">
+            <span className="panel-heading">
+              <small>Write</small>
+              <strong>{activeDocumentLabel}</strong>
               <code>{source.length.toLocaleString()} chars</code>
             </span>
             <span className="panel-title-actions">
@@ -680,14 +715,31 @@ export function App() {
           <EditorPane ref={editorPaneRef} value={source} onChange={setSource} />
         </div>
         <div className={isPreviewFullscreen ? "panel preview-panel preview-panel-fullscreen" : "panel preview-panel"}>
-          <div className="panel-title">
-            <span>Preview</span>
-            <span className="panel-title-actions">
-              <code>{previewSize} / {effectiveThemeRef}</code>
-              <button type="button" onClick={handleTogglePreviewFullscreen}>
-                {isPreviewFullscreen ? "Exit fullscreen" : "Fullscreen"}
-              </button>
+          <div className="panel-title preview-panel-title">
+            <span className="panel-heading">
+              <small>Render</small>
+              <strong>Preview</strong>
+              <code>{effectiveThemeRef}</code>
             </span>
+            <PreviewToolbar
+              allowThemeTools={!hasProjectSession || editorSession?.themeDevelopment === true}
+              canBuildTheme={canBuildEffectiveTheme}
+              effectiveThemeRef={effectiveThemeRef}
+              frontmatterThemeRef={frontmatterThemeRef}
+              isBuildingTheme={isBuildingEffectiveTheme}
+              isFullscreen={isPreviewFullscreen}
+              isInspectingTheme={isInspectingEffectiveTheme}
+              onBuildTheme={() => void handleBuildTheme()}
+              onInspectTheme={() => void handleInspectTheme()}
+              onPreviewSizeChange={setPreviewSize}
+              onThemeChange={handleThemeChange}
+              onToggleFullscreen={handleTogglePreviewFullscreen}
+              previewSize={previewSize}
+              previewThemeRef={previewThemeRef}
+              themeBuildSummary={themeBuildSummary}
+              themeInspectionSummary={themeInspectionSummary}
+              themes={themes}
+            />
           </div>
           {previewNotice === undefined ? null : (
             <div className="preview-toast" role="status">
@@ -701,20 +753,6 @@ export function App() {
       <DiagnosticsPane diagnostics={renderState.diagnostics} />
     </main>
   );
-}
-
-function themeOptions(themes: ThemeSummary[], themeRef: string): ThemeSummary[] {
-  if (themes.some((theme) => theme.name === themeRef)) {
-    return themes;
-  }
-
-  return [
-    {
-      name: themeRef,
-      label: themeRef
-    },
-    ...themes
-  ];
 }
 
 function isPreviewNavigationMessage(value: unknown): value is { type: "mds-preview-navigation"; href: string } {

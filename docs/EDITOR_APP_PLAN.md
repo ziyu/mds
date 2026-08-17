@@ -142,7 +142,7 @@ Use a dense two-pane app, not a promotional landing page:
 
 ```txt
 ┌─────────────────────────────────────────────────────────┐
-│ Top bar: example selector | theme selector | copy/export │
+│ Workbench: document selector | state | document/export   │
 ├──────────────────────────────┬──────────────────────────┤
 │ Editor                       │ Preview iframe           │
 │ CodeMirror                   │ rendered standalone HTML │
@@ -153,11 +153,11 @@ Use a dense two-pane app, not a promotional landing page:
 
 Core controls:
 
-- Example selector: Basic, Landing, Forms, Components.
-- Preview mode: Desktop, Tablet, Mobile.
-- Toggle: show diagnostics panel.
-- Button: copy generated HTML.
-- Button: download generated HTML.
+- Unified Document selector: project files, browser-opened local documents, local drafts, and built-in examples use one editor lifecycle.
+- Always-visible New and Open entry points, with contextual Save for writable documents and Reset for edited examples.
+- Render-panel theme and preview-size controls: Desktop, Tablet, Mobile.
+- Diagnostics panel.
+- Copy and export generated HTML.
 
 Theme build and inspect are not document-level controls. Keep them in the preview panel's theme toolbelt because they operate on the effective theme that produces the iframe output. See [EDITOR_WORKFLOW.md](./EDITOR_WORKFLOW.md) for the current editor surface rules.
 

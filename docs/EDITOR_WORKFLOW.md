@@ -4,12 +4,20 @@ The editor is a working authoring surface for `.mds` documents. It should keep f
 
 ## Surface Layout
 
-The top bar is for document-level controls:
+The Editor uses one workspace shell for project files, browser-opened local documents, local drafts, and built-in examples. Examples are not a separate preview mode: they are editable document sources with a reset baseline, while writable documents add save behavior to the same authoring surface.
 
-- Example selection.
-- Theme selection.
-- Preview size.
-- Copy and download for the generated standalone HTML.
+The workbench header is for document-level controls:
+
+- A single Document selector, grouped into project files, local documents, and examples as those sources become available.
+- A source badge (`Project file`, `Local document`, or `Built-in example`) and one shared modified-state indicator.
+- Always-visible `New` and `Open…` entry points. In a CLI project session, `New` creates a jailed project file; in the standalone app it creates a local draft. `Open…` uses the browser file picker in either session.
+- Contextual Save for project and local files, plus Reset for edited examples. Browsers without writable file handles fall back to downloading the `.mds` source.
+- Copy and export for the generated standalone HTML.
+
+The two workspace panels own their local controls:
+
+- Write owns source identity, character count, and MDS folding.
+- Render owns theme selection, theme tools, viewport size, and fullscreen preview.
 
 Theme build and inspect are intentionally not top-level actions. They are theme maintenance actions, so they live in the preview panel's theme toolbelt. This keeps them near the rendered result, makes it clear which theme will be built or inspected, and avoids mixing low-frequency development tasks with regular authoring controls.
 
@@ -32,7 +40,7 @@ theme: clarity
 ---
 ```
 
-the toolbelt operates on `clarity`, even if the top bar selector still points at another theme.
+the toolbelt operates on `clarity`, even if the Render-panel selector still points at another theme.
 
 ## MDS Editing Feedback
 

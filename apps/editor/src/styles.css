@@ -1,17 +1,20 @@
 :root {
   color-scheme: light;
-  --bg: #ece7dd;
-  --panel: #fbfaf7;
-  --panel-strong: #ffffff;
-  --line: #d4cec2;
-  --line-strong: #a99f91;
-  --text: #171512;
-  --muted: #686157;
-  --accent: #245c99;
-  --accent-strong: #123d6a;
-  --danger: #b42318;
-  --warning: #a86100;
-  --success: #047857;
+  --bg: #e7e1d6;
+  --panel: #f7f4ed;
+  --panel-strong: #fffdf8;
+  --paper: #fffefb;
+  --line: #d0c8bb;
+  --line-strong: #9b9081;
+  --text: #1d1b17;
+  --muted: #6b6359;
+  --accent: #1f547f;
+  --accent-strong: #123b60;
+  --accent-soft: #dce8f1;
+  --mark: #a94b2d;
+  --danger: #a6372d;
+  --warning: #9a5b0b;
+  --success: #24664d;
   --editor-selection: rgb(36 92 153 / 22%);
   --editor-selection-strong: rgb(36 92 153 / 30%);
   --editor-selection-muted: rgb(36 92 153 / 16%);
@@ -32,7 +35,9 @@ body,
 
 body {
   margin: 0;
-  background: var(--bg);
+  background:
+    radial-gradient(circle at 18% -20%, rgb(255 255 255 / 72%), transparent 32rem),
+    var(--bg);
   color: var(--text);
 }
 
@@ -69,19 +74,27 @@ input {
 }
 
 button {
-  min-height: 2.1rem;
+  min-height: 2rem;
   border: 1px solid var(--line-strong);
-  border-radius: 7px;
+  border-radius: 6px;
   background: var(--panel-strong);
   color: var(--text);
   cursor: pointer;
-  padding: 0.35rem 0.65rem;
+  padding: 0.32rem 0.68rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: border-color 140ms ease, background 140ms ease, color 140ms ease, translate 140ms ease;
   white-space: nowrap;
 }
 
 button:hover {
   border-color: var(--accent);
+  background: var(--accent-soft);
   color: var(--accent-strong);
+}
+
+button:active {
+  translate: 0 1px;
 }
 
 button:disabled {
@@ -107,9 +120,9 @@ button:disabled {
 }
 
 select {
-  min-height: 2.1rem;
+  min-height: 2rem;
   border: 1px solid var(--line-strong);
-  border-radius: 7px;
+  border-radius: 6px;
   background: var(--panel-strong);
   color: var(--text);
   padding: 0.25rem 1.8rem 0.25rem 0.55rem;
@@ -121,43 +134,97 @@ select {
   height: 100%;
 }
 
-.topbar {
+.workbench-header {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  min-height: 3.5rem;
+  gap: 0.7rem;
+  min-height: 4.45rem;
   border-bottom: 1px solid var(--line);
-  background: var(--panel);
-  padding: 0.55rem 0.75rem;
-  box-shadow: 0 1px 0 rgb(23 21 18 / 4%);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--panel), white 40%), var(--panel));
+  padding: 0.65rem 0.8rem;
+  box-shadow: 0 1px 0 rgb(23 21 18 / 5%), 0 8px 24px rgb(62 51 37 / 5%);
 }
 
 .brand {
   display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 9.25rem;
+}
+
+.brand-mark {
+  display: grid;
+  min-width: 3rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: white;
+  font: 850 0.78rem/1 "Avenir Next", "Gill Sans", sans-serif;
+  letter-spacing: 0.08em;
+}
+
+.brand-copy {
+  display: grid;
+  line-height: 1.05;
+}
+
+.brand-copy strong {
+  font-size: 0.95rem;
+}
+
+.brand-copy small {
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-size: 0.64rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.document-switcher {
+  display: grid;
+  flex: 0 1 22rem;
+  gap: 0.2rem;
+  min-width: 12rem;
+}
+
+.control-kicker,
+.panel-heading small {
+  color: var(--mark);
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.document-switcher select {
+  width: 100%;
+  min-height: 2.15rem;
+  font-weight: 700;
+}
+
+.document-identity {
+  display: grid;
+  gap: 0.15rem;
+  width: min(15vw, 12rem);
   min-width: 7rem;
 }
 
-.brand span {
-  color: var(--accent);
-  font-weight: 800;
+.document-identity strong {
+  overflow: hidden;
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.brand strong {
-  font-size: 0.92rem;
-}
-
-.toolbar-field {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
+.document-kind {
   color: var(--muted);
-  font-size: 0.85rem;
-}
-
-.file-picker select {
-  width: min(16vw, 14rem);
+  font-size: 0.64rem;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .file-state {
@@ -165,7 +232,7 @@ select {
   align-items: center;
   gap: 0.35rem;
   color: var(--success);
-  font-size: 0.76rem;
+  font-size: 0.68rem;
   font-weight: 800;
   text-transform: uppercase;
 }
@@ -182,42 +249,20 @@ select {
   color: var(--warning);
 }
 
-.theme-toolbar-field {
-  gap: 0.5rem;
+.header-spacer {
+  flex: 1 1 auto;
 }
 
-.theme-select-field {
+.document-actions,
+.export-actions {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.35rem;
 }
 
-.segmented {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  margin-left: auto;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 0.2rem;
-}
-
-.segmented button {
-  min-height: 1.8rem;
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  padding-inline: 0.5rem;
-}
-
-.segmented button.active {
-  background: var(--accent);
-  color: white;
-}
-
-.toolbar-actions {
-  display: flex;
-  gap: 0.3rem;
+.export-actions {
+  border-left: 1px solid var(--line);
+  padding-left: 0.7rem;
 }
 
 .status-stack {
@@ -326,8 +371,9 @@ select {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(22rem, 0.9fr) minmax(24rem, 1.1fr);
+  grid-template-columns: minmax(23rem, 0.94fr) minmax(28rem, 1.06fr);
   min-height: 0;
+  background: var(--line);
 }
 
 .panel {
@@ -335,7 +381,7 @@ select {
   grid-template-rows: auto minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
-  background: var(--panel);
+  background: var(--paper);
 }
 
 .editor-panel {
@@ -346,24 +392,40 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.7rem;
-  min-height: 2.4rem;
+  gap: 0.85rem;
+  min-height: 3.4rem;
   border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--panel), white 28%), var(--panel));
   color: var(--muted);
   font-size: 0.82rem;
-  padding: 0.45rem 0.7rem;
+  padding: 0.55rem 0.72rem;
 }
 
-.panel-title-copy {
+.panel-heading {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.6rem;
   min-width: 0;
 }
 
-.panel-title code {
+.panel-heading strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel-heading code {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-strong);
   color: var(--accent);
+  padding: 0.15rem 0.4rem;
   font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.67rem;
 }
 
 .panel-title-actions {
@@ -386,6 +448,68 @@ select {
   color: var(--accent);
 }
 
+.preview-panel-title {
+  flex-wrap: wrap;
+}
+
+.preview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.38rem;
+  min-width: 0;
+}
+
+.preview-control {
+  display: flex;
+  align-items: center;
+  gap: 0.38rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.preview-control select {
+  min-height: 1.85rem;
+  max-width: 9.5rem;
+  padding-block: 0.16rem;
+  font-size: 0.76rem;
+  text-transform: none;
+}
+
+.segmented {
+  display: flex;
+  align-items: center;
+  gap: 0.12rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--panel), white 30%);
+  padding: 0.16rem;
+}
+
+.segmented button {
+  min-height: 1.62rem;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  padding: 0.2rem 0.45rem;
+  font-size: 0.68rem;
+  text-transform: capitalize;
+}
+
+.segmented button.active {
+  background: var(--accent);
+  color: white;
+}
+
+.fullscreen-action {
+  min-height: 1.85rem;
+  padding-block: 0.2rem;
+  font-size: 0.72rem;
+}
+
 .editor-host {
   min-height: 0;
   overflow: hidden;
@@ -393,7 +517,7 @@ select {
 
 .editor-host .cm-editor {
   height: 100%;
-  background: #fffdfa;
+  background: var(--paper);
   color: var(--text);
   font-size: 14px;
 }
@@ -709,7 +833,7 @@ select {
 .diagnostics {
   border-top: 1px solid var(--line);
   background: var(--panel);
-  min-height: 7rem;
+  min-height: 3.15rem;
   max-height: 12rem;
   overflow: auto;
 }
@@ -728,14 +852,21 @@ select {
 }
 
 .diagnostics-header strong {
-  color: var(--text);
+  display: inline-grid;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 0.7rem;
 }
 
 .diagnostics-empty {
   margin: 0;
   color: var(--success);
-  padding: 0.75rem;
-  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.78rem;
 }
 
 .diagnostics ul {
@@ -792,18 +923,59 @@ select {
   color: var(--muted);
 }
 
+@media (max-width: 1180px) {
+  .workbench-header {
+    flex-wrap: wrap;
+  }
+
+  .document-switcher {
+    flex: 1 1 20rem;
+  }
+
+  .document-identity {
+    width: 10rem;
+  }
+
+  .header-spacer {
+    display: none;
+  }
+
+  .export-actions {
+    margin-left: auto;
+  }
+}
+
 @media (max-width: 900px) {
   .app-shell {
     height: auto;
     min-height: 100%;
   }
 
-  .topbar {
-    flex-wrap: wrap;
+  .workbench-header {
+    align-items: flex-end;
   }
 
-  .file-picker select {
-    width: min(65vw, 24rem);
+  .brand {
+    min-width: 8.5rem;
+  }
+
+  .document-identity {
+    display: none;
+  }
+
+  .file-state {
+    align-self: center;
+  }
+
+  .preview-panel-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .preview-toolbar {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .create-file-bar,
@@ -814,10 +986,6 @@ select {
 
   .create-file-bar input {
     width: min(100%, 30rem);
-  }
-
-  .segmented {
-    margin-left: 0;
   }
 
   .workspace {
@@ -841,5 +1009,50 @@ select {
 
   .theme-build-status code {
     margin-left: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .workbench-header {
+    align-items: stretch;
+  }
+
+  .brand,
+  .document-switcher {
+    flex-basis: 100%;
+  }
+
+  .document-actions,
+  .export-actions {
+    flex: 1 1 auto;
+  }
+
+  .document-actions button,
+  .export-actions button {
+    flex: 1 1 auto;
+  }
+
+  .export-actions {
+    margin-left: 0;
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .panel-heading code,
+  .preview-control > span {
+    display: none;
+  }
+
+  .preview-toolbar {
+    display: grid;
+    grid-template-columns: minmax(7rem, 1fr) auto;
+  }
+
+  .segmented {
+    grid-column: 1 / -1;
+  }
+
+  .segmented button {
+    flex: 1 1 auto;
   }
 }

@@ -27,12 +27,15 @@ The production Editor supports:
 
 - selecting existing `.mds` files under the opened project root;
 - creating a new `.mds` file in an existing project directory;
+- opening an explicitly selected local `.mds` file through the browser file picker;
 - live parser, renderer, and theme diagnostics;
 - live standalone HTML preview at desktop, tablet, and mobile widths;
 - saving with the Save button or `Cmd/Ctrl+S`;
 - visible saved and unsaved state;
 - a close/replacement warning while content is unsaved;
 - HTML copy and download actions.
+
+`New` and `Open…` remain visible in every Editor session. In a CLI project session, `New` creates a project file under the jailed project root. In the standalone development app, it creates an in-memory local draft. `Open…` reads the file selected by the user directly in the browser; when the browser exposes a writable file handle, Save writes it back, otherwise Save downloads a new `.mds` file.
 
 Saves use a temporary file and atomic rename. Each opened version has a content-hash revision. If another process changes or deletes the file, the next save stops and offers two explicit choices:
 
@@ -69,6 +72,8 @@ The local server:
 - limits document and request sizes;
 - serves the Editor with restrictive browser headers;
 - renders document output in an iframe with `allow-scripts allow-forms`, without `allow-same-origin` or popup permission.
+
+Files chosen with the browser `Open…` action do not pass through the loopback server or expand its project-root access. They are available only because the user selected them through the browser file picker.
 
 Installed themes are trusted local dependencies. MDS document content remains untrusted and is handled by the renderer's escaping and URL-safety rules.
 
