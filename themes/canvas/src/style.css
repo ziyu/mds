@@ -44,6 +44,17 @@ body.has-overlay {
   overflow: hidden;
 }
 
+body.has-overlay::after {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  background: oklch(0.2 0.018 72 / 0.32);
+  backdrop-filter: blur(2px);
+  content: "";
+  cursor: default;
+  pointer-events: auto;
+}
+
 [hidden] {
   display: none !important;
 }
@@ -118,6 +129,16 @@ body::before {
   to {
     opacity: 1;
     transform: translate3d(-50%, -50%, 0) scale(1);
+  }
+}
+
+@keyframes overlay-backdrop-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
   }
 }
 
@@ -886,9 +907,7 @@ blockquote p {
   z-index: 70;
   overflow: auto;
   border-color: color-mix(in oklab, var(--color-primary), var(--color-border) 60%);
-  box-shadow:
-    0 28px 80px oklch(0.2 0.018 72 / 0.24),
-    0 0 0 999vmax oklch(0.2 0.018 72 / 0.32);
+  box-shadow: 0 28px 80px oklch(0.2 0.018 72 / 0.24);
 }
 
 .mds-dialog:not([hidden]) {
@@ -2090,6 +2109,10 @@ section.command {
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  body.has-overlay::after {
+    animation: overlay-backdrop-in 180ms ease both;
+  }
+
   .mds-hero::after {
     animation: hero-sheen 1.45s cubic-bezier(0.22, 1, 0.36, 1) 700ms 1 both;
   }

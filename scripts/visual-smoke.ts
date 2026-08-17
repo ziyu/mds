@@ -63,9 +63,26 @@ interface DefaultEnhancementMetrics {
   dialogAria: boolean;
   dialogBodyLock: boolean;
   dialogFocus: boolean;
+  dialogCoversViewport: boolean;
   dialogClose: boolean;
   drawerOpen: boolean;
+  drawerCoversViewport: boolean;
   drawerClose: boolean;
+}
+
+interface CanvasOverlayMetrics {
+  dialogPortaled: boolean;
+  dialogPanelTopmost: boolean;
+  dialogPointerShield: boolean;
+  dialogBackgroundInert: boolean;
+  dialogBackdropClose: boolean;
+  dialogRestoresBackground: boolean;
+  drawerPortaled: boolean;
+  drawerPanelTopmost: boolean;
+  drawerPointerShield: boolean;
+  drawerBackgroundInert: boolean;
+  drawerBackdropClose: boolean;
+  drawerRestoresBackground: boolean;
 }
 
 interface MotionEnhancementMetrics {
@@ -468,6 +485,17 @@ async function captureScreenshot(
             getComputedStyle(commandAction).display === 'inline-flex' &&
             commandAction.closest('section.command') === null;
 
+          const coversViewport = (overlay) => {
+            if (!(overlay instanceof HTMLElement)) return false;
+            const backdrop = overlay.querySelector('.dialog-backdrop, .drawer-backdrop');
+            if (!(backdrop instanceof HTMLElement)) return false;
+            const rootRect = overlay.getBoundingClientRect();
+            const backdropRect = backdrop.getBoundingClientRect();
+            const covers = (rect) => rect.top <= 1 && rect.left <= 1 &&
+              rect.right >= window.innerWidth - 1 && rect.bottom >= window.innerHeight - 1;
+            return getComputedStyle(overlay).position === 'fixed' && covers(rootRect) && covers(backdropRect);
+          };
+
           const dialogTrigger = document.querySelector('[data-action="open"][data-target="componentDialog"]');
           const dialogRoot = document.querySelector('#componentDialog');
           dialogTrigger?.click();
@@ -477,6 +505,7 @@ async function captureScreenshot(
           const dialogBodyLock = document.body.classList.contains('has-overlay');
           const dialogFocus = dialogTrigger instanceof HTMLElement && dialogRoot instanceof HTMLElement &&
             dialogRoot.contains(document.activeElement);
+          const dialogCoversViewport = coversViewport(dialogRoot);
           dialogRoot?.querySelector('[data-overlay-close]')?.click();
           const dialogClose = dialogRoot instanceof HTMLElement && !dialogRoot.classList.contains('is-open') &&
             dialogRoot.getAttribute('aria-hidden') === 'true' && !document.body.classList.contains('has-overlay') &&
@@ -489,13 +518,14 @@ async function captureScreenshot(
           const drawerOpen = drawerTrigger instanceof HTMLElement && drawerRoot instanceof HTMLElement &&
             drawerRoot.classList.contains('is-open') && drawerRoot.getAttribute('aria-hidden') === 'false' &&
             document.body.classList.contains('has-overlay') && drawerRoot.contains(document.activeElement);
+          const drawerCoversViewport = coversViewport(drawerRoot);
           document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
           const drawerClose = drawerRoot instanceof HTMLElement && !drawerRoot.classList.contains('is-open') &&
             drawerRoot.getAttribute('aria-hidden') === 'true' && !document.body.classList.contains('has-overlay') &&
             document.activeElement === drawerTrigger;
 
           window.scrollTo(0, 0);
-          return { tabs, accordion, detailsToggle, commandActions, dialogClass, dialogAria, dialogBodyLock, dialogFocus, dialogClose, drawerOpen, drawerClose };
+          return { tabs, accordion, detailsToggle, commandActions, dialogClass, dialogAria, dialogBodyLock, dialogFocus, dialogCoversViewport, dialogClose, drawerOpen, drawerCoversViewport, drawerClose };
         })()`,
         awaitPromise: true,
         returnByValue: true
@@ -506,6 +536,69 @@ async function captureScreenshot(
         if (Object.values(defaultEnhancements).some((value) => !value)) {
           throw new Error(
             `Default theme enhancement failed for ${screenshotPath}: ${JSON.stringify(defaultEnhancements)}.`
+          );
+        }
+      }
+      if (themeName === "canvas") {
+        const canvasOverlayEvaluated = await client.send<{ result: { value: CanvasOverlayMetrics } }>(
+          "Runtime.evaluate",
+          {
+            expression: `(async () => {
+              const nextFrames = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+              const hasInertAncestor = (element) => {
+                let current = element;
+                while (current instanceof HTMLElement && current !== document.body) {
+                  if (current.hasAttribute('inert')) return true;
+                  current = current.parentElement;
+                }
+                return false;
+              };
+              const pointerShielded = () => document.elementFromPoint(8, 8) === document.body;
+              const overlayTopmost = (overlay) => {
+                if (!(overlay instanceof HTMLElement)) return false;
+                const rect = overlay.getBoundingClientRect();
+                const x = Math.min(Math.max(rect.left + rect.width / 2, 0), innerWidth - 1);
+                const y = Math.min(Math.max(rect.top + rect.height / 2, 0), innerHeight - 1);
+                const hit = document.elementFromPoint(x, y);
+                return hit === overlay || (hit instanceof Node && overlay.contains(hit));
+              };
+
+              const dialogTrigger = document.querySelector('[data-action="open"][data-target="componentDialog"]');
+              const dialogRoot = document.querySelector('#componentDialog');
+              dialogTrigger?.click();
+              await nextFrames();
+              const dialogPortaled = dialogRoot instanceof HTMLElement && dialogRoot.parentElement === document.body;
+              const dialogPanelTopmost = overlayTopmost(dialogRoot);
+              const dialogPointerShield = pointerShielded();
+              const dialogBackgroundInert = dialogTrigger instanceof HTMLElement && hasInertAncestor(dialogTrigger);
+              document.body.click();
+              const dialogBackdropClose = dialogRoot instanceof HTMLElement && dialogRoot.hidden;
+              const dialogRestoresBackground = dialogTrigger instanceof HTMLElement && !hasInertAncestor(dialogTrigger);
+
+              const drawerTrigger = document.querySelector('[data-action="show"][data-target="componentDrawer"]');
+              const drawerRoot = document.querySelector('#componentDrawer');
+              drawerTrigger?.click();
+              await nextFrames();
+              const drawerPortaled = drawerRoot instanceof HTMLElement && drawerRoot.parentElement === document.body;
+              const drawerPanelTopmost = overlayTopmost(drawerRoot);
+              const drawerPointerShield = pointerShielded();
+              const drawerBackgroundInert = drawerTrigger instanceof HTMLElement && hasInertAncestor(drawerTrigger);
+              document.body.click();
+              const drawerBackdropClose = drawerRoot instanceof HTMLElement && drawerRoot.hidden;
+              const drawerRestoresBackground = drawerTrigger instanceof HTMLElement && !hasInertAncestor(drawerTrigger);
+
+              window.scrollTo(0, 0);
+              return { dialogPortaled, dialogPanelTopmost, dialogPointerShield, dialogBackgroundInert, dialogBackdropClose, dialogRestoresBackground, drawerPortaled, drawerPanelTopmost, drawerPointerShield, drawerBackgroundInert, drawerBackdropClose, drawerRestoresBackground };
+            })()`,
+            awaitPromise: true,
+            returnByValue: true
+          },
+          sessionId
+        );
+        const canvasOverlay = canvasOverlayEvaluated.result.value;
+        if (Object.values(canvasOverlay).some((value) => !value)) {
+          throw new Error(
+            `Canvas overlay interaction failed for ${screenshotPath}: ${JSON.stringify(canvasOverlay)}.`
           );
         }
       }

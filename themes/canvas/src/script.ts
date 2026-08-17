@@ -1,8 +1,15 @@
 const overlayTriggers = new WeakMap<HTMLElement, HTMLElement>();
+const overlayBackgroundStates = new WeakMap<HTMLElement, Map<HTMLElement, boolean>>();
 
 document.addEventListener("click", (event: MouseEvent) => {
   const target = getEventElement(event.target);
   if (target === null) {
+    return;
+  }
+
+  const openOverlay = getOpenOverlay();
+  if (openOverlay !== null && target === document.body) {
+    setControlledVisibility(openOverlay, false);
     return;
   }
 
@@ -92,7 +99,7 @@ document.addEventListener("keydown", (event: KeyboardEvent) => {
     return;
   }
 
-  const openOverlay = document.querySelector<HTMLElement>(".mds-dialog:not([hidden]), .mds-drawer:not([hidden])");
+  const openOverlay = getOpenOverlay();
   if (openOverlay === null) {
     return;
   }
@@ -132,17 +139,55 @@ function setControlledVisibility(controlled: Element, visible: boolean, trigger?
     if (trigger !== undefined) {
       overlayTriggers.set(controlled, getOverlayReturnTarget(trigger));
     }
+    setOverlayBackgroundInert(controlled, true);
     document.body.classList.add("has-overlay");
     requestAnimationFrame(() => focusOverlay(controlled));
     return;
   }
 
+  setOverlayBackgroundInert(controlled, false);
   updateOverlayLock();
   overlayTriggers.get(controlled)?.focus();
 }
 
 function isOverlay(element: Element): boolean {
   return element.classList.contains("mds-dialog") || element.classList.contains("mds-drawer");
+}
+
+function getOpenOverlay(): HTMLElement | null {
+  return document.querySelector<HTMLElement>(".mds-dialog:not([hidden]), .mds-drawer:not([hidden])");
+}
+
+function setOverlayBackgroundInert(overlay: HTMLElement, inert: boolean): void {
+  if (!inert) {
+    const states = overlayBackgroundStates.get(overlay);
+    if (states === undefined) {
+      return;
+    }
+    for (const [element, wasInert] of states) {
+      element.inert = wasInert;
+    }
+    overlayBackgroundStates.delete(overlay);
+    return;
+  }
+
+  const states = new Map<HTMLElement, boolean>();
+  let branch: HTMLElement = overlay;
+  while (branch.parentElement !== null) {
+    const parent = branch.parentElement;
+    for (const sibling of Array.from(parent.children)) {
+      if (!(sibling instanceof HTMLElement) || sibling === branch || states.has(sibling)) {
+        continue;
+      }
+      states.set(sibling, sibling.inert);
+      sibling.inert = true;
+    }
+    branch = parent;
+    if (parent === document.body) {
+      break;
+    }
+  }
+  overlayBackgroundStates.set(overlay, states);
 }
 
 function focusOverlay(overlay: HTMLElement): void {
@@ -507,7 +552,15 @@ function setupCarousels(): void {
 
 function setupOverlays(): void {
   for (const overlay of Array.from(document.querySelectorAll<HTMLElement>(".mds-dialog, .mds-drawer"))) {
+    // Promote modal surfaces out of page-local stacking contexts so their
+    // z-index is compared directly with the body-level interaction shield.
+    if (overlay.parentElement !== document.body) {
+      document.body.append(overlay);
+    }
     overlay.setAttribute("aria-hidden", overlay.hidden ? "true" : "false");
+    if (!overlay.hidden) {
+      setOverlayBackgroundInert(overlay, true);
+    }
   }
   updateOverlayLock();
 }

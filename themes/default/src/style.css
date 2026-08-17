@@ -1543,6 +1543,12 @@ th {
   transition: opacity 180ms ease, visibility 0s linear 180ms;
 }
 
+/* Full-viewport overlays are page children, but must not inherit the document's
+   vertical rhythm. A block margin here shifts both the panel and backdrop. */
+.page > :is(.dialog, .drawer) {
+  margin: 0;
+}
+
 .dialog {
   place-items: center;
   padding: 1rem;
