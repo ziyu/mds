@@ -10,6 +10,7 @@ The source snapshot is the official [shadcn/ui component list](https://ui.shadcn
 - Do not add aliases whose only benefit is matching a library-specific name.
 - Model compound widgets as one public block with attributes, slots, or semantic children rather than exposing every React subcomponent.
 - Keep typography, transient state, layout mechanics, and runtime services out of the block vocabulary when Markdown, themes, or application code already own them.
+- Keep every implementation semantically minimal: imported component styling must not add visible copy, summaries, metadata, panels, or actions beyond the MDS block contract.
 - Every new block must have a readable native HTML fallback before theme enhancement.
 - Existing `open`, `close`, `show`, `hide`, `toggle`, `submit`, and `reset` action behavior remains compatible. New application actions must be additive.
 

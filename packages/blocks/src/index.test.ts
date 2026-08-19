@@ -57,6 +57,7 @@ describe("MDS block packs", () => {
     expect(theme.blockRenderers?.hero).toBeUndefined();
     expect(theme.js).toContain("setupCommands");
     expect(theme.js).toContain("setupCalendars");
+    expect(theme.js).toContain("setupToggles");
     expect(theme.js).toContain("setupContextMenus");
     expect(theme.js).not.toContain("setupDataTables");
     expect(theme.js).not.toContain("setupMessageScrollers");
@@ -107,6 +108,60 @@ describe("MDS block packs", () => {
   it("scopes command enhancement to command blocks instead of command actions", () => {
     expect(interactiveBlocks.files["runtime.js"]).toContain('querySelectorAll("section.command")');
     expect(interactiveBlocks.files["runtime.css"]).toContain(":where(section.command)");
+  });
+
+  it("gives bare toggles intrinsic pressed-state behavior without hijacking target actions", () => {
+    const script = controlBlocks.files["runtime.js"];
+
+    expect(script).toBeTypeOf("string");
+    if (script === undefined) {
+      throw new Error("Expected the control pack runtime asset.");
+    }
+    expect(() => new Function(script)).not.toThrow();
+    expect(script).toContain("setupToggles");
+    expect(script).toContain('querySelectorAll("button.toggle-control[aria-pressed]")');
+    expect(script).toContain('toggle.dataset.action === "toggle" && Boolean(toggle.dataset.target)');
+    expect(script).toContain('toggle.setAttribute("aria-pressed"');
+  });
+
+  it("does not invent visible labels for unlabeled controls", () => {
+    const controlTemplates = ["blocks/button.html", "blocks/toggle.html"].map((path) => controlBlocks.files[path]);
+    const formTemplates = [
+      "blocks/label.html",
+      "blocks/input.html",
+      "blocks/input-group.html",
+      "blocks/input-otp.html",
+      "blocks/combobox.html",
+      "blocks/calendar.html",
+      "blocks/select.html",
+      "blocks/option.html",
+      "blocks/textarea.html",
+      "blocks/checkbox.html",
+      "blocks/radio.html",
+      "blocks/radio-group.html",
+      "blocks/slider.html",
+      "blocks/switch.html"
+    ].map((path) => formsBlocks.files[path]);
+
+    expect([...controlTemplates, ...formTemplates].every((template) => typeof template === "string")).toBe(true);
+    expect(controlTemplates.join("\n")).not.toMatch(/\{\{ attr:label:(?:Button|Toggle) \}\}/);
+    expect(formsBlocks.files["blocks/input.html"]).toContain('<span class="field-label">{{ attr:label }}</span>');
+    expect(formsBlocks.files["blocks/calendar.html"]).toContain('<span class="field-label">{{ attr:label }}</span>');
+    expect(formsBlocks.files["blocks/radio-group.html"]).toContain("<legend>{{ attr:legend }}</legend>");
+    expect(formsBlocks.files["blocks/slider.html"]).toContain("{{ attr:label }}");
+    expect(formTemplates.join("\n")).not.toContain("{{ attr:label:Value }}");
+  });
+
+  it("keeps atomic progress output limited to its native semantic element", () => {
+    const template = displayBlocks.files["blocks/progress.html"];
+
+    expect(template).toBe(
+      '<progress{{ attrs }} class="progress" value="{{ attr:value:0 }}" max="{{ attr:max:100 }}" aria-label="{{ attr:label:Progress }}"></progress>'
+    );
+    expect(template).not.toContain("<figure");
+    expect(template).not.toContain("<figcaption");
+    expect(template).not.toContain("{{ children }}");
+    expect(template).not.toContain("{{ slots }}");
   });
 
   it("exports only the nine reusable packs", () => {

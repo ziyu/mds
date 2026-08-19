@@ -240,6 +240,8 @@ Guidelines:
 
 - Prefer semantic block names and slots for ordinary content.
 - Use attributes for compact theme-defined options such as `variant`, `tone`, `motion`, `delay`, or `columns`.
+- Implement only the block's declared semantics. Do not manufacture visible labels, value summaries, metadata, actions, cards, or layout wrappers from available attributes.
+- Compose richer presentation through Markdown, outer blocks, or declared slots instead of hiding it inside an atomic primitive.
 - Do not use curly attribute syntax.
 - Do not use event-handler attributes such as `onclick`.
 - Do not use attributes to embed JavaScript or large content payloads.

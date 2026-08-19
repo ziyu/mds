@@ -758,9 +758,11 @@ textarea {
   text-transform: uppercase;
 }
 
-.progress progress {
+.progress {
+  display: block;
   width: 100%;
   height: 0.8rem;
+  margin: 0;
   accent-color: var(--signal);
 }
 

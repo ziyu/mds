@@ -71,11 +71,17 @@ For the shared blocks layer that turns this vocabulary into reusable block packs
 
    MDS core parses and preserves the block. Canvas, Clarity, or a user theme decides the layout, CSS, motion, and progressive enhancement.
 
-6. **Native HTML before custom JavaScript**
+6. **Implement only the declared semantics**
+
+   A block implementation styles and enhances the smallest native structure required by its contract. It must not silently add visible copy, metadata, controls, cards, or layout. Compose those concerns explicitly with Markdown, outer blocks, or declared slots.
+
+   For example, `:: progress value=5 max=100 label="Upload progress"` renders a progress indicator whose label is an accessible name. The theme may style the track and fill, but must not add a card, a visible heading, or a `5/100` summary.
+
+7. **Native HTML before custom JavaScript**
 
    Use native anchors, buttons, forms, details, dialog-like overlays, and media semantics where possible. Theme JavaScript should enhance behavior, not replace basic content.
 
-7. **Fallback must be readable**
+8. **Fallback must be readable**
 
    Unsupported blocks should still render content in a safe container with a diagnostic when appropriate.
 
@@ -142,7 +148,7 @@ This matrix is the authoring vocabulary, not a promise that every name lives in 
 | `chart-point` | Native meter-backed numeric value. | `label`, `value`, and `max`. |
 | `comparison` | Compare options/features. | Nested cards or markdown table. |
 | `metric` | Highlighted metric. | `value`, `label`, optional body. |
-| `progress` | Progress indicator. | `value`, `max`, optional label. |
+| `progress` | Native progress indicator. | `value`, `max`, optional accessible `label`; visible copy is composed separately. |
 | `badge` | Small status label. | Short text, optional `tone`. |
 | `tag` | Category label. | Short text. |
 | `kbd` | Keyboard key/chord. | Key text. |

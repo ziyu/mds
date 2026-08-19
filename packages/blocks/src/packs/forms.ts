@@ -50,7 +50,7 @@ export const formsBlocks: ThemeBlockPackSource = {
   {{ children }}
   {{ slots }}
 </div>`,
-    "blocks/label.html": `<label{{ attrs }} class="field-label"{{ optional:for:for }}>{{ attr:text:Label }}</label>`,
+    "blocks/label.html": `<label{{ attrs }} class="field-label"{{ optional:for:for }}>{{ attr:text }}</label>`,
     "blocks/help.html": `<div{{ attrs }} class="field-help">
   {{ children }}
 </div>`,
@@ -58,12 +58,12 @@ export const formsBlocks: ThemeBlockPackSource = {
   {{ children }}
 </div>`,
     "blocks/input.html": `<label{{ attrs }} class="form-field input-field">
-  <span class="field-label">{{ attr:label:Input }}</span>
+  <span class="field-label">{{ attr:label }}</span>
   <input type="{{ attr:type:text }}"{{ optional:name:name }}{{ optional:value:value }}{{ optional:placeholder:placeholder }}{{ optional:autocomplete:autocomplete }}{{ optional:min:min }}{{ optional:max:max }}{{ optional:step:step }}{{ bool:required }}{{ bool:disabled }}{{ bool:readonly }}>
 </label>`,
     "blocks/input-group.html": `<div{{ attrs }} class="form-field input-group">
   <label class="input-group-label">
-    <span class="field-label">{{ attr:label:Input }}</span>
+    <span class="field-label">{{ attr:label }}</span>
     <span class="input-group-frame">
       <input class="input-group-control" type="{{ attr:type:text }}"{{ optional:name:name }}{{ optional:value:value }}{{ optional:placeholder:placeholder }}{{ optional:autocomplete:autocomplete }}{{ optional:inputmode:inputmode }}{{ optional:min:min }}{{ optional:max:max }}{{ optional:step:step }}{{ optional:invalid:aria-invalid }}{{ bool:required }}{{ bool:disabled }}{{ bool:readonly }}>
       <span class="input-group-addon input-group-prefix">{{ slot:prefix }}</span>
@@ -76,14 +76,14 @@ export const formsBlocks: ThemeBlockPackSource = {
 </div>`,
     "blocks/input-otp.html": `<div{{ attrs }} class="form-field input-otp">
   <label class="input-otp-label">
-    <span class="field-label">{{ attr:label:Verification code }}</span>
+    <span class="field-label">{{ attr:label }}</span>
     <input class="input-otp-control" type="text"{{ optional:name:name }}{{ optional:value:value }}{{ optional:pattern:pattern }}{{ optional:placeholder:placeholder }} inputmode="{{ attr:inputmode:numeric }}" autocomplete="one-time-code" autocapitalize="none" spellcheck="false" maxlength="{{ attr:length:6 }}" size="{{ attr:length:6 }}"{{ optional:invalid:aria-invalid }}{{ bool:required }}{{ bool:disabled }}{{ bool:readonly }}>
   </label>
   <div class="field-help">{{ slot:help }}</div>
   <div class="field-error" role="alert">{{ slot:error }}</div>
 </div>`,
     "blocks/combobox.html": `<label{{ attrs }} class="form-field combobox-field">
-  <span class="field-label">{{ attr:label:Choose an option }}</span>
+  <span class="field-label">{{ attr:label }}</span>
   <input class="combobox-control" type="text" list="{{ attr:list:combobox-options }}"{{ optional:name:name }}{{ optional:value:value }}{{ optional:placeholder:placeholder }}{{ optional:autocomplete:autocomplete }}{{ optional:invalid:aria-invalid }}{{ bool:required }}{{ bool:disabled }}{{ bool:readonly }}>
   <datalist id="{{ attr:list:combobox-options }}">
     {{ children }}
@@ -91,7 +91,7 @@ export const formsBlocks: ThemeBlockPackSource = {
 </label>`,
     "blocks/calendar.html": `<div{{ attrs }} class="calendar">
   <label class="calendar-native">
-    <span class="field-label">{{ attr:label:Choose a date }}</span>
+    <span class="field-label">{{ attr:label }}</span>
     <input class="calendar-native-input" type="date"{{ optional:name:name }}{{ optional:value:value }}{{ optional:min:min }}{{ optional:max:max }}{{ bool:required }}{{ bool:disabled }}{{ bool:readonly }}>
   </label>
   <div class="calendar-enhanced" role="group" aria-label="{{ attr:label:Choose a date }}" hidden>
@@ -106,36 +106,36 @@ export const formsBlocks: ThemeBlockPackSource = {
   </div>
 </div>`,
     "blocks/select.html": `<label{{ attrs }} class="form-field select-field">
-  <span class="field-label">{{ attr:label:Select }}</span>
+  <span class="field-label">{{ attr:label }}</span>
   <select{{ optional:name:name }}{{ bool:required }}{{ bool:disabled }}{{ bool:multiple }}>
     {{ children }}
   </select>
 </label>`,
-    "blocks/option.html": `<option{{ attrs }}{{ optional:value:value }}{{ bool:selected }}{{ bool:disabled }}>{{ attr:label:Option }}</option>`,
+    "blocks/option.html": `<option{{ attrs }}{{ optional:value:value }}{{ bool:selected }}{{ bool:disabled }}>{{ attr:label }}</option>`,
     "blocks/textarea.html": `<label{{ attrs }} class="form-field textarea-field">
-  <span class="field-label">{{ attr:label:Text }}</span>
+  <span class="field-label">{{ attr:label }}</span>
   <textarea{{ optional:name:name }}{{ optional:placeholder:placeholder }}{{ optional:rows:rows }}{{ bool:required }}{{ bool:disabled }}{{ bool:readonly }}></textarea>
 </label>`,
     "blocks/checkbox.html": `<label{{ attrs }} class="form-field choice-field checkbox">
   <input type="checkbox"{{ optional:name:name }}{{ optional:value:value }}{{ bool:checked }}{{ bool:required }}{{ bool:disabled }}>
-  <span>{{ attr:label:Checkbox }}</span>
+  <span>{{ attr:label }}</span>
 </label>`,
     "blocks/radio.html": `<label{{ attrs }} class="form-field choice-field radio">
   <input type="radio"{{ optional:name:name }}{{ optional:value:value }}{{ bool:checked }}{{ bool:required }}{{ bool:disabled }}>
-  <span>{{ attr:label:Option }}</span>
+  <span>{{ attr:label }}</span>
 </label>`,
     "blocks/radio-group.html": `<fieldset{{ attrs }} class="radio-group"{{ bool:disabled }}>
-  <legend>{{ attr:legend:Choose one }}</legend>
+  <legend>{{ attr:legend }}</legend>
   {{ children }}
   {{ slots }}
 </fieldset>`,
     "blocks/slider.html": `<label{{ attrs }} class="form-field slider-field">
-  <span class="field-label">{{ attr:label:Value }}</span>
+  <span class="field-label">{{ attr:label }}</span>
   <input type="range"{{ optional:name:name }}{{ optional:min:min }}{{ optional:max:max }}{{ optional:step:step }}{{ optional:value:value }}{{ bool:disabled }}>
 </label>`,
     "blocks/switch.html": `<label{{ attrs }} class="form-field choice-field switch">
   <input type="checkbox" role="switch"{{ optional:name:name }}{{ optional:value:value }}{{ bool:checked }}{{ bool:required }}{{ bool:disabled }}>
-  <span>{{ attr:label:Switch }}</span>
+  <span>{{ attr:label }}</span>
 </label>`
   }
 };

@@ -75,6 +75,7 @@ describe("editor examples", () => {
     expect(inspection.blocks).toHaveLength(67);
     expect(inspection.blockPacks).toHaveLength(9);
     expect(inspection.templateSources.filter((entry) => entry.source === "theme")).toHaveLength(6);
+    expectAtomicProgress(theme, inspection);
 
     for (const example of examples) {
       const result = renderHtmlResult(parseMds(example.source), { theme });
@@ -108,6 +109,7 @@ describe("editor examples", () => {
     const theme = await loadThemeDirectory(build.outputDirectory);
 
     expect(inspection.diagnostics).toEqual([]);
+    expectAtomicProgress(theme, inspection);
 
     for (const example of examples) {
       const result = renderHtmlResult(parseMds(example.source), { theme });
@@ -127,8 +129,57 @@ describe("editor examples", () => {
     expect(result.html).toContain('class="carousel-track"');
     expect(result.html).toContain("mds-block command");
     expect(result.html).not.toContain("{{ attr:");
+
+    const unlabeledControls = renderHtmlResult(
+      parseMds(`# Unlabeled controls
+
+:: input placeholder="Input"
+
+:: slider value=25
+
+:: progress value=42 max=100
+`),
+      { theme }
+    );
+    expect(unlabeledControls.diagnostics).toEqual([]);
+    expect(unlabeledControls.html).not.toContain(">Input<");
+    expect(unlabeledControls.html).not.toContain(">Value<");
+    expect(unlabeledControls.html).not.toContain("<strong>Progress</strong>");
+    expect(unlabeledControls.html).toContain('aria-label="Progress"');
+    expect(theme.js).toContain("setupToggles");
+  });
+
+  it("keeps progress atomic across the remaining official themes that support it", async () => {
+    for (const themeName of ["folio", "atelier", "rich"]) {
+      const themeDirectory = fileURLToPath(new URL(`../../../themes/${themeName}`, import.meta.url));
+      const build = await buildPackageTheme(themeDirectory);
+      const inspection = await inspectThemeArtifact(build.outputDirectory);
+      const theme = await loadThemeDirectory(build.outputDirectory);
+
+      expect(inspection.diagnostics, themeName).toEqual([]);
+      expectAtomicProgress(theme, inspection);
+    }
   });
 });
+
+function expectAtomicProgress(
+  theme: Awaited<ReturnType<typeof loadThemeDirectory>>,
+  inspection: Awaited<ReturnType<typeof inspectThemeArtifact>>
+): void {
+  expect(inspection.templateSources).toContainEqual({
+    block: "progress",
+    source: "@mds-crate/blocks/display"
+  });
+
+  const result = renderHtmlResult(parseMds(':: progress label="the progress" value=5 max=100'), { theme });
+  expect(result.diagnostics).toEqual([]);
+  expect(result.html).toMatch(/<progress\b[^>]*class="progress"[^>]*><\/progress>/);
+  expect(result.html).not.toContain("progress-block");
+  expect(result.html).not.toContain("<figure");
+  expect(result.html).not.toContain("<figcaption");
+  expect(result.html).not.toContain(">the progress<");
+  expect(result.html).not.toContain("5/100");
+}
 
 function collectBlockTypes(source: string): string[] {
   const blockTypes = new Set<string>();

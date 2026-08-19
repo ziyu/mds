@@ -112,9 +112,11 @@ Attributes are advanced. Use them for compact configuration:
 Standalone pages rendered from semantic Markdown.
 :::
 
-::: progress value=72 max=100 label="Migration progress"
+Migration progress
+
+:: progress value=72 max=100 label="Migration progress"
+
 Most documents have been converted.
-:::
 ```
 
 Avoid attributes for long content:

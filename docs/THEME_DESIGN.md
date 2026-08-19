@@ -123,6 +123,10 @@ Authoring helpers such as JSX utilities, future React/Preact adapters, and typed
 
    Common block packs should be merged into a theme source before rendering or writing a built artifact. Themes keep ownership of visual styling and may override any shared block template, while runtime tools still consume a plain theme artifact.
 
+10. **Theme implementations are semantically minimal**
+
+   A theme styles the smallest native structure required by a block contract. It must not turn an atomic primitive into a card, duplicate attributes as visible summaries, invent fallback copy, or add metadata/actions/layout that the author did not request. Visible composition belongs in Markdown, outer blocks, or declared slots. Accessibility-only naming remains allowed when it does not create visible UI.
+
 ## File Responsibilities
 
 | File | Required | Runtime Role |
@@ -468,6 +472,7 @@ Template rules:
 - Do not blindly serialize raw author attributes into executable browser attributes.
 - Do not use an `mds-` prefix in generated classes by default.
 - Prefer semantic native HTML where possible.
+- Keep atomic templates semantically minimal: do not add visible labels, summaries, panels, or wrapper roles beyond the block contract.
 - Theme templates must not parse raw MDS source.
 
 ### Shell Template

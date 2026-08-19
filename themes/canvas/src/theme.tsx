@@ -106,7 +106,7 @@ export default defineReactTheme({
         ariaLabel={block.attr("label", "Navigation")}
         motion="drop-in"
         duration={520}
-        className="canvas-nav sticky top-4 z-20 mx-auto flex w-[min(100%,72rem)] flex-wrap items-center gap-2 border border-border/80 bg-background/92 px-3 py-2.5 text-sm shadow-sm backdrop-blur sm:gap-3 sm:px-4"
+        className="canvas-nav flex w-full flex-wrap items-center border border-border/80 bg-background/92 text-sm shadow-xs backdrop-blur"
       >
         <Content block={block} />
       </Surface>
@@ -289,16 +289,6 @@ export default defineReactTheme({
         <Flow block={block} />
       </Surface>
     ),
-    progress: (block) => (
-      <Surface block={block} as="div" motion="fade-up" duration={540} className="progress-block rounded-xl border border-border bg-card p-5 shadow-xs">
-        <div className="progress-copy">
-          <strong>{block.attr("label", "Progress")}</strong>
-          <span>{block.attr("value", "0")}/{block.attr("max", "100")}</span>
-        </div>
-        <progress value={block.attr("value", "0")} max={block.attr("max", "100")} />
-        <Flow block={block} />
-      </Surface>
-    ),
     popover: (block) => (
       <Surface block={block} as="details" motion="scale-in" duration={520} className="popover rounded-xl border border-border bg-card p-4 shadow-xs">
         <summary>{block.attr("label", "More")}</summary>
@@ -367,9 +357,9 @@ export default defineReactTheme({
       </Surface>
     ),
     details: (block) => (
-      <Surface block={block} as="details" motion="fade-up" duration={620} className="mds-details group border border-border bg-card p-5 shadow-xs">
+      <Surface block={block} as="details" motion="fade-up" duration={620} className="mds-details group overflow-hidden border border-border bg-card shadow-xs">
         <summary className="cursor-pointer select-none font-medium text-foreground">{block.attr("label", "Details")}</summary>
-        <Flow block={block} className="mt-3" />
+        <Flow block={block} />
       </Surface>
     ),
     accordion: (block) => (
@@ -408,12 +398,12 @@ export default defineReactTheme({
       </Surface>
     ),
     form: (block) => (
-      <Surface block={block} as="form" motion="fade-up" duration={700} stagger={70} className="grid max-w-4xl gap-6 rounded-xl border border-border bg-card p-6 shadow-xs sm:p-8">
+      <Surface block={block} as="form" motion="fade-up" duration={700} stagger={70} className="canvas-form grid w-full rounded-xl border border-border bg-card shadow-xs">
         <Flow block={block} />
       </Surface>
     ),
     fieldset: (block) => (
-      <Surface block={block} as="fieldset" motion="fade-up" duration={560} className="fieldset rounded-xl border border-border bg-background p-5">
+      <Surface block={block} as="fieldset" motion="fade-up" duration={560} className="fieldset w-full rounded-xl border border-border bg-background">
         <legend>{block.attr("legend")}</legend>
         <Flow block={block} />
       </Surface>

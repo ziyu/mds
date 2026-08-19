@@ -77,7 +77,6 @@
       "blocks/message-scroller.html",
       "blocks/message.html",
       "blocks/metric.html",
-      "blocks/progress.html",
       "blocks/step.html",
       "blocks/steps.html",
       "blocks/tag.html",

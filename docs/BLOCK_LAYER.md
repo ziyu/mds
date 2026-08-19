@@ -27,6 +27,18 @@ MDS already treats every extensible component as a block. The next step is to ma
 - Do not remove custom block support.
 - Do not turn block attributes into arbitrary HTML attributes or JavaScript hooks.
 
+## Semantic Minimum Invariant
+
+Every shared pack, official theme, SDK-authored theme, and third-party component library must implement a block at the smallest structure that fully expresses that block's declared semantics.
+
+- A theme may style the semantic root and the native parts required for its behavior.
+- A theme must not invent visible titles, labels, value summaries, metadata, actions, panels, cards, or layout roles that the author did not request and the block contract does not require.
+- A theme must not duplicate an attribute as visible content merely because the value is available. Accessibility-only output such as an `aria-label` is allowed when it names the native semantic element without adding visible UI.
+- Extra presentation must be composed explicitly with Markdown, an outer layout block, or a declared child/slot contract. It must not be hidden inside an atomic primitive.
+- Theme overrides may change DOM only when accessibility, interaction, or the declared content model requires it. A visual preference alone is not a reason to widen a primitive's responsibility.
+
+For example, `progress` renders one native `<progress>` element. A theme may style its track and fill. It may not wrap it in a card, print its label, or add a `value/max` summary. Authors who want visible explanatory text write that text separately and compose it with layout blocks.
+
 ## Terms
 
 **Block vocabulary**

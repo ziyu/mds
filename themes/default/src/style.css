@@ -483,7 +483,11 @@ th {
 .field-help:empty,
 .field-error:empty,
 .input-group-addon:empty,
-.input-group-actions:empty {
+.input-group-actions:empty,
+.field-label:empty,
+.choice-field > span:empty,
+.fieldset > legend:empty,
+.radio-group > legend:empty {
   display: none;
 }
 
@@ -837,11 +841,42 @@ th {
   opacity: 0.45;
 }
 
+.toggle-control {
+  justify-self: start;
+  width: fit-content;
+  min-width: 0;
+  border-color: var(--line-strong);
+  background: var(--soft);
+  padding-inline: 0.7rem 0.8rem;
+  box-shadow: none;
+}
+
+.toggle-control::before {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex: 0 0 auto;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  background: var(--surface);
+  content: "";
+  transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+}
+
+.toggle-control:hover::before {
+  border-color: var(--accent);
+}
+
 .toggle-control[aria-pressed="true"] {
   border-color: var(--accent);
   background: var(--accent-soft);
   color: var(--accent-strong);
-  box-shadow: inset 0 -2px var(--accent);
+  box-shadow: none;
+}
+
+.toggle-control[aria-pressed="true"]::before {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent-soft);
 }
 
 .toggle-group {
@@ -1015,38 +1050,30 @@ th {
 }
 
 .progress {
-  display: grid;
-  gap: 0.45rem;
-  width: min(100%, 32rem);
-  margin: 0;
-}
-
-.progress progress {
+  display: block;
   overflow: hidden;
-  width: 100%;
+  width: min(100%, 28rem);
   height: 0.45rem;
+  margin: 0;
+  appearance: none;
   border: 0;
   border-radius: 999px;
   background: var(--soft);
+  vertical-align: top;
 }
 
-.progress progress::-webkit-progress-bar {
+.progress::-webkit-progress-bar {
   background: var(--soft);
 }
 
-.progress progress::-webkit-progress-value {
+.progress::-webkit-progress-value {
   border-radius: 999px;
   background: var(--accent);
 }
 
-.progress progress::-moz-progress-bar {
+.progress::-moz-progress-bar {
   border-radius: 999px;
   background: var(--accent);
-}
-
-.progress figcaption {
-  color: var(--muted);
-  font: 600 0.75rem/1.4 var(--font-ui);
 }
 
 /* Forms */

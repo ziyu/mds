@@ -30,11 +30,6 @@ export const displayBlocks: ThemeBlockPackSource = {
     "blocks/badge.html": `<span{{ attrs }} class="badge {{ attr:tone }}">
   {{ children }}
 </span>`,
-    "blocks/progress.html": `<figure{{ attrs }} class="progress">
-  <progress value="{{ attr:value:0 }}" max="{{ attr:max:100 }}"></progress>
-  <figcaption>{{ attr:label }}</figcaption>
-  {{ children }}
-  {{ slots }}
-</figure>`
+    "blocks/progress.html": `<progress{{ attrs }} class="progress" value="{{ attr:value:0 }}" max="{{ attr:max:100 }}" aria-label="{{ attr:label:Progress }}"></progress>`
   }
 };

@@ -29,7 +29,7 @@ export const displayVocabulary = [
   {
     name: "progress",
     profile: "display",
-    purpose: "Native progress indicator with a label.",
+    purpose: "Native progress indicator; the optional label is its accessible name.",
     attrs: ["value", "max", "label"]
   }
 ] as const satisfies readonly BlockVocabularyEntry[];
