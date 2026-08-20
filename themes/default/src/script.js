@@ -139,7 +139,7 @@
         ? !target.classList.contains("is-open")
         : target instanceof HTMLDetailsElement
           ? !target.open
-          : !target.classList.contains("is-open");
+          : target.hidden;
       setTargetState(target, shouldOpen, control);
       return;
     }
@@ -322,6 +322,8 @@
     target.classList.toggle("is-open", open);
     if (target instanceof HTMLDetailsElement) {
       target.open = open;
+    } else {
+      target.hidden = !open;
     }
     if (control?.hasAttribute("aria-pressed")) {
       control.setAttribute("aria-pressed", open ? "true" : "false");

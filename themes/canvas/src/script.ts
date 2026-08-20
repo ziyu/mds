@@ -539,7 +539,11 @@ function setupCarousels(): void {
     let currentIndex = 0;
     const show = (index: number): void => {
       currentIndex = Math.min(Math.max(index, 0), items.length - 1);
-      items[currentIndex]!.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest", inline: "start" });
+      const currentItem = items[currentIndex]!;
+      track.scrollTo({
+        left: currentItem.offsetLeft - track.offsetLeft,
+        behavior: reduceMotion ? "auto" : "smooth"
+      });
       status.textContent = `${currentIndex + 1} / ${items.length}`;
       previous.disabled = currentIndex === 0;
       next.disabled = currentIndex === items.length - 1;

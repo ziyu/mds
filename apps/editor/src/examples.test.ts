@@ -100,6 +100,9 @@ describe("editor examples", () => {
     expect(result.html).not.toContain('class="message-scroller"');
     expect(result.html).not.toContain('class="terminal"');
     expect(result.html).not.toContain("{{ attr:");
+    expectCompactModeToBeIntrinsic(result.html);
+    expect(theme.js).toContain(": target.hidden;");
+    expect(theme.js).toContain("target.hidden = !open;");
   });
 
   it("renders every example through Canvas without unsupported block fallbacks", async () => {
@@ -129,6 +132,7 @@ describe("editor examples", () => {
     expect(result.html).toContain('class="carousel-track"');
     expect(result.html).toContain("mds-block command");
     expect(result.html).not.toContain("{{ attr:");
+    expectCompactModeToBeIntrinsic(result.html);
 
     const unlabeledControls = renderHtmlResult(
       parseMds(`# Unlabeled controls
@@ -147,6 +151,10 @@ describe("editor examples", () => {
     expect(unlabeledControls.html).not.toContain("<strong>Progress</strong>");
     expect(unlabeledControls.html).toContain('aria-label="Progress"');
     expect(theme.js).toContain("setupToggles");
+    expect(theme.js).toContain("track.scrollTo");
+    expect(theme.js).not.toContain("scrollIntoView");
+    expect(theme.css).toContain(":where(details, .mds-details):has(+ .action)");
+    expect(theme.css).not.toContain(":where(details, .mds-details) + .action");
   });
 
   it("keeps progress atomic across the remaining official themes that support it", async () => {
@@ -179,6 +187,16 @@ function expectAtomicProgress(
   expect(result.html).not.toContain("<figcaption");
   expect(result.html).not.toContain(">the progress<");
   expect(result.html).not.toContain("5/100");
+}
+
+function expectCompactModeToBeIntrinsic(html: string): void {
+  const compactMode = html.match(/<button\b[^>]*>Compact mode<\/button>/)?.[0];
+  expect(compactMode).toBeDefined();
+  expect(compactMode).toContain('class="action toggle-control"');
+  expect(compactMode).toContain('aria-pressed="false"');
+  expect(compactMode).not.toContain("data-action");
+  expect(compactMode).not.toContain("data-target");
+  expect(compactMode).not.toContain("aria-controls");
 }
 
 function collectBlockTypes(source: string): string[] {

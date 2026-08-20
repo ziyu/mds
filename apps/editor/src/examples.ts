@@ -201,7 +201,7 @@ Create a preset when the default foundation is not enough.
 
 ::: toggle-group label="Preview options"
 :: toggle label="Pin details" pressed=false action="toggle" target="componentDetails"
-:: toggle label="Compact mode" pressed=false action="toggle" target="foundationControls"
+:: toggle label="Compact mode" pressed=false
 :::
 
 ::: form foundationForm method="post"

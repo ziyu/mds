@@ -210,8 +210,8 @@ body::before {
   margin-top: var(--canvas-section-gap);
 }
 
-.page:not(.mds-block) > :where(details, .mds-details) + .action {
-  margin-top: 0.85rem;
+.page:not(.mds-block) > :where(details, .mds-details):has(+ .action) {
+  margin-bottom: 0.85rem;
 }
 
 .page:not(.mds-block) > :where(h1, h2, h3) + p {
