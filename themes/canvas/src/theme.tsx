@@ -5,6 +5,7 @@ import {
   formsBlocks,
   interactiveBlocks,
   menuBlocks,
+  motionBlocks,
   navigationBlocks
 } from "@mds-crate/blocks";
 import { Content, Slot, Slots, defineReactTheme } from "@mds-crate/theme-sdk-react";
@@ -17,7 +18,7 @@ export default defineReactTheme({
   author: "MDS",
   preview: "preview.svg",
   tags: ["tailwind", "react", "canvas", "package"],
-  blockPacks: [displayBlocks, navigationBlocks, controlBlocks, formsBlocks, interactiveBlocks, menuBlocks],
+  blockPacks: [displayBlocks, navigationBlocks, controlBlocks, formsBlocks, interactiveBlocks, menuBlocks, motionBlocks],
   supportedBlocks: [
     "page",
     "header",
@@ -77,7 +78,6 @@ export default defineReactTheme({
     "sticky",
     "footer"
   ],
-  actions: ["toggle", "open", "close", "show", "hide"],
   blocks: {
     page: (block) => (
       <Surface
@@ -146,17 +146,18 @@ export default defineReactTheme({
       </Surface>
     ),
     scene: (block) => (
-      <Panel block={block} className="scene overflow-hidden">
-        <Flow block={block} />
-      </Panel>
-    ),
-    motion: (block) => (
-      <Surface block={block} motionAttr="preset" className="motion-block grid gap-5">
+      <Surface block={block} motion="scene" duration={880} mdsRole="scene" className="scene overflow-hidden rounded-xl border border-border bg-card p-5 shadow-xs">
         <Flow block={block} />
       </Surface>
     ),
+    motion: (block) => (
+      <Surface block={block} motionAttr="preset" mdsRole="motion" className="motion-block grid gap-5">
+        <Content block={block} />
+        <Slots block={block} />
+      </Surface>
+    ),
     reveal: (block) => (
-      <Surface block={block} motionAttr="preset" motion="reveal" duration={760} className="reveal-block">
+      <Surface block={block} motionAttr="preset" motion="reveal" duration={760} mdsRole="reveal" className="reveal-block">
         <Flow block={block} />
       </Surface>
     ),
@@ -290,19 +291,19 @@ export default defineReactTheme({
       </Surface>
     ),
     popover: (block) => (
-      <Surface block={block} as="details" motion="scale-in" duration={520} className="popover rounded-xl border border-border bg-card p-4 shadow-xs">
+      <Surface block={block} as="details" motion="scale-in" duration={520} mdsRole="popover" className="popover rounded-xl border border-border bg-card p-4 shadow-xs">
         <summary>{block.attr("label", "More")}</summary>
         <Flow block={block} className="popover-body" />
       </Surface>
     ),
     tooltip: (block) => (
-      <Surface block={block} as="div" className="tooltip" tabIndex={0}>
+      <Surface block={block} as="div" mdsRole="tooltip" className="tooltip" tabIndex={0}>
         <span className="tooltip-label">{block.attr("label", "Tip")}</span>
         <Flow block={block} className="tooltip-body" />
       </Surface>
     ),
     command: (block) => (
-      <Surface block={block} as="section" className="command">
+      <Surface block={block} as="section" mdsRole="command" className="command">
         <label className="command-search" hidden>
           <span className="field-label">{block.attr("label", "Commands")}</span>
           <input
@@ -357,48 +358,56 @@ export default defineReactTheme({
       </Surface>
     ),
     details: (block) => (
-      <Surface block={block} as="details" motion="fade-up" duration={620} className="mds-details group overflow-hidden border border-border bg-card shadow-xs">
+      <Surface block={block} as="details" motion="fade-up" duration={620} mdsRole="details" className="mds-details group overflow-hidden border border-border bg-card shadow-xs">
         <summary className="cursor-pointer select-none font-medium text-foreground">{block.attr("label", "Details")}</summary>
         <Flow block={block} />
       </Surface>
     ),
     accordion: (block) => (
-      <Surface block={block} motion="fade-up" duration={680} stagger={70} className="mds-accordion overflow-hidden border border-border bg-card">
+      <Surface block={block} motion="fade-up" duration={680} stagger={70} mdsRole="accordion" className="mds-accordion overflow-hidden border border-border bg-card">
         <Slots block={block} />
         <Content block={block} />
       </Surface>
     ),
     tabs: (block) => (
-      <Surface block={block} motion="scale-in" duration={620} className="mds-tabs border border-border bg-card p-3 shadow-xs">
-        <Slots block={block} />
-        <Content block={block} />
+      <Surface block={block} motion="scale-in" duration={620} mdsRole="tabs" className="mds-tabs border border-border bg-card p-3 shadow-xs">
+        <div className="tabs-intro"><Content block={block} /></div>
+        <div className="tabs-panels" data-mds-role="tabs-panels"><Slots block={block} /></div>
       </Surface>
     ),
     carousel: (block) => (
-      <Surface block={block} motion="fade-up" duration={700} stagger={80} className="mds-carousel border border-border bg-card p-4 shadow-xs sm:p-5">
-        <div className="carousel-track">
+      <Surface block={block} motion="fade-up" duration={700} stagger={80} mdsRole="carousel" tabIndex={0} className="mds-carousel border border-border bg-card p-4 shadow-xs sm:p-5">
+        <div className="carousel-track" data-mds-role="carousel-track">
           <Slots block={block} />
           <Content block={block} />
         </div>
-        <div className="carousel-controls" aria-label="Carousel controls">
-          <button className="carousel-previous" type="button" aria-label="Previous item">←</button>
-          <span className="carousel-status" aria-live="polite">1 / 1</span>
-          <button className="carousel-next" type="button" aria-label="Next item">→</button>
+        <div className="carousel-controls" data-mds-role="carousel-controls" aria-label="Carousel controls">
+          <button className="carousel-previous" data-mds-role="carousel-previous" type="button" aria-label="Previous item">←</button>
+          <span className="carousel-status" data-mds-role="carousel-status" aria-live="polite">1 / 1</span>
+          <button className="carousel-next" data-mds-role="carousel-next" type="button" aria-label="Next item">→</button>
         </div>
       </Surface>
     ),
     dialog: (block) => (
-      <Panel block={block} className="mds-dialog mx-auto max-w-2xl ring-1 ring-ring/15" hidden role="dialog" ariaLabel={block.attr("label", "Dialog")} ariaModal>
-        <Flow block={block} />
-      </Panel>
+      <Surface block={block} mdsRole="dialog" className="mds-dialog" hidden role="dialog" ariaLabel={block.attr("label", "Dialog")} ariaModal>
+        <button className="canvas-overlay-backdrop" data-mds-role="overlay-backdrop" data-mds-overlay-close type="button" tabIndex={-1} aria-label="Close dialog" />
+        <div className="mds-dialog-panel mx-auto max-w-2xl rounded-xl border border-border bg-card p-5 shadow-xs ring-1 ring-ring/15" data-mds-role="overlay-panel" tabIndex={-1}>
+          <button className="canvas-overlay-close" data-mds-overlay-close type="button" aria-label="Close dialog">×</button>
+          <Flow block={block} />
+        </div>
+      </Surface>
     ),
     drawer: (block) => (
-      <Surface block={block} as="aside" className="mds-drawer border border-border bg-card p-6 shadow-sm md:ml-auto md:max-w-sm" hidden role="dialog" ariaLabel={block.attr("label", "Drawer")} ariaModal>
-        <Flow block={block} />
+      <Surface block={block} as="aside" mdsRole="drawer" className="mds-drawer" hidden role="dialog" ariaLabel={block.attr("label", "Drawer")} ariaModal>
+        <button className="canvas-overlay-backdrop" data-mds-role="overlay-backdrop" data-mds-overlay-close type="button" tabIndex={-1} aria-label="Close drawer" />
+        <div className="mds-drawer-panel rounded-xl border border-border bg-card p-6 shadow-sm md:max-w-sm" data-mds-role="overlay-panel" tabIndex={-1}>
+          <button className="canvas-overlay-close" data-mds-overlay-close type="button" aria-label="Close drawer">×</button>
+          <Flow block={block} />
+        </div>
       </Surface>
     ),
     form: (block) => (
-      <Surface block={block} as="form" motion="fade-up" duration={700} stagger={70} className="canvas-form grid w-full rounded-xl border border-border bg-card shadow-xs">
+      <Surface block={block} as="form" motion="fade-up" duration={700} stagger={70} mdsRole="form" className="canvas-form grid w-full rounded-xl border border-border bg-card shadow-xs">
         <Flow block={block} />
       </Surface>
     ),

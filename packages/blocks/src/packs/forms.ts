@@ -1,5 +1,5 @@
 import type { ThemeBlockPackSource } from "@mds-crate/theme-loader";
-import { calendarEnhancementsScript } from "../runtime.js";
+import { calendarEnhancementsScript, formEnhancementsScript } from "../runtime.js";
 import { calendarBlockStyles } from "../styles.js";
 
 export const formsBlocks: ThemeBlockPackSource = {
@@ -32,8 +32,8 @@ export const formsBlocks: ThemeBlockPackSource = {
   js: "runtime.js",
   files: {
     "runtime.css": calendarBlockStyles,
-    "runtime.js": calendarEnhancementsScript,
-    "blocks/form.html": `<form{{ attrs }} class="form" method="{{ attr:method:post }}"{{ optional:action:action }}{{ bool:novalidate }}>
+    "runtime.js": [calendarEnhancementsScript, formEnhancementsScript].join("\n"),
+    "blocks/form.html": `<form{{ attrs }} class="form" data-mds-role="form" method="{{ attr:method:post }}"{{ optional:action:action }}{{ bool:novalidate }}>
   {{ children }}
   {{ slots }}
 </form>`,
@@ -46,7 +46,7 @@ export const formsBlocks: ThemeBlockPackSource = {
   {{ children }}
   {{ slots }}
 </div>`,
-    "blocks/field.html": `<div{{ attrs }} class="form-field field"{{ optional:invalid:data-invalid }}>
+    "blocks/field.html": `<div{{ attrs }} class="form-field field" data-mds-role="field"{{ optional:invalid:data-invalid }}>
   {{ children }}
   {{ slots }}
 </div>`,
@@ -89,7 +89,7 @@ export const formsBlocks: ThemeBlockPackSource = {
     {{ children }}
   </datalist>
 </label>`,
-    "blocks/calendar.html": `<div{{ attrs }} class="calendar">
+    "blocks/calendar.html": `<div{{ attrs }} class="calendar" data-mds-role="calendar">
   <label class="calendar-native">
     <span class="field-label">{{ attr:label }}</span>
     <input class="calendar-native-input" type="date"{{ optional:name:name }}{{ optional:value:value }}{{ optional:min:min }}{{ optional:max:max }}{{ bool:required }}{{ bool:disabled }}{{ bool:readonly }}>

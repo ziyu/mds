@@ -14,6 +14,7 @@ const outputDirectory = join(root, ".tmp/visual-smoke");
 const themeNames = ["default", "canvas"] as const;
 const viewports = [
   { name: "mobile", width: 390, height: 844 },
+  { name: "tablet", width: 820, height: 1000 },
   { name: "desktop", width: 1440, height: 1000 }
 ] as const;
 
@@ -54,7 +55,7 @@ interface SharedEnhancementMetrics {
   menubarFloating: boolean;
 }
 
-interface DefaultEnhancementMetrics {
+interface PortableInteractionMetrics {
   tabs: boolean;
   accordion: boolean;
   detailsToggle: boolean;
@@ -64,10 +65,18 @@ interface DefaultEnhancementMetrics {
   dialogBodyLock: boolean;
   dialogFocus: boolean;
   dialogCoversViewport: boolean;
-  dialogClose: boolean;
+  dialogBackgroundInert: boolean;
+  dialogStateClosed: boolean;
+  dialogAriaClosed: boolean;
+  dialogBodyUnlocked: boolean;
+  dialogFocusRestored: boolean;
   drawerOpen: boolean;
   drawerCoversViewport: boolean;
-  drawerClose: boolean;
+  drawerBackgroundInert: boolean;
+  drawerStateClosed: boolean;
+  drawerAriaClosed: boolean;
+  drawerBodyUnlocked: boolean;
+  drawerFocusRestored: boolean;
 }
 
 interface CanvasOverlayMetrics {
@@ -275,6 +284,17 @@ async function captureScreenshot(
       },
       sessionId
     );
+    const initialState = await client.send<{ result: { value: { scrollX: number; scrollY: number; focusIsBody: boolean } } }>(
+      "Runtime.evaluate",
+      {
+        expression: "({scrollX,scrollY,focusIsBody:document.activeElement===document.body})",
+        returnByValue: true
+      },
+      sessionId
+    );
+    if (initialState.result.value.scrollX !== 0 || initialState.result.value.scrollY !== 0 || !initialState.result.value.focusIsBody) {
+      throw new Error(`Unexpected initial navigation state for ${screenshotPath}: ${JSON.stringify(initialState.result.value)}.`);
+    }
     await client.send("Page.enable", {}, sessionId);
     await client.send("Runtime.enable", {}, sessionId);
     const domReady = client.waitForEvent("Page.domContentEventFired", sessionId, 15_000);
@@ -435,17 +455,17 @@ async function captureScreenshot(
           `Shared block enhancement failed for ${screenshotPath}: ${JSON.stringify(remaining)}.`
         );
       }
-      if (themeName === "default") {
-        const defaultEvaluated = await client.send<{ result: { value: DefaultEnhancementMetrics } }>(
+      {
+        const portableEvaluated = await client.send<{ result: { value: PortableInteractionMetrics } }>(
       "Runtime.evaluate",
       {
         expression: `(async () => {
-          const tabsRoot = document.querySelector('.tabs');
-          const tabButtons = [...(tabsRoot?.querySelectorAll('.tab-button') ?? [])];
-          const tabPanels = [...(tabsRoot?.querySelectorAll('.tabs-item') ?? [])];
+          const tabsRoot = document.querySelector('[data-mds-role="tabs"]');
+          const tabButtons = [...(tabsRoot?.querySelectorAll('[data-mds-role="tab"]') ?? [])];
+          const tabPanels = [...(tabsRoot?.querySelectorAll('[data-mds-role="tab-panel"]') ?? [])];
           let tabs = tabButtons.length > 1 && tabButtons.length === tabPanels.length &&
-            tabButtons.every((button, index) => button.id === \`tabs-1-\${index + 1}-tab\`) &&
-            tabPanels.every((panel, index) => panel.id === \`tabs-1-\${index + 1}-panel\`);
+            tabButtons.every((button, index) => button.getAttribute('aria-controls') === tabPanels[index]?.id) &&
+            tabPanels.every((panel, index) => panel.getAttribute('aria-labelledby') === tabButtons[index]?.id);
           if (tabs && tabButtons[0] instanceof HTMLElement && tabButtons[1] instanceof HTMLElement) {
             tabButtons[0].focus();
             tabButtons[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
@@ -455,10 +475,10 @@ async function captureScreenshot(
               tabPanels[1] instanceof HTMLElement && !tabPanels[1].hidden;
           }
 
-          const accordionRoot = document.querySelector('.accordion');
-          const accordionButtons = [...(accordionRoot?.querySelectorAll('.accordion-button') ?? [])];
-          const accordionPanels = [...(accordionRoot?.querySelectorAll('.accordion-panel') ?? [])];
-          let accordion = accordionRoot instanceof HTMLElement && accordionRoot.classList.contains('is-enhanced') &&
+          const accordionRoot = document.querySelector('[data-mds-role="accordion"]');
+          const accordionButtons = [...(accordionRoot?.querySelectorAll('[data-mds-role="accordion-trigger"]') ?? [])];
+          const accordionPanels = [...(accordionRoot?.querySelectorAll('[data-mds-role="accordion-panel"]') ?? [])];
+          let accordion = accordionRoot instanceof HTMLElement && accordionRoot.dataset.mdsAccordion === 'true' &&
             accordionButtons.length > 1 && accordionButtons.length === accordionPanels.length &&
             accordionButtons[0]?.getAttribute('aria-expanded') === 'true' &&
             accordionPanels[0] instanceof HTMLElement && !accordionPanels[0].hidden;
@@ -482,12 +502,12 @@ async function captureScreenshot(
 
           const commandAction = document.querySelector('button.action.command');
           const commandActions = commandAction instanceof HTMLButtonElement &&
-            getComputedStyle(commandAction).display === 'inline-flex' &&
-            commandAction.closest('section.command') === null;
+            commandAction.closest('[data-mds-role="command"]') === null &&
+            commandAction.dataset.mdsCommand === undefined;
 
           const coversViewport = (overlay) => {
             if (!(overlay instanceof HTMLElement)) return false;
-            const backdrop = overlay.querySelector('.dialog-backdrop, .drawer-backdrop');
+            const backdrop = overlay.querySelector('[data-mds-role="overlay-backdrop"]');
             if (!(backdrop instanceof HTMLElement)) return false;
             const rootRect = overlay.getBoundingClientRect();
             const backdropRect = backdrop.getBoundingClientRect();
@@ -503,13 +523,15 @@ async function captureScreenshot(
           const dialogClass = dialogRoot instanceof HTMLElement && dialogRoot.classList.contains('is-open');
           const dialogAria = dialogRoot instanceof HTMLElement && dialogRoot.getAttribute('aria-hidden') === 'false';
           const dialogBodyLock = document.body.classList.contains('has-overlay');
+          const dialogBackgroundInert = dialogTrigger instanceof HTMLElement && Boolean(dialogTrigger.closest('[inert]'));
           const dialogFocus = dialogTrigger instanceof HTMLElement && dialogRoot instanceof HTMLElement &&
             dialogRoot.contains(document.activeElement);
           const dialogCoversViewport = coversViewport(dialogRoot);
-          dialogRoot?.querySelector('[data-overlay-close]')?.click();
-          const dialogClose = dialogRoot instanceof HTMLElement && !dialogRoot.classList.contains('is-open') &&
-            dialogRoot.getAttribute('aria-hidden') === 'true' && !document.body.classList.contains('has-overlay') &&
-            document.activeElement === dialogTrigger;
+          dialogRoot?.querySelector('[data-mds-overlay-close]')?.click();
+          const dialogStateClosed = dialogRoot instanceof HTMLElement && dialogRoot.hidden && !dialogRoot.classList.contains('is-open');
+          const dialogAriaClosed = dialogRoot instanceof HTMLElement && dialogRoot.getAttribute('aria-hidden') === 'true';
+          const dialogBodyUnlocked = !document.body.classList.contains('has-overlay');
+          const dialogFocusRestored = document.activeElement === dialogTrigger;
 
           const drawerTrigger = document.querySelector('[data-action="show"][data-target="componentDrawer"]');
           const drawerRoot = document.querySelector('#componentDrawer');
@@ -519,23 +541,25 @@ async function captureScreenshot(
             drawerRoot.classList.contains('is-open') && drawerRoot.getAttribute('aria-hidden') === 'false' &&
             document.body.classList.contains('has-overlay') && drawerRoot.contains(document.activeElement);
           const drawerCoversViewport = coversViewport(drawerRoot);
+          const drawerBackgroundInert = drawerTrigger instanceof HTMLElement && Boolean(drawerTrigger.closest('[inert]'));
           document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-          const drawerClose = drawerRoot instanceof HTMLElement && !drawerRoot.classList.contains('is-open') &&
-            drawerRoot.getAttribute('aria-hidden') === 'true' && !document.body.classList.contains('has-overlay') &&
-            document.activeElement === drawerTrigger;
+          const drawerStateClosed = drawerRoot instanceof HTMLElement && drawerRoot.hidden && !drawerRoot.classList.contains('is-open');
+          const drawerAriaClosed = drawerRoot instanceof HTMLElement && drawerRoot.getAttribute('aria-hidden') === 'true';
+          const drawerBodyUnlocked = !document.body.classList.contains('has-overlay');
+          const drawerFocusRestored = document.activeElement === drawerTrigger;
 
           window.scrollTo(0, 0);
-          return { tabs, accordion, detailsToggle, commandActions, dialogClass, dialogAria, dialogBodyLock, dialogFocus, dialogCoversViewport, dialogClose, drawerOpen, drawerCoversViewport, drawerClose };
+          return { tabs, accordion, detailsToggle, commandActions, dialogClass, dialogAria, dialogBodyLock, dialogFocus, dialogCoversViewport, dialogBackgroundInert, dialogStateClosed, dialogAriaClosed, dialogBodyUnlocked, dialogFocusRestored, drawerOpen, drawerCoversViewport, drawerBackgroundInert, drawerStateClosed, drawerAriaClosed, drawerBodyUnlocked, drawerFocusRestored };
         })()`,
         awaitPromise: true,
         returnByValue: true
       },
       sessionId
     );
-        const defaultEnhancements = defaultEvaluated.result.value;
-        if (Object.values(defaultEnhancements).some((value) => !value)) {
+        const portableEnhancements = portableEvaluated.result.value;
+        if (Object.values(portableEnhancements).some((value) => !value)) {
           throw new Error(
-            `Default theme enhancement failed for ${screenshotPath}: ${JSON.stringify(defaultEnhancements)}.`
+            `Portable interaction enhancement failed for ${screenshotPath}: ${JSON.stringify(portableEnhancements)}.`
           );
         }
       }
@@ -553,7 +577,10 @@ async function captureScreenshot(
                 }
                 return false;
               };
-              const pointerShielded = () => document.elementFromPoint(8, 8) === document.body;
+              const pointerShielded = (overlay) => {
+                const hit = document.elementFromPoint(8, 8);
+                return hit instanceof HTMLElement && hit.matches('[data-mds-role="overlay-backdrop"]') && overlay.contains(hit);
+              };
               const overlayTopmost = (overlay) => {
                 if (!(overlay instanceof HTMLElement)) return false;
                 const rect = overlay.getBoundingClientRect();
@@ -569,9 +596,9 @@ async function captureScreenshot(
               await nextFrames();
               const dialogPortaled = dialogRoot instanceof HTMLElement && dialogRoot.parentElement === document.body;
               const dialogPanelTopmost = overlayTopmost(dialogRoot);
-              const dialogPointerShield = pointerShielded();
+              const dialogPointerShield = dialogRoot instanceof HTMLElement && pointerShielded(dialogRoot);
               const dialogBackgroundInert = dialogTrigger instanceof HTMLElement && hasInertAncestor(dialogTrigger);
-              document.body.click();
+              dialogRoot?.querySelector('[data-mds-role="overlay-backdrop"]')?.click();
               const dialogBackdropClose = dialogRoot instanceof HTMLElement && dialogRoot.hidden;
               const dialogRestoresBackground = dialogTrigger instanceof HTMLElement && !hasInertAncestor(dialogTrigger);
 
@@ -581,9 +608,9 @@ async function captureScreenshot(
               await nextFrames();
               const drawerPortaled = drawerRoot instanceof HTMLElement && drawerRoot.parentElement === document.body;
               const drawerPanelTopmost = overlayTopmost(drawerRoot);
-              const drawerPointerShield = pointerShielded();
+              const drawerPointerShield = drawerRoot instanceof HTMLElement && pointerShielded(drawerRoot);
               const drawerBackgroundInert = drawerTrigger instanceof HTMLElement && hasInertAncestor(drawerTrigger);
-              document.body.click();
+              drawerRoot?.querySelector('[data-mds-role="overlay-backdrop"]')?.click();
               const drawerBackdropClose = drawerRoot instanceof HTMLElement && drawerRoot.hidden;
               const drawerRestoresBackground = drawerTrigger instanceof HTMLElement && !hasInertAncestor(drawerTrigger);
 
@@ -603,16 +630,16 @@ async function captureScreenshot(
         }
       }
     }
-    if (verifyMotion && themeName === "default") {
+    if (verifyMotion) {
       const motionEvaluated = await client.send<{ result: { value: MotionEnhancementMetrics } }>(
         "Runtime.evaluate",
         {
           expression: `(async () => {
             const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
-            const hero = document.querySelector('.hero[data-attr-motion]');
-            const reveal = document.querySelector('.reveal');
-            const scene = document.querySelector('.scene');
-            const group = document.querySelector('.motion');
+            const hero = document.querySelector('[data-attr-motion][data-attr-trigger="load"]');
+            const reveal = document.querySelector('[data-mds-role="reveal"]');
+            const scene = document.querySelector('[data-mds-role="scene"]');
+            const group = document.querySelector('[data-mds-role="motion"]');
             const items = [...(group?.children ?? [])];
 
             const normalBlockAttrs = hero instanceof HTMLElement &&
@@ -643,10 +670,20 @@ async function captureScreenshot(
             const staggerCompletes = items.length === 3 &&
               items.every((item) => Number.parseFloat(getComputedStyle(item).opacity) > 0.98);
 
-            document.documentElement.style.scrollBehavior = 'auto';
-            window.scrollTo(0, 0);
+            if (group instanceof HTMLElement) {
+              group.style.transition = 'none';
+              group.style.transform = 'translateY(-100000px)';
+              window.dispatchEvent(new Event('scroll'));
+            }
             await wait(220);
             const replays = group instanceof HTMLElement && !group.classList.contains('is-visible');
+            if (group instanceof HTMLElement) {
+              group.style.removeProperty('transition');
+              group.style.removeProperty('transform');
+            }
+            window.scrollTo(0, 0);
+            window.dispatchEvent(new Event('scroll'));
+            await wait(1_050);
             return { normalBlockAttrs, revealPreset, scenePreset, staggerConfigured, entersViewport, staggerCompletes, replays };
           })()`,
           awaitPromise: true,
@@ -656,7 +693,7 @@ async function captureScreenshot(
       );
       const motion = motionEvaluated.result.value;
       if (Object.values(motion).some((value) => !value)) {
-        throw new Error(`Default motion enhancement failed for ${screenshotPath}: ${JSON.stringify(motion)}.`);
+        throw new Error(`Portable motion enhancement failed for ${screenshotPath}: ${JSON.stringify(motion)}.`);
       }
     }
     const evaluated = await client.send<{ result: { value: LayoutMetrics } }>(

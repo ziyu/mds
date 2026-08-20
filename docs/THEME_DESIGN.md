@@ -522,8 +522,12 @@ Rules:
 
 - MDS does not execute arbitrary user-defined JavaScript from documents.
 - Unknown non-native actions render but warn.
-- Themes declare handled actions in `theme.json#actions`.
+- The composed artifact declares handled actions in `theme.json#actions`.
+- Shared block packs own portable primitive actions and interaction state; themes must not redefine the same action with theme-dependent semantics.
+- Themes may own actions for theme-specific extensions, while applications own business actions and external side effects.
 - Applications may also provide known action names to suppress warnings.
+
+The same source changing themes may change presentation, but it must not change the baseline meaning, keyboard behavior, focus behavior, or visibility state machine of a shared block. See [BLOCK_LAYER.md](./BLOCK_LAYER.md#responsibility-decision) for the ownership model and conformance requirements.
 
 ## Development Modes
 

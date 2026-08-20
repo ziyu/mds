@@ -1425,7 +1425,7 @@ th {
   color: var(--muted);
 }
 
-.tabs-list {
+.mds-tabs-list {
   display: flex;
   overflow-x: auto;
   gap: 1.1rem;
@@ -1433,7 +1433,7 @@ th {
   scrollbar-width: thin;
 }
 
-.tab-button {
+.mds-tab {
   position: relative;
   flex: 0 0 auto;
   min-height: 2.5rem;
@@ -1445,7 +1445,7 @@ th {
   cursor: pointer;
 }
 
-.tab-button::after {
+.mds-tab::after {
   position: absolute;
   right: 0;
   bottom: -1px;
@@ -1455,15 +1455,15 @@ th {
   content: "";
 }
 
-.tab-button:hover {
+.mds-tab:hover {
   color: var(--text);
 }
 
-.tab-button[aria-selected="true"] {
+.mds-tab[aria-selected="true"] {
   color: var(--accent);
 }
 
-.tab-button[aria-selected="true"]::after {
+.mds-tab[aria-selected="true"]::after {
   background: var(--accent);
 }
 
@@ -1494,16 +1494,11 @@ th {
   font: 700 0.82rem/1.4 var(--font-ui);
 }
 
-.accordion.is-enhanced .accordion-item::before {
+.accordion[data-mds-accordion="true"] .accordion-item::before {
   display: none;
 }
 
-.accordion-heading {
-  max-width: none;
-  margin: 0;
-}
-
-.accordion-button {
+.mds-accordion-trigger {
   display: flex;
   gap: 0.75rem;
   align-items: center;
@@ -1519,31 +1514,32 @@ th {
   cursor: pointer;
 }
 
-.accordion-button::after {
+.mds-accordion-trigger > [data-mds-role="accordion-marker"] {
   color: var(--accent);
-  content: "+";
   font-size: 1.05rem;
   font-weight: 500;
 }
 
-.accordion-button[aria-expanded="true"]::after {
-  content: "−";
-}
-
-.accordion-panel {
+.mds-accordion-panel {
   padding: 0 0 1rem;
   color: var(--muted);
 }
 
-.accordion-panel > :first-child {
+.mds-accordion-panel > :first-child {
   margin-top: 0;
 }
 
-.accordion-panel > :last-child {
+.mds-accordion-panel > :last-child {
   margin-bottom: 0;
 }
 
 .carousel {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.carousel-track {
   display: grid;
   grid-auto-columns: minmax(min(82vw, 18rem), 24rem);
   grid-auto-flow: column;
@@ -1554,8 +1550,37 @@ th {
   scrollbar-width: thin;
 }
 
-.carousel > * {
+.carousel-track > * {
   scroll-snap-align: start;
+}
+
+.carousel-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.carousel-controls button {
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.carousel-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.carousel-status {
+  min-width: 4rem;
+  color: var(--muted);
+  font: 650 0.74rem/1 var(--font-ui);
+  text-align: center;
 }
 
 .dialog,

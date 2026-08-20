@@ -1,7 +1,7 @@
 import { createEnhancementScript } from "./create-script.js";
 
 const implementation = String.raw`  function setupToggles() {
-    for (const toggle of document.querySelectorAll("button.toggle-control[aria-pressed]")) {
+    for (const toggle of document.querySelectorAll("button[data-mds-role='toggle'][aria-pressed], button.toggle-control[aria-pressed]")) {
       if (!(toggle instanceof HTMLButtonElement) || toggle.dataset.mdsToggle === "true") {
         continue;
       }

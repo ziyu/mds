@@ -18,6 +18,7 @@ export function Surface(props: {
   role?: React.AriaRole | undefined;
   ariaLabel?: string | undefined;
   ariaModal?: boolean | undefined;
+  mdsRole?: string | undefined;
   children?: React.ReactNode;
 }) {
   const hiddenProps = props.hidden === undefined ? {} : { hidden: props.hidden };
@@ -37,6 +38,7 @@ export function Surface(props: {
       role={props.role}
       aria-label={props.ariaLabel}
       aria-modal={props.ariaModal}
+      data-mds-role={props.mdsRole}
       {...hiddenProps}
     >
       {props.children ?? <Flow block={props.block} />}
@@ -100,6 +102,7 @@ export function Panel(props: {
   role?: React.AriaRole | undefined;
   ariaLabel?: string | undefined;
   ariaModal?: boolean | undefined;
+  mdsRole?: string | undefined;
   children?: React.ReactNode;
 }) {
   const hiddenProps = props.hidden === undefined ? {} : { hidden: props.hidden };
@@ -112,6 +115,7 @@ export function Panel(props: {
       role={props.role}
       ariaLabel={props.ariaLabel}
       ariaModal={props.ariaModal}
+      mdsRole={props.mdsRole}
       {...hiddenProps}
     >
       {props.children ?? <Flow block={props.block} />}

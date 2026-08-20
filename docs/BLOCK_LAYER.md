@@ -4,7 +4,7 @@ This document defines the shared blocks layer that sits between MDS syntax and i
 
 The short version:
 
-**The block layer provides portable UI primitives. Themes compose those primitives, own higher-level content patterns, and still build to plain runtime artifacts.**
+**The block layer is the portable UI kernel: it provides primitive semantics, native-first templates, structural CSS, and shared baseline behavior. Themes compose those primitives, own visual expression and higher-level content patterns, and still build to plain runtime artifacts.**
 
 MDS already treats every extensible component as a block. The next step is to make the common block vocabulary reusable across themes without copying `blocks/*.html` into every theme directory.
 
@@ -17,10 +17,11 @@ MDS already treats every extensible component as a block. The next step is to ma
 - Keep file-based themes approachable for authors who do not use TypeScript, JSX, or a package builder.
 - Let package themes author rich blocks through SDKs, then build to the same artifact format.
 - Make block support inspectable and testable.
+- Keep portable interaction semantics identical when the same document changes themes.
 
 ## Non-Goals
 
-- Do not add a browser component runtime.
+- Do not add a framework, virtual DOM, custom-element system, or application runtime to generated pages. Small pack-owned progressive-enhancement scripts are allowed when native HTML alone cannot provide the declared behavior.
 - Do not make React, JSX, Tailwind, or package tooling part of MDS runtime.
 - Do not make the parser know every standard block name.
 - Do not require every theme to implement every shared block.
@@ -57,7 +58,7 @@ blocks/
 metadata.json
 ```
 
-A block pack is not a runtime component library. It is merged into a theme source before rendering or before writing a built artifact.
+A block pack is not a framework component library. It is merged into a theme source before rendering or before writing a built artifact, and may contribute small de-duplicated CSS and JavaScript assets for portable behavior.
 
 **Block profile**
 
@@ -98,6 +99,72 @@ The parser only preserves `blockType`, `name`, `id`, `attrs`, slots, and childre
 The renderer remains narrow. It receives an `HtmlTheme` and renders block nodes through the merged renderer map.
 
 The loader or builder owns block pack composition because it already owns artifact interpretation and block template discovery.
+
+## Responsibility Decision
+
+The blocks layer should own more than template contracts. It is the single source of truth for behavior that must remain stable when a document switches themes.
+
+| Layer | Owns | Must Not Own |
+| --- | --- | --- |
+| Parser and renderer core | Syntax, AST preservation, escaping, safe fallback rendering, template expansion. | Component state machines, theme layout, or application workflows. |
+| `@mds-crate/blocks` | Primitive vocabulary, minimal templates, native semantics, ARIA, stable runtime hooks, structural CSS, keyboard/focus behavior, and built-in `open`, `close`, `show`, `hide`, and `toggle` behavior. | Brand styling, editorial composition, business actions, remote data, or persistence. |
+| Theme | Tokens, typography, color, spacing, responsive layout, decorative surfaces, visual motion presets, and higher-level theme-specific blocks. | Reimplementing shared primitive state machines or changing their meaning. |
+| Application | Business actions, routing decisions, analytics, submission handlers, remote data, persistence, permissions, and product state. | Silently changing block semantics based on the selected theme. |
+
+This is a portability rule, not an attempt to build a client framework. The final artifact remains plain HTML, CSS, and optional JavaScript. Shared JavaScript should be small, event-delegated where appropriate, and scoped to explicit block runtime hooks.
+
+### Behavior The Blocks Layer Must Own
+
+The following behavior belongs in shared packs because it has one portable meaning:
+
+- intrinsic pressed state for targetless `toggle` controls;
+- target state for built-in `open`, `close`, `show`, `hide`, and `toggle` actions;
+- `tabs` selection, keyboard navigation, panel visibility, and ARIA relationships;
+- `accordion` expansion, keyboard behavior, and panel visibility;
+- `carousel` index state, next/previous controls, and scrolling confined to the carousel track;
+- `dialog` and `drawer` visibility, Escape handling, focus trapping and restoration, background inertness, and viewport-level interaction shielding;
+- dropdown, context-menu, and menubar positioning and keyboard behavior;
+- command filtering and calendar value/keyboard behavior;
+- motion trigger lifecycle, reduced-motion handling, `once`, delay, duration, and stagger state. Themes still own the visual preset, easing, transforms, and keyframes;
+- initialization safety: shared enhancements must not scroll the page, steal focus, open transient UI, or resize surrounding layout without an author request or user action.
+
+Native HTML remains the first choice. A shared runtime is justified only when the declared primitive cannot meet its contract with native behavior and structural CSS alone.
+
+### Behavior Themes And Applications Keep
+
+Themes keep behavior only when it is part of a theme-owned extension or visual expression, for example a Rich gallery lightbox transition, a theme-specific data visualization, or the keyframes behind `fade-up`.
+
+Applications keep actions such as `lead.submit`, `analytics.track`, authentication, network requests, persistence, and product-specific navigation. The blocks package may preserve and dispatch their metadata, but it must not implement their business meaning.
+
+### Stable Runtime Hooks
+
+Shared behavior must target semantic hooks instead of theme class names. The migration target is a small set of stable attributes such as `data-mds-role`, `data-mds-state`, `data-action`, `data-target`, and native ARIA attributes.
+
+- Classes are primarily presentation hooks and may be restyled by themes.
+- Shared runtime must not depend on a theme-specific DOM wrapper or sibling order.
+- Theme template overrides must preserve required runtime hooks and native relationships.
+- Builder inspection and conformance tests should reject an override that removes required hooks for a block whose shared behavior is enabled.
+- Runtime state must use native properties and attributes such as `hidden`, `open`, `aria-pressed`, `aria-expanded`, and `aria-hidden` as the source of truth. A class such as `is-open` may mirror state for styling, but must not be the only behavioral state.
+
+## Theme Conformance Contract
+
+A theme is not complete merely because it builds or renders every block name. Every official and publishable third-party theme should pass the same conformance runner.
+
+The runner should render focused fixtures for every selected pack across mobile, tablet, and desktop viewports and verify:
+
+- the semantic minimum invariant, including omitted optional labels and content;
+- no initial page scroll or unexpected focus movement;
+- no horizontal viewport overflow;
+- stable control height, alignment, and popup geometry;
+- popup content does not resize its trigger or surrounding layout;
+- overlays cover the viewport, remain above their backdrop, and block background interaction;
+- built-in actions and ARIA state behave identically across themes;
+- keyboard navigation and focus restoration;
+- reduced-motion behavior;
+- no browser console errors;
+- screenshots against reviewed visual baselines.
+
+The editor Components page remains a showcase and broad integration fixture. It must not be the only test. Each primitive also needs isolated fixtures for its default, minimal, unlabeled, long-content, disabled, invalid, open, nested, and adjacent states where those states apply.
 
 ## Initial Implementation
 
@@ -199,8 +266,8 @@ Rules:
 - Pack templates use the same placeholders as theme templates: `{{ attrs }}`, `{{ children }}`, `{{ slots }}`, `{{ slot:name }}`, `{{ attr:name:fallback }}`, `{{ optional:source:html-name }}`, and `{{ bool:name }}`.
 - Pack templates should prefer readable native HTML and safe fallbacks.
 - Pack templates should avoid visual styling that forces one specific theme aesthetic.
-- Pack CSS should be optional. The preferred first version is structural templates plus class names that themes style.
-- Pack JavaScript should be avoided unless a profile explicitly declares progressive enhancement behavior.
+- Pack CSS should stay structural: state visibility, containment, native fallback behavior, and geometry required for correct interaction. It must not impose a brand aesthetic.
+- Pack JavaScript should own portable progressive enhancement. It must not implement business workflows or theme-specific visual effects.
 
 ## Profiles
 
@@ -322,7 +389,15 @@ For editor development mode, the dev server may compose pack sources before send
 
 7. **Add visual smoke tests**
 
-   Status: implemented through `pnpm test:visual`. The Components gallery covers exactly the 64 shared blocks and renders through `default` at 390x844 and 1440x1000. Chrome DevTools Protocol captures PNGs and fails on horizontal overflow, missing shared enhancement behavior, or render diagnostics.
+   Status: partially implemented through `pnpm test:visual`. The Components gallery covers exactly the 64 shared blocks and exercises `default` and `canvas` at 390x844, 820x1000, and 1440x1000. Chrome DevTools Protocol captures PNGs and rejects initial scroll/focus movement, horizontal overflow, broken menu geometry, inconsistent shared state, overlay coverage/inertness/focus failures, or render diagnostics. The Motion fixture separately checks timing, stagger, reduced trigger state, and replay across both themes. It does not yet provide complete official-theme coverage, per-block isolated fixtures, or reviewed screenshot-diff baselines.
+
+8. **Move portable state machines into blocks**
+
+   Status: implemented for the shared primitive set. Controls, native target actions, form validation state, calendar, command, tabs, accordion, carousel, dialog, drawer, dropdown, context-menu, menubar, and motion lifecycle now come from pack-owned runtime assets. `default` and `canvas` preserve stable `data-mds-role` hooks and no longer duplicate those state machines. Canvas keeps only its theme-owned code-group, gallery-lightbox, and video enhancements.
+
+9. **Add a conformance runner and release gate**
+
+   Status: planned. It should execute focused fixtures against every official theme and become mandatory in CI, theme scaffolds, and official theme release checks.
 
 ## Compatibility
 
@@ -336,7 +411,7 @@ For editor development mode, the dev server may compose pack sources before send
 ## Open Questions
 
 - Should block pack references live in `theme.json`, package config, SDK source definitions, or all three?
-- Should pack CSS ever be merged automatically, or should packs only provide structural HTML templates?
 - Should `supportedBlocks` default to the composed template list when omitted?
 - Should pack profiles be versioned independently from theme manifest version?
-- How should inspect output show template provenance without making the runtime artifact more complex?
+- How should inspect output show template and runtime provenance without making the runtime artifact more complex?
+- Which stable `data-mds-*` hooks should be part of the versioned override contract?

@@ -51,17 +51,6 @@ body.has-overlay {
   overflow: hidden;
 }
 
-body.has-overlay::after {
-  position: fixed;
-  z-index: 60;
-  inset: 0;
-  background: oklch(0.2 0.018 72 / 0.32);
-  backdrop-filter: blur(2px);
-  content: "";
-  cursor: default;
-  pointer-events: auto;
-}
-
 [hidden] {
   display: none !important;
 }
@@ -130,12 +119,12 @@ body::before {
 @keyframes dialog-pop {
   from {
     opacity: 0;
-    transform: translate3d(-50%, calc(-50% + 1rem), 0) scale(0.97);
+    transform: translate3d(0, 1rem, 0) scale(0.97);
   }
 
   to {
     opacity: 1;
-    transform: translate3d(-50%, -50%, 0) scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
@@ -925,27 +914,68 @@ blockquote p {
 .mds-dialog:not([hidden]),
 .mds-drawer:not([hidden]) {
   z-index: 70;
+  display: grid;
+  overflow: hidden;
+}
+
+.canvas-overlay-backdrop {
+  border: 0;
+  background: oklch(0.2 0.018 72 / 0.32);
+  cursor: default;
+  backdrop-filter: blur(2px);
+}
+
+.mds-dialog-panel,
+.mds-drawer-panel {
   overflow: auto;
   border-color: color-mix(in oklab, var(--color-primary), var(--color-border) 60%);
+  background: var(--color-card);
   box-shadow: 0 28px 80px oklch(0.2 0.018 72 / 0.24);
 }
 
 .mds-dialog:not([hidden]) {
-  position: fixed;
-  top: 50%;
-  left: 50%;
+  place-items: center;
+  padding: 1rem;
+}
+
+.mds-dialog-panel {
   width: min(42rem, calc(100vw - 2rem));
   max-height: min(78vh, 48rem);
-  transform: translate3d(-50%, -50%, 0);
 }
 
 .mds-drawer:not([hidden]) {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  bottom: 1rem;
+  justify-items: end;
+  padding: 1rem;
+}
+
+.mds-drawer-panel {
+  height: 100%;
   width: min(26rem, calc(100vw - 2rem));
   max-width: none;
+}
+
+.canvas-overlay-close {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  float: right;
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: -0.35rem -0.35rem 0.5rem 0.75rem;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-card);
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+  font: 500 1.15rem/1 ui-sans-serif, sans-serif;
+}
+
+.canvas-overlay-close:hover,
+.canvas-overlay-close:focus-visible {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 details[open] > .mds-flow {
@@ -998,7 +1028,7 @@ details > summary:hover {
   content: "−";
 }
 
-.canvas-tablist {
+.mds-tabs-list {
   display: flex;
   gap: 0.25rem;
   overflow-x: auto;
@@ -1006,7 +1036,7 @@ details > summary:hover {
   padding: 0 0.15rem 0.65rem;
 }
 
-.canvas-tab {
+.mds-tab {
   flex: 0 0 auto;
   border: 1px solid transparent;
   border-radius: 0.32rem;
@@ -1019,19 +1049,19 @@ details > summary:hover {
   font-weight: 680;
 }
 
-.canvas-tab:hover,
-.canvas-tab:focus-visible {
+.mds-tab:hover,
+.mds-tab:focus-visible {
   background: var(--color-muted);
   color: var(--color-foreground);
 }
 
-.canvas-tab[aria-selected="true"] {
+.mds-tab[aria-selected="true"] {
   border-color: var(--color-primary);
   background: var(--color-primary);
   color: var(--color-primary-foreground);
 }
 
-.canvas-tab-panel {
+.mds-tab-panel {
   margin-top: 0.75rem;
   border: 0;
   background: transparent;
@@ -1039,11 +1069,11 @@ details > summary:hover {
   box-shadow: none;
 }
 
-.canvas-tab-panel::before {
+.mds-tab-panel::before {
   display: none;
 }
 
-.accordion-trigger {
+.mds-accordion-trigger {
   display: flex;
   width: 100%;
   align-items: center;
@@ -1060,23 +1090,23 @@ details > summary:hover {
   font-weight: 680;
 }
 
-.accordion-trigger:first-child {
+.mds-accordion-trigger:first-child {
   border-top: 0;
 }
 
-.accordion-trigger:hover,
-.accordion-trigger:focus-visible,
-.accordion-trigger[aria-expanded="true"] {
+.mds-accordion-trigger:hover,
+.mds-accordion-trigger:focus-visible,
+.mds-accordion-trigger[aria-expanded="true"] {
   background: color-mix(in oklab, var(--color-primary), transparent 92%);
 }
 
-.accordion-trigger > :last-child {
+.mds-accordion-trigger > :last-child {
   color: var(--canvas-mark);
   font-family: ui-monospace, monospace;
   font-size: 1.15rem;
 }
 
-.accordion-panel {
+.mds-accordion-panel {
   border: 0;
   border-top: 1px solid var(--color-border);
   border-radius: 0;
@@ -1085,7 +1115,7 @@ details > summary:hover {
   box-shadow: none;
 }
 
-.accordion-panel::before {
+.mds-accordion-panel::before {
   display: none;
 }
 
@@ -1104,7 +1134,7 @@ details > summary:hover {
   scrollbar-width: thin;
 }
 
-.carousel-track > .canvas-carousel-item {
+.carousel-track > [data-mds-role="carousel-item"] {
   flex: 0 0 min(82vw, 24rem);
   scroll-snap-align: start;
 }
@@ -2182,7 +2212,7 @@ section.command {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  body.has-overlay::after {
+  .canvas-overlay-backdrop {
     animation: overlay-backdrop-in 180ms ease both;
   }
 
@@ -2190,11 +2220,11 @@ section.command {
     animation: hero-sheen 1.45s cubic-bezier(0.22, 1, 0.36, 1) 700ms 1 both;
   }
 
-  .mds-dialog:not([hidden])[data-overlay-open="true"] {
+  .mds-dialog:not([hidden])[data-overlay-open="true"] .mds-dialog-panel {
     animation: dialog-pop 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
-  .mds-drawer:not([hidden])[data-overlay-open="true"] {
+  .mds-drawer:not([hidden])[data-overlay-open="true"] .mds-drawer-panel {
     animation: drawer-slide 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 

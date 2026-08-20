@@ -1,7 +1,7 @@
 import { createEnhancementScript } from "./create-script.js";
 
 const implementation = String.raw`  function setupCalendars() {
-    for (const calendar of document.querySelectorAll(".calendar")) {
+    for (const calendar of document.querySelectorAll("[data-mds-role='calendar'], .calendar")) {
       if (!(calendar instanceof HTMLElement) || calendar.dataset.mdsCalendar === "true") {
         continue;
       }

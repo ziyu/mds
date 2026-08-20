@@ -101,7 +101,7 @@ describe("editor examples", () => {
     expect(result.html).not.toContain('class="terminal"');
     expect(result.html).not.toContain("{{ attr:");
     expectCompactModeToBeIntrinsic(result.html);
-    expect(theme.js).toContain(": target.hidden;");
+    expect(theme.js).toContain("function setTargetState(target, open, trigger)");
     expect(theme.js).toContain("target.hidden = !open;");
   });
 

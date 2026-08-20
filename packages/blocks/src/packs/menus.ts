@@ -20,27 +20,27 @@ export const menuBlocks: ThemeBlockPackSource = {
   files: {
     "runtime.css": menuBlockStyles,
     "runtime.js": menuEnhancementsScript,
-    "blocks/dropdown.html": `<details{{ attrs }} class="dropdown-menu"{{ bool:open }}>
+    "blocks/dropdown.html": `<details{{ attrs }} class="dropdown-menu" data-mds-role="dropdown"{{ bool:open }}>
   <summary>{{ attr:label:Menu }}</summary>
   <div class="dropdown-menu-content">
     {{ children }}
     {{ slots }}
   </div>
 </details>`,
-    "blocks/context-menu.html": `<details{{ attrs }} class="context-menu"{{ bool:open }}>
+    "blocks/context-menu.html": `<details{{ attrs }} class="context-menu" data-mds-role="context-menu"{{ bool:open }}>
   <summary class="context-menu-trigger">{{ attr:label:Open menu }}</summary>
   <div class="context-menu-content">
     {{ children }}
     {{ slots }}
   </div>
 </details>`,
-    "blocks/menubar.html": `<nav{{ attrs }} class="menubar" aria-label="{{ attr:label:Application menu }}">
+    "blocks/menubar.html": `<nav{{ attrs }} class="menubar" data-mds-role="menubar" aria-label="{{ attr:label:Application menu }}">
   <div class="menubar-list" role="menubar">
     {{ children }}
     {{ slots }}
   </div>
 </nav>`,
-    "blocks/menu.html": `<ul{{ attrs }} class="menu-list" aria-label="{{ attr:label:Menu }}">
+    "blocks/menu.html": `<ul{{ attrs }} class="menu-list" data-mds-role="menu" aria-label="{{ attr:label:Menu }}">
   {{ children }}
 </ul>`,
     "blocks/menu-group.html": `<li{{ attrs }} class="menu-group">
@@ -49,7 +49,7 @@ export const menuBlocks: ThemeBlockPackSource = {
     {{ children }}
   </ul>
 </li>`,
-    "blocks/menu-item.html": `<li{{ attrs }} class="menu-item">
+    "blocks/menu-item.html": `<li{{ attrs }} class="menu-item" data-mds-role="menu-item">
   <button type="button" class="action menu-item-control"{{ optional:action:data-action }}{{ optional:target:data-target }}{{ bool:disabled }}>
     <span class="menu-item-label">{{ attr:label:Item }}</span>
     <kbd class="menu-item-shortcut">{{ attr:shortcut }}</kbd>

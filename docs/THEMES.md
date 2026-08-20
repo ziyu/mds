@@ -130,7 +130,7 @@ Rules:
 - Paths are relative POSIX paths inside the theme directory. Leading `./`, internal `.` segments, and repeated `/` separators are normalized away.
 - `version` is optional. When present, use `1`.
 - `theme.json` is reserved for the manifest and must not appear in `files`.
-- `actions` declares commands handled by theme JavaScript. It does not define application logic.
+- `actions` declares commands handled by the composed artifact. Built-in primitive actions normally come from shared block packs; theme-owned and application-owned actions must remain explicit. The field does not define application logic.
 - `actions` and `supportedBlocks` should be unique. Duplicates produce warnings and the first entry wins.
 - Generated HTML should use normal class names such as `page`, `hero`, and `card`. Themes should not add an `mds-` prefix unless they intentionally want one.
 - Theme-owned components are ordinary block templates. A custom component such as `kanban-column` or a motion primitive such as `motion` is registered the same way as `hero` or `card`.
@@ -248,7 +248,7 @@ Guidelines:
 
 ## Motion Blocks
 
-Motion is implemented by themes, not by a separate MDS animation runtime.
+Motion syntax remains declarative. The shared motion pack should own portable trigger lifecycle, reduced-motion handling, timing attributes, and state hooks; themes own the visible preset, easing, transforms, keyframes, and any theme-specific staging.
 
 ```mds
 ::: motion preset="fade-up" trigger="view" stagger=80
@@ -270,7 +270,7 @@ A theme can render `motion` as a wrapper with CSS variables and data attributes:
 </div>
 ```
 
-The theme CSS and JavaScript decide whether that means CSS transitions, `IntersectionObserver`, Web Animations API, Motion One, GSAP, or another implementation. The generated page remains standalone HTML.
+Theme CSS decides what the selected preset looks like. A theme may provide a specialized motion implementation, but it must preserve the shared trigger and reduced-motion contract. The generated page remains standalone HTML.
 
 ## Shell Template
 
@@ -331,7 +331,13 @@ Package themes may compose shared block packs before their own templates:
 
 `blockPacks` accepts the named `@mds-crate/blocks/*` primitive packs or the `@mds-crate/blocks/foundation` alias. `foundation` contains core layout, display, navigation, controls, forms, interactive containers, and menus; `media` and `motion` are explicit additions. The shared layer contains 64 blocks across nine packs and deliberately excludes data systems, documentation layouts, guided sequences, galleries, and conversation UI. Those higher-level patterns belong to themes such as `@mds-crate/theme-rich` or to application-owned extensions.
 
-Packs contain reusable structural implementations, not just type declarations. They may contribute de-duplicated CSS and progressive-enhancement JavaScript; those assets are emitted before the theme's own assets so the theme can override presentation while retaining portable behavior. A theme normally keeps only templates whose DOM, slots, accessibility behavior, or interaction model must differ from the pack. `blockOverrides` lists that theme-owned subset relative to the source manifest; the builder composes packs first and overrides second, then writes the complete runtime artifact to `dist/theme`. Build metadata records selected packs and final template provenance, and `mds theme inspect` reports both.
+Packs contain reusable structural implementations, not just type declarations. They may contribute de-duplicated CSS and progressive-enhancement JavaScript; those assets are emitted before the theme's own assets so the theme can override presentation while retaining portable behavior. A theme normally keeps templates only for theme-specific blocks or declared structural variations that preserve the shared semantics and runtime hooks. `blockOverrides` lists that theme-owned subset relative to the source manifest; the builder composes packs first and overrides second, then writes the complete runtime artifact to `dist/theme`. Build metadata records selected packs and final template provenance, and `mds theme inspect` reports both.
+
+### Theme Responsibility Boundary
+
+A theme changes expression, not primitive meaning. Shared packs own native structure, ARIA, built-in action state, keyboard and focus rules, overlay safety, menu geometry, and other behavior that must survive a theme switch. Themes own tokens, typography, color, spacing, responsive composition, decorative surfaces, and visual motion presets.
+
+Theme JavaScript is appropriate for a theme-owned extension. It should not copy the state machine for a shared toggle, tabs, accordion, carousel, dialog, drawer, menu, or calendar. When a theme overrides shared markup, it must preserve the stable runtime hooks required by the pack and pass the theme conformance suite described in [BLOCK_LAYER.md](./BLOCK_LAYER.md#theme-conformance-contract).
 
 ```txt
 my-theme/

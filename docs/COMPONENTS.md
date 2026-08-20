@@ -2,7 +2,7 @@
 
 This document plans the component block system for MDS themes.
 
-MDS components are semantic blocks. They are not runtime components, JSX tags, or HTML shortcuts. A theme decides how each block looks and behaves, and the final output remains standalone HTML.
+MDS components are semantic blocks. They are not framework components, JSX tags, or HTML shortcuts. The shared blocks layer owns portable semantics and baseline behavior; a theme decides how those semantics look and how theme-owned extensions behave. The final output remains standalone HTML.
 
 For the shared blocks layer that turns this vocabulary into reusable block packs and theme overrides, see [BLOCK_LAYER.md](./BLOCK_LAYER.md).
 
@@ -17,7 +17,7 @@ For the shared blocks layer that turns this vocabulary into reusable block packs
 
 ## Non-Goals
 
-- MDS will not define a browser component runtime.
+- MDS will not require a framework, virtual DOM, or custom-element runtime. Compact block-pack enhancement scripts remain valid when they provide portable behavior that native HTML cannot express alone.
 - MDS will not require React, JSX, Tailwind, shadcn, or any package at runtime.
 - MDS will not expose arbitrary event handlers in documents.
 - MDS will not try to standardize every visual variant across all themes.
@@ -67,9 +67,9 @@ For the shared blocks layer that turns this vocabulary into reusable block packs
 
    Attributes should handle small options such as `tone`, `variant`, `columns`, `value`, `motion`, and `duration`.
 
-5. **Themes own presentation**
+5. **Blocks own portable behavior; themes own presentation**
 
-   MDS core parses and preserves the block. Canvas, Clarity, or a user theme decides the layout, CSS, motion, and progressive enhancement.
+   MDS core parses and preserves the block. `@mds-crate/blocks` defines its minimal native structure, ARIA, stable state, and cross-theme interaction. Canvas, Clarity, or a user theme decides typography, color, spacing, responsive layout, surfaces, and visual motion presets.
 
 6. **Implement only the declared semantics**
 
@@ -79,7 +79,7 @@ For the shared blocks layer that turns this vocabulary into reusable block packs
 
 7. **Native HTML before custom JavaScript**
 
-   Use native anchors, buttons, forms, details, dialog-like overlays, and media semantics where possible. Theme JavaScript should enhance behavior, not replace basic content.
+   Use native anchors, buttons, forms, details, dialog-like overlays, and media semantics where possible. Shared block JavaScript may progressively enhance behavior, but themes must not replace a portable state machine with a different meaning.
 
 8. **Fallback must be readable**
 
@@ -280,11 +280,11 @@ Phase 3 can add progressive enhancement scripts where native HTML is not enough.
 The Canvas implementation keeps the no-JavaScript fallback readable:
 
 - `scene` variants are CSS-driven through `variant`.
-- `reveal` is a normal block that maps to theme-owned motion.
+- `reveal` is a normal block whose trigger lifecycle is portable while the selected theme supplies the visible preset.
 - `video`, `image`, and generic `media` blocks provide theme framing around native media.
 - Gallery lightbox enhances existing `figure` blocks; without JavaScript, figures stay inline.
 - `code-group` tab switching enhances named slots; without JavaScript, all code panels remain visible.
-- Form validation is opt-in with a `validate` block attribute and uses native controls plus theme-owned status UI.
+- Form validation is opt-in with a `validate` block attribute and uses native controls plus shared validation state hooks. Themes style the status UI; applications still own submission and server-side validation.
 
 ## Authoring Patterns
 
@@ -654,7 +654,7 @@ These attribute names are recommended across themes:
 | `author` | Attribution name. | `author="Ava"` |
 | `role` | Attribution role. | `role="Designer"` |
 | `highlighted` | Boolean emphasis. | `highlighted` |
-| `validate` | Enable theme-owned form validation. | `validate` |
+| `validate` | Enable shared native-first form validation enhancement. | `validate` |
 | `src` | Media source for image/video blocks. | `src="/demo.mp4"` |
 | `alt` | Image alternative text. | `alt="Product screenshot"` |
 | `motion` | Motion preset. | `motion="fade-up"` |
@@ -687,7 +687,7 @@ Implementation guidelines:
 
 - Keep higher-level templates isolated under `themes/rich/src/blocks/` rather than moving them back into the shared package.
 - Prefer CSS for layout and simple interaction states.
-- Use theme JavaScript only for progressive enhancement such as dialog, drawer, carousel controls, code-group switching, and advanced gallery behavior.
+- Use theme JavaScript only for Rich-owned behavior such as code-group switching, advanced gallery behavior, and theme-specific data presentation. Shared dialog, drawer, carousel, action, menu, and control behavior belongs in `@mds-crate/blocks`.
 - Every interactive block must still render useful content when JavaScript is unavailable.
 - Avoid adding editor-specific behavior into the theme.
 
@@ -730,14 +730,15 @@ Component expansion should be verified at three levels:
    - `{{ attrs }}` and `{{ attr:name:fallback }}` produce expected HTML.
    - Unsupported blocks fall back safely.
 
-3. **Editor visual smoke tests**
+3. **Browser conformance and visual regression**
 
    - Components example renders without diagnostics.
-   - `pnpm test:visual` renders the shared-only Components gallery through Default at mobile and desktop viewports.
-   - The smoke runner captures PNG artifacts and rejects horizontal viewport overflow.
-   - Rich desktop and mobile previews are readable.
+   - Focused fixtures cover every selected block pack and relevant state.
+   - Every official theme runs at mobile, tablet, and desktop viewports. The current gate covers Default and Canvas; the remaining official themes still need to join it.
+   - The runner rejects initial scroll, horizontal overflow, popup geometry changes, broken overlay shielding, inconsistent action state, focus failures, and console errors.
+   - PNG artifacts are compared with reviewed visual baselines instead of only being generated.
    - Interactive blocks do not hide content accidentally.
-   - Theme JavaScript does not emit console errors.
+   - Shared runtime behavior remains identical when the same fixture changes themes.
 
 ## Compatibility Rules
 

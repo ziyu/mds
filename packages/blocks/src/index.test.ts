@@ -68,20 +68,26 @@ describe("MDS block packs", () => {
     const cases = [
       {
         pack: formsBlocks,
-        setupFunctions: ["setupCalendars"],
+        setupFunctions: ["setupCalendars", "setupFormValidation"],
         selector: ".calendar-enhanced",
         unrelatedSetup: "setupCommands"
       },
       {
         pack: interactiveBlocks,
-        setupFunctions: ["setupCommands"],
-        selector: ".command-input",
+        setupFunctions: ["setupCommands", "setupTabs", "setupAccordions", "setupCarousels", "setupOverlays"],
+        selector: "[data-mds-role=\"dialog\"]",
         unrelatedSetup: "setupCalendars"
       },
       {
         pack: menuBlocks,
         setupFunctions: ["setupFloatingMenus", "setupContextMenus", "setupMenubars"],
         selector: ".context-menu-content",
+        unrelatedSetup: "setupCommands"
+      },
+      {
+        pack: motionBlocks,
+        setupFunctions: ["setupMotion"],
+        selector: "data-motion-ready",
         unrelatedSetup: "setupCommands"
       }
     ] as const;
@@ -106,7 +112,7 @@ describe("MDS block packs", () => {
   });
 
   it("scopes command enhancement to command blocks instead of command actions", () => {
-    expect(interactiveBlocks.files["runtime.js"]).toContain('querySelectorAll("section.command")');
+    expect(interactiveBlocks.files["runtime.js"]).toContain("[data-mds-role='command']");
     expect(interactiveBlocks.files["runtime.css"]).toContain(":where(section.command)");
   });
 
@@ -119,7 +125,7 @@ describe("MDS block packs", () => {
     }
     expect(() => new Function(script)).not.toThrow();
     expect(script).toContain("setupToggles");
-    expect(script).toContain('querySelectorAll("button.toggle-control[aria-pressed]")');
+    expect(script).toContain("button[data-mds-role='toggle'][aria-pressed]");
     expect(script).toContain('toggle.dataset.action === "toggle" && Boolean(toggle.dataset.target)');
     expect(script).toContain('toggle.setAttribute("aria-pressed"');
   });
@@ -223,5 +229,42 @@ describe("MDS block packs", () => {
     expect(blockVocabularyByName.reveal?.attrs).toEqual(["preset", "delay", "duration"]);
     expect(blockVocabularyByName.scene?.attrs).toEqual(["variant"]);
     expect(blockPacksByName["@mds-crate/blocks/core"]).toBe(coreBlocks);
+  });
+
+  it("owns portable interaction state through stable runtime hooks", () => {
+    const script = interactiveBlocks.files["runtime.js"];
+    const styles = interactiveBlocks.files["runtime.css"];
+
+    expect(script).toBeTypeOf("string");
+    expect(styles).toBeTypeOf("string");
+    if (script === undefined || styles === undefined) {
+      throw new Error("Expected interactive runtime assets.");
+    }
+
+    expect(interactiveBlocks.files["blocks/tabs.html"]).toContain('data-mds-role="tabs"');
+    expect(interactiveBlocks.files["blocks/carousel.html"]).toContain('data-mds-role="carousel-track"');
+    expect(interactiveBlocks.files["blocks/dialog.html"]).toContain('data-mds-role="overlay-panel"');
+    expect(interactiveBlocks.files["blocks/dialog.html"]).toContain(" hidden>");
+    expect(script).toContain('new Set(["open", "close", "show", "hide", "toggle"])');
+    expect(script).toContain('target instanceof HTMLDetailsElement');
+    expect(script).toContain('target.hidden = !open');
+    expect(script).toContain('document.body.append(overlay)');
+    expect(script).toContain('sibling.inert = true');
+    expect(script).toContain('focus({ preventScroll: true })');
+    expect(script).toContain('update(0, false)');
+    expect(styles).toContain('[data-mds-role="overlay-backdrop"]');
+  });
+
+  it("keeps motion lifecycle portable while leaving visual presets to themes", () => {
+    const script = motionBlocks.files["runtime.js"];
+    const styles = motionBlocks.files["runtime.css"];
+
+    expect(script).toContain("IntersectionObserver");
+    expect(script).toContain('window.matchMedia("(prefers-reduced-motion: reduce)")');
+    expect(script).toContain('element.dataset.mdsState = "visible"');
+    expect(script).toContain('element.dataset.motionState = "in"');
+    expect(script).toContain('entry.target.dataset.motionOnce !== "false"');
+    expect(styles).not.toContain("translate");
+    expect(styles).not.toContain("opacity:");
   });
 });

@@ -40,7 +40,7 @@ describe("loadThemeDirectory", () => {
 
     expect(theme.name).toBe("default");
     expect(theme.css).toContain(".page");
-    expect(theme.js).toContain("querySelectorAll");
+    expect(theme.js).toContain("Portable block behavior is provided by @mds-crate/blocks");
     expect(theme.shell?.({
       title: "File <Theme>",
       lang: "en",

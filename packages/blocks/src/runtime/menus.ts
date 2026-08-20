@@ -1,7 +1,7 @@
 import { createEnhancementScript } from "./create-script.js";
 
 const implementation = String.raw`  function setupFloatingMenus() {
-    for (const menu of document.querySelectorAll(".dropdown-menu, .context-menu")) {
+    for (const menu of document.querySelectorAll("[data-mds-role='dropdown'], [data-mds-role='context-menu'], .dropdown-menu, .context-menu")) {
       if (!(menu instanceof HTMLDetailsElement) || menu.dataset.mdsFloatingMenu === "true") {
         continue;
       }
@@ -80,7 +80,7 @@ const implementation = String.raw`  function setupFloatingMenus() {
   }
 
   function setupContextMenus() {
-    for (const contextMenu of document.querySelectorAll(".context-menu")) {
+    for (const contextMenu of document.querySelectorAll("[data-mds-role='context-menu'], .context-menu")) {
       if (!(contextMenu instanceof HTMLDetailsElement) || contextMenu.dataset.mdsContextMenu === "true") {
         continue;
       }
@@ -120,11 +120,11 @@ const implementation = String.raw`  function setupFloatingMenus() {
   }
 
   function setupMenubars() {
-    for (const menubar of document.querySelectorAll(".menubar")) {
+    for (const menubar of document.querySelectorAll("[data-mds-role='menubar'], .menubar")) {
       if (!(menubar instanceof HTMLElement) || menubar.dataset.mdsMenubar === "true") {
         continue;
       }
-      const menus = Array.from(menubar.querySelectorAll(".dropdown-menu"));
+      const menus = Array.from(menubar.querySelectorAll("[data-mds-role='dropdown'], .dropdown-menu"));
       const triggers = menus.map((menu) => menu.querySelector("summary")).filter((trigger) => trigger instanceof HTMLElement);
       if (triggers.length === 0) {
         continue;
