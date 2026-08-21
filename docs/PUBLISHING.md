@@ -30,6 +30,8 @@ pnpm release:publish:next
 pnpm release:verify:next
 ```
 
+The `0.1.0-beta.2` release must use this authenticated bootstrap path for the complete fourteen-package set because the Rich, Light, and Dark package objects do not exist yet. Do not dispatch the OIDC workflow until registry verification passes and trusted publishers have been configured for those three packages. After verification, push the package tags, create the umbrella `v0.1.0-beta.2` tag, and publish the reviewed GitHub release notes.
+
 `release:publish:next` packs every package with pnpm so `workspace:` dependencies become publishable version references, then publishes those tarballs with npm in dependency order. The command is hard-coded to the `next` dist-tag and creates package Git tags only after every npm publish succeeds. Use `pnpm release:publish:next:dry-run` to exercise the exact packing path without changing npm. npm automatically created `latest` during the first publication; that tag is intentionally retained, while future prereleases continue targeting `next`. If publication stops partway through, do not bump or reuse versions blindly: inspect the registry, let `release:check` report exact versions that already exist, and publish only a reviewed recovery release.
 
 The registry verifier creates a clean temporary consumer and:

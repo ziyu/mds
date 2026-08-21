@@ -6,7 +6,7 @@ MDS is a Markdown-based semantic authoring language. Authors write normal Markdo
 
 ## Public Beta
 
-`0.1.0-beta.1` is available from the public [`@mds-crate`](https://www.npmjs.com/org/mds-crate) npm organization. The beta requires Node.js 20.19 or newer and publishes ESM packages. Prerelease installation examples use the `next` tag.
+`0.1.0-beta.1` is the current registry release in the public [`@mds-crate`](https://www.npmjs.com/org/mds-crate) npm organization and contains the original eleven packages. The `0.1.0-beta.2` release candidate expands the fixed release set to fourteen packages by adding the Rich, Light, and Dark themes. The beta requires Node.js 20.19 or newer and publishes ESM packages. Prerelease installation examples use the `next` tag.
 
 The Editor is currently a local browser application launched by the `mds` CLI, not a native `.dmg` or `.exe` application. See the [beta testing guide](./docs/BETA.md) for supported journeys, known limitations, and feedback links.
 
@@ -39,7 +39,7 @@ const result = renderMdsResult("# Hello from MDS", {
 console.log(result.body, result.diagnostics);
 ```
 
-Use `@mds-crate/theme-light@next` or `@mds-crate/theme-dark@next` when an application needs a fixed appearance independent of the operating-system preference. For data tables, charts, technical documentation, guided sequences, galleries, and conversation layouts, install `@mds-crate/theme-rich@next` and import its `theme` export instead.
+Starting with `0.1.0-beta.2`, use `@mds-crate/theme-light@next` or `@mds-crate/theme-dark@next` when an application needs a fixed appearance independent of the operating-system preference. For data tables, charts, technical documentation, guided sequences, galleries, and conversation layouts, install `@mds-crate/theme-rich@next` and import its `theme` export instead.
 
 ### Create a package-defined theme
 
@@ -62,7 +62,7 @@ The `0.1` line is organized around three user journeys:
 2. Document authors can open, edit, preview, and save real `.mds` files in a local Editor.
 3. Application developers can render MDS source in Node.js and browser projects through stable package APIs.
 
-All three journeys pass against the published registry packages. See [the release plan](./docs/RELEASE_PLAN.md) for acceptance evidence and the path from beta feedback to `0.1.0`.
+All three journeys pass against the published `0.1.0-beta.1` registry packages. The `0.1.0-beta.2` release candidate must repeat the same registry acceptance across the expanded fourteen-package set. See [the release plan](./docs/RELEASE_PLAN.md) for acceptance evidence and the path from beta feedback to `0.1.0`.
 
 ## Repository Quick Start
 

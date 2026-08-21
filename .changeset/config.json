@@ -14,6 +14,8 @@
       "@mds-crate/theme-sdk-react",
       "@mds-crate/theme-builder",
       "@mds-crate/theme-default",
+      "@mds-crate/theme-light",
+      "@mds-crate/theme-dark",
       "@mds-crate/theme-rich",
       "@mds-crate/cli"
     ]
