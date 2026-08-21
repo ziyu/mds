@@ -13,7 +13,7 @@
 
 MDS 想帮你消除这些烦恼。仍旧在写 Markdown，但是渲染出网页级的效果。
 
-Think in Markdown. Render in HTML.
+MDS 是一种新的标记语言。Think in Markdown. Render in HTML.
 
 你照常写 Markdown，只多写几个语义块；布局、动效和交互交给 MDS 渲染器，最后得到像 HTML 一样丰富美观的页面效果。
 

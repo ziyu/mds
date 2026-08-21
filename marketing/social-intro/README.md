@@ -27,7 +27,7 @@ npm run record
 | 时间 | 画面 |
 |------|------|
 | 0–8s | 双痛点 Hook（单调 vs 复杂） |
-| 8–15s | MDS + Think in Markdown / Render in HTML + 中文说明（口播保留「消除这些烦恼」，画面不显示） |
+| 8–15s | MDS +「一种新的标记语言」画面介绍 + Think in Markdown / Render in HTML（口播保留「消除这些烦恼」，画面不显示） |
 | 15–26s | 核心机制（MDS 渲染器） |
 | 26–36s | 示例 01：基础 Markdown → HTML 预览 |
 | 36–44s | 示例 02：hero 语义块 → 页面预览 |
