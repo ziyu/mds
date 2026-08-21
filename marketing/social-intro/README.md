@@ -1,6 +1,6 @@
 # MDS 社交媒体介绍短视频
 
-竖屏 **9:16** · **约 65 秒** · 中文口播（女声）+ 画面字幕
+竖屏 **9:16** · **约 73 秒** · 中文口播（女声）+ 画面字幕
 
 ## 成品
 
@@ -32,4 +32,5 @@ npm run record
 | 27–38s | 示例 01：基础 Markdown → HTML 预览 |
 | 38–47s | 示例 02：hero 语义块 → 页面预览 |
 | 47–57s | 示例 03：button / slider / switch 控件 |
-| 57–65s | 安装命令 + GitHub；License 在底部 |
+| 57–65s | 主题介绍：default / light / dark / rich，可定制 |
+| 65–73s | 安装命令 + GitHub；License 在底部 |

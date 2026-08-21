@@ -620,6 +620,124 @@
       border-color: var(--th-line);
     }
 
+    /* Themes */
+    .themes-block { margin-top: 36px; }
+
+    .themes-lead {
+      font-size: 44px;
+      line-height: 1.45;
+      font-weight: 500;
+      max-width: 920px;
+    }
+
+    .themes-lead strong {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .theme-grid {
+      margin-top: 48px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+    }
+
+    .theme-swatch {
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .scene.active .theme-swatch:nth-child(1) { opacity: 1; transform: none; transition-delay: 0.08s; }
+    .scene.active .theme-swatch:nth-child(2) { opacity: 1; transform: none; transition-delay: 0.18s; }
+    .scene.active .theme-swatch:nth-child(3) { opacity: 1; transform: none; transition-delay: 0.28s; }
+    .scene.active .theme-swatch:nth-child(4) { opacity: 1; transform: none; transition-delay: 0.38s; }
+
+    .theme-swatch .swatch-body {
+      flex: 1;
+      padding: 28px 26px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .theme-swatch .swatch-name {
+      font-family: var(--mono);
+      font-size: 20px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .theme-swatch .swatch-title {
+      font-size: 34px;
+      line-height: 1.2;
+      font-weight: 600;
+    }
+
+    .theme-swatch .swatch-bar {
+      margin-top: auto;
+      height: 10px;
+      border-radius: 999px;
+      width: 56%;
+    }
+
+    .theme-swatch.default .swatch-body {
+      background: linear-gradient(180deg, #fbfaf6, #f1eee7);
+      color: #20221f;
+    }
+    .theme-swatch.default .swatch-name { color: #285474; }
+    .theme-swatch.default .swatch-title { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; }
+    .theme-swatch.default .swatch-bar { background: #285474; }
+
+    .theme-swatch.light .swatch-body {
+      background: linear-gradient(180deg, #ffffff, #f3f6fa);
+      color: #152033;
+    }
+    .theme-swatch.light .swatch-name { color: #3b6ea5; }
+    .theme-swatch.light .swatch-bar { background: #3b6ea5; }
+
+    .theme-swatch.dark .swatch-body {
+      background: linear-gradient(180deg, #171a1f, #0f1216);
+      color: #e8ecf2;
+      border-color: rgba(255,255,255,0.08);
+    }
+    .theme-swatch.dark .swatch-name { color: #8fb4ff; }
+    .theme-swatch.dark .swatch-bar { background: #8fb4ff; }
+
+    .theme-swatch.rich .swatch-body {
+      background: linear-gradient(180deg, #f7f1e8, #ebe2d4);
+      color: #1c1915;
+    }
+    .theme-swatch.rich .swatch-name { color: #9a4a28; }
+    .theme-swatch.rich .swatch-title { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; }
+    .theme-swatch.rich .swatch-bar { background: #9a4a28; }
+
+    .themes-note {
+      margin-top: 40px;
+      font-size: 34px;
+      line-height: 1.5;
+      color: var(--muted);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.5s ease 0.55s, transform 0.5s ease 0.55s;
+    }
+
+    .scene.active .themes-note {
+      opacity: 1;
+      transform: none;
+    }
+
+    .themes-note strong {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
     /* CTA */
     .cta { margin-top: 40px; }
 
@@ -815,6 +933,44 @@
         </div>
       </section>
 
+      <section class="scene" data-scene="themes">
+        <div class="eyebrow">主题</div>
+        <div class="themes-block">
+          <p class="themes-lead">提供多种<strong>默认主题</strong>，直接切换就能换一套视觉。</p>
+          <div class="theme-grid">
+            <div class="theme-swatch default">
+              <div class="swatch-body">
+                <div class="swatch-name">default</div>
+                <div class="swatch-title">编辑纸感</div>
+                <div class="swatch-bar"></div>
+              </div>
+            </div>
+            <div class="theme-swatch light">
+              <div class="swatch-body">
+                <div class="swatch-name">light</div>
+                <div class="swatch-title">明亮清晰</div>
+                <div class="swatch-bar"></div>
+              </div>
+            </div>
+            <div class="theme-swatch dark">
+              <div class="swatch-body">
+                <div class="swatch-name">dark</div>
+                <div class="swatch-title">深色沉浸</div>
+                <div class="swatch-bar"></div>
+              </div>
+            </div>
+            <div class="theme-swatch rich">
+              <div class="swatch-body">
+                <div class="swatch-name">rich</div>
+                <div class="swatch-title">内容增强</div>
+                <div class="swatch-bar"></div>
+              </div>
+            </div>
+          </div>
+          <p class="themes-note">不满意也可以<strong>自己定制主题</strong>。</p>
+        </div>
+      </section>
+
       <section class="scene" data-scene="cta">
         <div class="cta">
           <div class="eyebrow">开始使用</div>
@@ -855,8 +1011,10 @@
       { start: 42.51, end: 46.65, scene: "demo", text: "MDS 渲染器会立刻把它渲染成真正的页面" },
       { start: 46.65, end: 51.00, scene: "demo", text: "当然，你也可以像 HTML 那样写各种控件" },
       { start: 51.00, end: 56.68, scene: "demo", text: "比如 button、slider、switch，MDS 渲染器同样会渲染出来" },
-      { start: 56.68, end: 999, scene: "cta", text: "公开 Beta 已上线，通过下面的命令即可快速使用" },
-      { start: 61.55, end: 999, scene: "cta", text: "源代码已发布 GitHub，欢迎上手反馈" },
+      { start: 56.68, end: 64.54, scene: "themes", text: "还有多种默认主题可选" },
+      { start: 59.07, end: 64.54, scene: "themes", text: "default、light、dark、rich，不满意也可以自己定制主题" },
+      { start: 64.54, end: 999, scene: "cta", text: "公开 Beta 已上线，通过下面的命令即可快速使用" },
+      { start: 69.40, end: 999, scene: "cta", text: "源代码已发布 GitHub，欢迎上手反馈" },
     ];
 
     const CODE_MD = `# 欢迎使用 MDS
@@ -1055,7 +1213,7 @@
     }
 
     function tick() {
-      const dur = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 65.45;
+      const dur = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 73.32;
       let t = audio.currentTime || 0;
 
       // Ignore accidental rewinds (browser media quirks) after playback has progressed
@@ -1077,7 +1235,7 @@
       progress.style.width = `${Math.min(100, (t / dur) * 100)}%`;
 
       const active = sceneLocked
-        ? pickCue(Math.max(t, 61.55))
+        ? pickCue(Math.max(t, 69.40))
         : pickCue(t);
       setScene(sceneLocked || active.scene);
       caption.textContent = active.text;
@@ -1087,19 +1245,19 @@
 
     window.__mdsPromo = {
       play() { return audio.play(); },
-      duration() { return audio.duration || 65.45; },
+      duration() { return audio.duration || 73.32; },
       ended() { return audio.ended; },
       ready() { return audio.readyState >= 3; },
       freezeCta() {
         sceneLocked = "cta";
-        maxHeard = Math.max(maxHeard, audio.duration || 65.45);
+        maxHeard = Math.max(maxHeard, audio.duration || 73.32);
       },
     };
 
     audio.addEventListener("play", () => { bootstrapped = true; }, { once: true });
     audio.addEventListener("ended", () => {
       sceneLocked = "cta";
-      maxHeard = Math.max(maxHeard, audio.duration || 65.45);
+      maxHeard = Math.max(maxHeard, audio.duration || 73.32);
       setScene("cta");
       caption.textContent = "源代码已发布 GitHub，欢迎上手反馈";
     });

@@ -13,5 +13,8 @@ MDS 渲染器会立刻把它渲染成真正的页面。
 当然，你也可以像 HTML 那样写各种控件。
 比如 button、slider、switch，MDS 渲染器同样会渲染出来。
 
+还有多种默认主题可选。
+default、light、dark、rich，不满意也可以自己定制主题。
+
 公开 Beta 已上线，通过下面的命令即可快速使用。
 源代码已发布 GitHub，欢迎上手反馈。

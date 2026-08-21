@@ -19,6 +19,8 @@ MDS 想帮你消除这些烦恼。仍旧在写 Markdown，但是渲染出网页�
 
 写法也很简单——先写最基础的 Markdown，再写 hero，当然也可以像 HTML 那样写 button、slider、switch 等各种控件，MDS 渲染器会立刻渲染成真正的页面。
 
+还有多种默认主题可选，像 default、light、dark、rich；不满意也可以自己定制主题。
+
 公开 Beta 已上线，通过下面的命令即可快速使用：
 
 ```bash
