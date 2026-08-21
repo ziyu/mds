@@ -26,8 +26,8 @@
       --th-line: #d8d3c8;
       --th-accent: #285474;
       --th-accent-soft: #e1ebf0;
-      --th-serif: "Instrument Serif", "Noto Sans SC", Georgia, serif;
-      --th-ui: "Noto Sans SC", system-ui, sans-serif;
+      --th-serif: "Instrument Serif", Charter, "Iowan Old Style", Georgia, serif;
+      --th-ui: "Noto Sans SC", "Avenir Next", system-ui, sans-serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -455,15 +455,19 @@
     }
 
     .preview-page {
-      background:
-        radial-gradient(circle at 86% 8%, color-mix(in srgb, var(--th-accent), transparent 70%), transparent 16rem),
-        linear-gradient(180deg, var(--th-paper), var(--th-bg));
+      background: var(--th-paper);
       color: var(--th-text);
-      padding: 28px 30px 22px;
+      padding: 0;
       flex: 1;
       min-height: 0;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
+      font-family: var(--th-serif);
+      font-size: 17px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      border-top: 3px solid var(--th-accent);
     }
 
     .preview-panel {
@@ -471,227 +475,231 @@
       flex: 1;
       flex-direction: column;
       min-height: 0;
+      position: relative;
+      padding: 28px 28px 44px;
+      overflow: hidden;
     }
 
     .preview-panel.active { display: flex; }
 
-    .th-prose {
+    .preview-page .page {
       display: grid;
-      gap: 16px;
+      gap: 0;
+      width: 100%;
+      margin: 0;
+      padding: 4px 0 0;
       opacity: 0;
       transform: translateY(12px);
       transition: opacity 0.5s ease 0.08s, transform 0.5s ease 0.08s;
     }
+    .preview-shell.show[data-mode="md"] .page { opacity: 1; transform: none; }
+    .preview-page .page > * + * { margin-top: 20px; }
 
-    .preview-shell.show[data-mode="md"] .th-prose {
-      opacity: 1;
-      transform: none;
-    }
-
-    .th-prose h1 {
-      font-family: var(--th-serif);
-      font-size: 42px;
-      line-height: 1.15;
-      letter-spacing: -0.02em;
-      font-weight: 400;
-    }
-
-    .th-prose ul {
+    .preview-page .page > h1 {
+      position: relative;
+      max-width: 12em;
       margin: 0;
-      padding-left: 1.15em;
-      font: 500 20px/1.5 var(--th-ui);
-    }
-
-    .th-prose li + li { margin-top: 6px; }
-
-    .th-prose blockquote {
-      margin: 0;
-      padding: 14px 18px;
-      border-left: 3px solid var(--th-accent);
-      background: var(--th-accent-soft);
-      color: var(--th-accent);
-      font: italic 500 20px/1.4 var(--th-serif);
-    }
-
-    .th-prose a {
-      display: inline-flex;
-      color: var(--th-accent);
-      font: 600 18px/1.4 var(--th-ui);
-      text-decoration: none;
-      border-bottom: 1.5px solid color-mix(in srgb, var(--th-accent), transparent 45%);
-    }
-
-    .th-hero {
-      display: grid;
-      gap: 14px;
-      opacity: 0;
-      transform: translateY(12px);
-      transition: opacity 0.5s ease 0.08s, transform 0.5s ease 0.08s;
-    }
-
-    .preview-shell.show .th-hero {
-      opacity: 1;
-      transform: none;
-    }
-
-    .th-eyebrow {
-      color: var(--th-accent);
-      font: 700 14px/1.3 var(--th-ui);
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-
-    .th-title {
+      padding-top: 18px;
       font-family: var(--th-serif);
-      font-size: 40px;
-      line-height: 1.15;
-      letter-spacing: -0.02em;
-      max-width: 12ch;
-      font-weight: 400;
+      font-weight: 600;
+      font-size: 36px;
+      line-height: 1.08;
+      letter-spacing: -0.025em;
+    }
+    .preview-page .page > h1::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 42px;
+      height: 2px;
+      background: var(--th-accent);
     }
 
-    .th-body {
+    .preview-page ul {
+      margin: 0;
+      padding-left: 1.25em;
       max-width: 28em;
-      color: var(--th-muted);
-      font: 500 18px/1.5 var(--th-ui);
-    }
-
-    .th-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 4px;
-    }
-
-    .th-btn {
-      font: 600 16px/1 var(--th-ui);
-      padding: 12px 18px;
-      border-radius: 6px;
-      border: 1px solid transparent;
-    }
-
-    .th-btn.primary { background: var(--th-accent); color: #fff; }
-    .th-btn.ghost {
-      background: transparent;
+      font: 400 18px/1.55 var(--th-serif);
       color: var(--th-text);
-      border-color: var(--th-line);
     }
+    .preview-page li + li { margin-top: 5px; }
 
-    .th-controls {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 16px 20px;
-      align-items: start;
-      opacity: 0;
-      transform: translateY(12px);
-      transition: opacity 0.5s ease 0.08s, transform 0.5s ease 0.08s;
+    .preview-page blockquote {
+      margin: 0;
+      max-width: 28em;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--th-text);
+      font: 400 18px/1.55 var(--th-serif);
     }
+    .preview-page blockquote p { margin: 0; }
 
-    .preview-shell.show[data-mode="controls"] .th-controls {
-      opacity: 1;
-      transform: none;
-    }
-
-    .th-controls .th-switch { grid-column: 1 / -1; }
-
-    .th-control-label {
-      display: block;
-      margin-bottom: 10px;
-      color: var(--th-muted);
-      font: 600 14px/1.3 var(--th-ui);
-      letter-spacing: 0.04em;
-    }
-
-    .th-button {
+    .preview-page a.action {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 44px;
-      padding: 0 22px;
-      border: none;
+      gap: 6px;
+      min-height: 40px;
+      margin-top: 2px;
+      padding: 10px 16px;
+      border: 1px solid var(--th-accent);
       border-radius: 6px;
       background: var(--th-accent);
       color: #fff;
-      font: 600 18px/1 var(--th-ui);
-      box-shadow: 0 8px 18px color-mix(in srgb, var(--th-accent), transparent 70%);
+      font: 650 15px/1.2 var(--th-ui);
+      letter-spacing: 0.01em;
+      text-decoration: none;
+      width: fit-content;
     }
 
-    .th-slider {
+    .preview-page .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+      align-items: start;
+      min-height: 0;
+      width: 100%;
+      margin: 0;
+      padding: 8px 0 4px;
+      border-bottom: 1px solid var(--th-line);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.5s ease 0.08s, transform 0.5s ease 0.08s;
+    }
+    .preview-shell.show[data-mode="hero"] .hero { opacity: 1; transform: none; }
+    .preview-page .hero-copy {
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+    .preview-page .hero-flow {
+      display: grid;
+      gap: 16px;
+    }
+    .preview-page .hero-flow > h1 {
+      margin: 0;
+      max-width: 14em;
+      font-family: var(--th-serif);
+      font-weight: 600;
+      font-size: 34px;
+      line-height: 1.12;
+      letter-spacing: -0.025em;
+    }
+    .preview-page .hero-flow > p {
+      margin: 0;
+      max-width: 28em;
+      color: var(--th-muted);
+      font: 400 18px/1.55 var(--th-serif);
+    }
+    .preview-page .hero-eyebrow:empty,
+    .preview-page .hero-title:empty,
+    .preview-page .hero-body:empty,
+    .preview-page .hero-actions:empty,
+    .preview-page .hero-media:empty { display: none; }
+
+    .preview-page .controls-stack {
+      display: grid;
+      gap: 22px;
+      width: min(100%, 26em);
+      margin: auto 0;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.5s ease 0.08s, transform 0.5s ease 0.08s;
+    }
+    .preview-shell.show[data-mode="controls"] .controls-stack { opacity: 1; transform: none; }
+
+    .preview-page .action.control-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      padding: 10px 16px;
+      border: 1px solid #aaa69c;
+      border-radius: 6px;
+      background: #fffefa;
+      color: var(--th-text);
+      font: 650 15px/1.2 var(--th-ui);
+      letter-spacing: 0.01em;
+      cursor: default;
+    }
+
+    .preview-page .form-field {
       display: grid;
       gap: 8px;
-      padding: 16px 18px;
-      border: 1px solid var(--th-line);
-      border-radius: 10px;
-      background: color-mix(in srgb, var(--th-paper) 70%, #fff);
+      min-width: 0;
     }
-
-    .th-slider-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+    .preview-page .field-label {
+      color: var(--th-text);
+      font: 700 14px/1.35 var(--th-ui);
+      letter-spacing: 0.012em;
     }
-
-    .th-slider-value {
-      font: 700 18px/1 var(--mono);
-      color: var(--th-accent);
-    }
-
-    .th-range {
-      -webkit-appearance: none;
-      appearance: none;
+    .preview-page .slider-field { width: min(100%, 26rem); }
+    .preview-page .slider-field > input[type="range"] {
       width: 100%;
-      height: 7px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, var(--th-accent) 60%, var(--th-line) 60%);
-      outline: none;
+      height: 22px;
+      margin: 0;
+      accent-color: var(--th-accent);
+      background: transparent;
     }
 
-    .th-range::-webkit-slider-thumb {
-      -webkit-appearance: none;
+    .preview-page .choice-field.switch {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      width: fit-content;
+      color: var(--th-text);
+      font: 550 16px/1.4 var(--th-ui);
+      cursor: default;
+    }
+    .preview-page .switch > input[role="switch"] {
+      position: relative;
+      width: 42px;
+      height: 24px;
+      margin: 0;
       appearance: none;
+      -webkit-appearance: none;
+      border: 1px solid #aaa69c;
+      border-radius: 999px;
+      background: #f5f2eb;
+      flex-shrink: 0;
+    }
+    .preview-page .switch > input[role="switch"]::after {
+      position: absolute;
+      top: 2px;
+      left: 2px;
       width: 18px;
       height: 18px;
       border-radius: 50%;
+      background: var(--th-muted);
+      content: "";
+    }
+    .preview-page .switch > input[role="switch"]:checked {
+      border-color: var(--th-accent);
       background: var(--th-accent);
-      border: 3px solid #fff;
-      box-shadow: 0 3px 10px rgb(40 84 116 / 35%);
     }
-
-    .th-switch {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px 16px;
-      border: 1px solid var(--th-line);
-      border-radius: 10px;
-      background: color-mix(in srgb, var(--th-paper) 70%, #fff);
-    }
-
-    .th-switch-track {
-      position: relative;
-      width: 46px;
-      height: 26px;
-      border-radius: 999px;
-      background: var(--th-accent);
-      flex-shrink: 0;
-    }
-
-    .th-switch-track i {
-      position: absolute;
-      top: 3px;
-      right: 3px;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
+    .preview-page .switch > input[role="switch"]:checked::after {
+      left: auto;
+      right: 2px;
       background: #fff;
-      box-shadow: 0 2px 6px rgb(0 0 0 / 18%);
+    }
+
+    .preview-panel[data-panel="hero"],
+    .preview-panel[data-panel="controls"],
+    .preview-panel[data-panel="md"] {
+      justify-content: center;
     }
 
     .th-note {
-      margin-top: auto;
-      padding-top: 18px;
+      position: absolute;
+      left: 28px;
+      right: 28px;
+      bottom: 16px;
+      margin: 0;
       color: var(--th-muted);
-      font: 400 14px/1.4 var(--th-ui);
+      font: 400 13px/1.4 var(--th-ui);
       opacity: 0;
       transition: opacity 0.4s ease 0.28s;
     }
@@ -982,49 +990,48 @@
             </div>
             <div class="preview-page">
               <div class="preview-panel active" data-panel="md">
-                <div class="th-prose">
+                <main class="page">
                   <h1>Welcome to MDS</h1>
                   <ul>
                     <li>Simple writing</li>
                     <li>MDS rendering</li>
                     <li>Ship standalone</li>
                   </ul>
-                  <blockquote>Think in Markdown.</blockquote>
-                  <a href="#">Start →</a>
-                </div>
-                <p class="th-note">Rendered by MDS renderer</p>
+                  <blockquote><p>Think in Markdown.</p></blockquote>
+                  <a class="action primary" href="#">Start</a>
+                </main>
+                <p class="th-note">theme-default · MDS renderer</p>
               </div>
               <div class="preview-panel" data-panel="hero">
-                <div class="th-hero">
-                  <div class="th-eyebrow">MDS</div>
-                  <h3 class="th-title">Write web pages like Markdown</h3>
-                  <p class="th-body">Describe intent with semantic blocks; the MDS renderer presents it.</p>
-                  <div class="th-actions">
-                    <div class="th-btn primary">Start</div>
-                    <div class="th-btn ghost">Docs</div>
+                <section class="hero">
+                  <div class="hero-copy">
+                    <p class="hero-eyebrow"></p>
+                    <div class="hero-title"></div>
+                    <div class="hero-body"></div>
+                    <div class="hero-actions"></div>
+                    <div class="hero-flow">
+                      <h1>Write web pages like Markdown</h1>
+                      <p>Describe intent with semantic blocks; the MDS renderer presents it.</p>
+                      <a class="action primary" href="#">Start</a>
+                    </div>
                   </div>
-                </div>
-                <p class="th-note">Rendered by MDS renderer</p>
+                  <div class="hero-media"></div>
+                </section>
+                <p class="th-note">theme-default · MDS renderer</p>
               </div>
               <div class="preview-panel" data-panel="controls">
-                <div class="th-controls">
-                  <div>
-                    <span class="th-control-label">button</span>
-                    <button class="th-button" type="button">Start</button>
-                  </div>
-                  <div class="th-slider">
-                    <div class="th-slider-row">
-                      <span class="th-control-label" style="margin:0">slider · Volume</span>
-                      <span class="th-slider-value">60</span>
-                    </div>
-                    <input class="th-range" type="range" min="0" max="100" value="60" disabled />
-                  </div>
-                  <div class="th-switch">
-                    <span class="th-switch-track" aria-hidden="true"><i></i></span>
-                    <span class="th-control-label" style="margin:0">switch · Dark mode</span>
-                  </div>
+                <div class="controls-stack">
+                  <button class="action control-button" type="button">Start</button>
+                  <label class="form-field slider-field">
+                    <span class="field-label">Volume</span>
+                    <input type="range" min="0" max="100" value="60" disabled />
+                  </label>
+                  <label class="form-field choice-field switch">
+                    <input type="checkbox" role="switch" checked disabled />
+                    <span>Dark mode</span>
+                  </label>
                 </div>
-                <p class="th-note">Rendered by MDS renderer</p>
+                <p class="th-note">theme-default · MDS renderer</p>
               </div>
             </div>
           </div>
