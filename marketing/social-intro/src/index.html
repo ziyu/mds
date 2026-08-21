@@ -132,7 +132,6 @@
       pointer-events: auto;
     }
 
-    .scene[data-scene="hook"],
     .scene[data-scene="demo"],
     .scene[data-scene="themes"],
     .scene[data-scene="cta"] {
@@ -148,16 +147,17 @@
       margin-bottom: 22px;
     }
 
-    /* Hook: fill the tall stage — Q1 upper, Q2 lower */
+    /* Hook: cohesive pair, optically centered — not pinned to edges */
     .hook-stack {
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: center;
+      gap: 52px;
       width: 100%;
-      height: 100%;
-      padding: 48px 0 36px;
+      margin: auto 0;
+      padding: 24px 0;
     }
-    .hook-item { display: flex; flex-direction: column; gap: 22px; max-width: 16em; }
+    .hook-item { display: flex; flex-direction: column; gap: 20px; max-width: 15em; }
     .hook-label {
       font-family: var(--mono);
       font-size: 16px;
@@ -169,35 +169,34 @@
     .hook-q {
       font-family: var(--sans);
       font-weight: 800;
-      font-size: 56px;
-      line-height: 1.26;
+      font-size: 54px;
+      line-height: 1.28;
       letter-spacing: -0.03em;
     }
     .hook-q em { font-style: normal; color: var(--accent); }
     .hook-rule {
-      width: 2px;
-      height: 88px;
-      margin: 0 auto;
-      background: linear-gradient(180deg, transparent, var(--accent), transparent);
+      width: 64px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), transparent);
       flex-shrink: 0;
     }
 
-    /* Brand: denser optical center, not a floating island */
+    /* Brand: denser optical center */
     .brand-block {
       display: flex;
       flex-direction: column;
       gap: 0;
       width: 100%;
-      max-width: 920px;
+      max-width: 940px;
       margin: 0 auto;
     }
     .logo {
       font-family: var(--display);
       font-weight: 800;
-      font-size: 168px;
+      font-size: 176px;
       line-height: 0.86;
       letter-spacing: -0.07em;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
     }
     .brand-def {
       font-size: 34px;
@@ -205,7 +204,7 @@
       font-weight: 500;
       color: var(--muted);
       letter-spacing: 0.04em;
-      margin-bottom: 36px;
+      margin-bottom: 32px;
     }
     .tagline {
       font-family: var(--mono);
@@ -219,9 +218,8 @@
     .tagline span { display: block; color: var(--ink); }
     .brand-zh {
       font-size: 38px;
-      line-height: 1.48;
+      line-height: 1.45;
       font-weight: 500;
-      max-width: 11.5em;
     }
     .brand-zh strong { color: var(--accent); font-weight: 700; }
 
@@ -259,14 +257,14 @@
     }
     .demo-step strong { color: var(--accent); font-weight: 600; }
 
-    /* Demo: code fills stage while typing; preview expands when ready */
+    /* Demo: content-sized code while typing; preview fills remainder when ready */
     .demo-stack {
       display: flex;
       flex-direction: column;
+      justify-content: center;
       gap: 14px;
-      flex: 1 1 auto;
+      flex: 1 1 0;
       min-height: 0;
-      height: 0;
     }
 
     .code-card, .preview-shell {
@@ -278,19 +276,25 @@
     }
 
     .code-card {
-      flex: 1 1 auto;
+      flex: 0 1 auto;
+      width: 100%;
+      max-height: 88%;
       background: var(--panel);
       border: 1px solid var(--line);
-      padding: 22px 26px 24px;
+      padding: 26px 28px 28px;
       font-family: var(--mono);
       font-size: 26px;
       line-height: 1.48;
       color: #d7ddd4;
-      transition: flex 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transition: max-height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .demo-stack.has-preview {
+      justify-content: flex-start;
     }
     .demo-stack.has-preview .code-card {
-      flex: 0 1 auto;
-      max-height: 36%;
+      flex: 0 0 auto;
+      max-height: 34%;
+      padding: 20px 26px 22px;
     }
     .code-card .bar {
       display: flex;
@@ -340,22 +344,21 @@
 
     .preview-shell {
       flex: 0 0 0;
-      max-height: 0;
       opacity: 0;
       border: 1px solid transparent;
       background: var(--th-bg);
       transform: translateY(28px);
       transition:
-        opacity 0.55s ease,
-        transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
-        flex 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
-        max-height 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+        opacity 0.5s ease,
+        transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+        flex-grow 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
+        flex-basis 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
       box-shadow: none;
       pointer-events: none;
+      overflow: hidden;
     }
     .preview-shell.show {
-      flex: 1 1 auto;
-      max-height: 1200px;
+      flex: 1 1 0;
       opacity: 1;
       border-color: rgba(216, 211, 200, 0.3);
       transform: none;
@@ -498,8 +501,15 @@
       opacity: 0;
       transform: translateY(14px);
       transition: opacity 0.5s ease 0.08s, transform 0.5s ease 0.08s;
+      margin: auto 0;
     }
     .preview-shell.show[data-mode="controls"] .th-controls { opacity: 1; transform: none; }
+    .preview-shell[data-mode="controls"] .preview-panel[data-panel="controls"] {
+      justify-content: center;
+    }
+    .preview-shell[data-mode="controls"] .th-note {
+      margin-top: 36px;
+    }
     .th-control-label {
       display: block;
       margin-bottom: 14px;
@@ -599,9 +609,8 @@
       display: flex;
       flex-direction: column;
       gap: 24px;
-      flex: 1 1 auto;
+      flex: 1 1 0;
       min-height: 0;
-      height: 0;
       padding-top: 8px;
     }
     .themes-lead {
@@ -688,10 +697,10 @@
       height: 100%;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      gap: 0;
-      padding: 24px 0;
+      justify-content: space-between;
+      padding: 72px 0 48px;
     }
+    .cta .cta-top { display: flex; flex-direction: column; }
     .cta h2 {
       font-family: var(--display);
       font-weight: 800;
@@ -707,7 +716,7 @@
       line-height: 1.45;
     }
     .cta .cmd {
-      margin-top: 48px;
+      margin-top: 0;
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 20px;
@@ -719,14 +728,15 @@
     }
     .cta .cmd .prompt { color: var(--muted); }
     .cta .cmd .pkg { color: var(--ink); }
+    .cta .cta-foot { display: flex; flex-direction: column; gap: 14px; }
     .cta .github {
-      margin-top: 40px;
+      margin-top: 0;
       font-family: var(--mono);
       font-size: 32px;
     }
     .cta .github span { color: var(--accent-2); }
     .cta .license {
-      margin-top: 16px;
+      margin-top: 0;
       font-family: var(--mono);
       font-size: 20px;
       letter-spacing: 0.04em;
@@ -930,15 +940,19 @@
 
       <section class="scene" data-scene="cta">
         <div class="cta">
-          <div class="eyebrow">开始使用</div>
-          <h2>公开 Beta<br />现已上线</h2>
-          <div class="meta">Node.js 20.19+ · ESM · npm `@mds-crate`</div>
+          <div class="cta-top">
+            <div class="eyebrow">开始使用</div>
+            <h2>公开 Beta<br />现已上线</h2>
+            <div class="meta">Node.js 20.19+ · ESM · npm `@mds-crate`</div>
+          </div>
           <div class="cmd">
             <div><span class="prompt">$</span> npm i -g <span class="pkg">@mds-crate/cli@next</span></div>
             <div><span class="prompt">$</span> mds edit ./page.mds</div>
           </div>
-          <div class="github">GitHub · <span>ziyu/mds</span></div>
-          <div class="license">欢迎上手反馈 · Apache-2.0</div>
+          <div class="cta-foot">
+            <div class="github">GitHub · <span>ziyu/mds</span></div>
+            <div class="license">欢迎上手反馈 · Apache-2.0</div>
+          </div>
         </div>
       </section>
     </div>
