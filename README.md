@@ -39,7 +39,7 @@ const result = renderMdsResult("# Hello from MDS", {
 console.log(result.body, result.diagnostics);
 ```
 
-For data tables, charts, technical documentation, guided sequences, galleries, and conversation layouts, install `@mds-crate/theme-rich@next` and import its `theme` export instead.
+Use `@mds-crate/theme-light@next` or `@mds-crate/theme-dark@next` when an application needs a fixed appearance independent of the operating-system preference. For data tables, charts, technical documentation, guided sequences, galleries, and conversation layouts, install `@mds-crate/theme-rich@next` and import its `theme` export instead.
 
 ### Create a package-defined theme
 
@@ -153,6 +153,8 @@ Primary public packages:
 
 - `@mds-crate/renderer-html`
 - `@mds-crate/theme-default`
+- `@mds-crate/theme-light`
+- `@mds-crate/theme-dark`
 - `@mds-crate/theme-rich`
 - `@mds-crate/cli`
 - `@mds-crate/theme-builder`

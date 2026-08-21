@@ -212,8 +212,8 @@ All checks passed.
     expect(result.html).not.toContain('data-fallback="true"');
   });
 
-  it("keeps progress atomic across the remaining official themes that support it", async () => {
-    for (const themeName of ["folio", "atelier", "rich"]) {
+  it("keeps progress atomic across every official file-authored theme", async () => {
+    for (const themeName of ["default", "light", "dark", "rich"]) {
       const themeDirectory = fileURLToPath(new URL(`../../../themes/${themeName}`, import.meta.url));
       const build = await buildPackageTheme(themeDirectory);
       const inspection = await inspectThemeArtifact(build.outputDirectory);

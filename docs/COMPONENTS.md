@@ -734,7 +734,7 @@ Component expansion should be verified at three levels:
 
    - Components example renders without diagnostics.
    - Focused fixtures cover every selected block pack and relevant state.
-   - Every official theme runs at mobile, tablet, and desktop viewports. The current gate covers Default and Canvas; the remaining official themes still need to join it.
+   - Every official theme runs at mobile, tablet, and desktop viewports. The current gate covers Default, Canvas, Rich, Light, and Dark.
    - The runner rejects initial scroll, horizontal overflow, popup geometry changes, broken overlay shielding, inconsistent action state, focus failures, and console errors.
    - PNG artifacts are compared with reviewed visual baselines instead of only being generated.
    - Interactive blocks do not hide content accidentally.

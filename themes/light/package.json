@@ -1,0 +1,71 @@
+{
+  "name": "@mds-crate/theme-light",
+  "version": "0.1.0-beta.1",
+  "description": "Official fixed light theme for MDS documents and applications.",
+  "keywords": [
+    "mds",
+    "markdown",
+    "theme",
+    "light"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ziyu/mds.git",
+    "directory": "themes/light"
+  },
+  "homepage": "https://github.com/ziyu/mds#readme",
+  "bugs": {
+    "url": "https://github.com/ziyu/mds/issues"
+  },
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./theme/*": "./dist/theme/*",
+    "./package.json": "./package.json"
+  },
+  "mdsTheme": {
+    "source": "./src/theme.json",
+    "dist": "./dist/theme",
+    "blockPacks": [
+      "@mds-crate/blocks/foundation",
+      "@mds-crate/blocks/media",
+      "@mds-crate/blocks/motion"
+    ],
+    "blockOverrides": [
+      "blocks/dialog.html",
+      "blocks/drawer.html",
+      "blocks/hero.html",
+      "blocks/float.html",
+      "blocks/sticky.html",
+      "blocks/tabs.html"
+    ]
+  },
+  "scripts": {
+    "build": "node ../../scripts/clean-package-dist.mjs && pnpm --dir ../.. build:theme themes/light && node ../../scripts/generate-theme-module.mjs .",
+    "prepack": "pnpm run build && node ../../scripts/manage-package-license.mjs add",
+    "postpack": "node ../../scripts/manage-package-license.mjs remove"
+  },
+  "dependencies": {
+    "@mds-crate/html-types": "workspace:*",
+    "@mds-crate/theme-loader": "workspace:*"
+  },
+  "devDependencies": {
+    "@mds-crate/blocks": "workspace:*",
+    "@mds-crate/theme-builder": "workspace:*"
+  }
+}

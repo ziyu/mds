@@ -11,7 +11,7 @@ import { examples } from "../apps/editor/src/examples.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outputDirectory = join(root, ".tmp/visual-smoke");
-const themeNames = ["default", "canvas", "rich"] as const;
+const themeNames = ["default", "canvas", "rich", "light", "dark"] as const;
 const richExample = {
   id: "rich",
   label: "Rich extensions",

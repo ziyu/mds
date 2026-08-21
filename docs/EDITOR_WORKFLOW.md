@@ -36,11 +36,11 @@ Frontmatter wins over the selected preview theme. If a document contains:
 
 ```mds
 ---
-theme: clarity
+theme: dark
 ---
 ```
 
-the toolbelt operates on `clarity`, even if the Render-panel selector still points at another theme.
+the toolbelt operates on `dark`, even if the Render-panel selector still points at another theme.
 
 ## MDS Editing Feedback
 

@@ -298,16 +298,6 @@ importers:
         specifier: ^3.2.0
         version: 3.2.6(@types/debug@4.1.13)(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.4)
 
-  themes/atelier:
-    dependencies:
-      '@mds-crate/blocks':
-        specifier: workspace:*
-        version: link:../../packages/blocks
-    devDependencies:
-      '@mds-crate/theme-builder':
-        specifier: workspace:*
-        version: link:../../packages/theme-builder
-
   themes/canvas:
     dependencies:
       '@mds-crate/blocks':
@@ -330,8 +320,18 @@ importers:
         specifier: ^5.8.0
         version: 5.9.3
 
-  themes/clarity:
+  themes/dark:
+    dependencies:
+      '@mds-crate/html-types':
+        specifier: workspace:*
+        version: link:../../packages/html-types
+      '@mds-crate/theme-loader':
+        specifier: workspace:*
+        version: link:../../packages/theme-loader
     devDependencies:
+      '@mds-crate/blocks':
+        specifier: workspace:*
+        version: link:../../packages/blocks
       '@mds-crate/theme-builder':
         specifier: workspace:*
         version: link:../../packages/theme-builder
@@ -352,12 +352,18 @@ importers:
         specifier: workspace:*
         version: link:../../packages/theme-builder
 
-  themes/folio:
+  themes/light:
     dependencies:
+      '@mds-crate/html-types':
+        specifier: workspace:*
+        version: link:../../packages/html-types
+      '@mds-crate/theme-loader':
+        specifier: workspace:*
+        version: link:../../packages/theme-loader
+    devDependencies:
       '@mds-crate/blocks':
         specifier: workspace:*
         version: link:../../packages/blocks
-    devDependencies:
       '@mds-crate/theme-builder':
         specifier: workspace:*
         version: link:../../packages/theme-builder

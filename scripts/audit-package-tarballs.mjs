@@ -18,6 +18,8 @@ const packageDirectories = [
   "packages/theme-builder",
   "themes/default",
   "themes/rich",
+  "themes/light",
+  "themes/dark",
   "packages/cli"
 ];
 const importablePackages = [
@@ -31,7 +33,9 @@ const importablePackages = [
   "@mds-crate/theme-sdk-react",
   "@mds-crate/theme-builder",
   "@mds-crate/theme-default",
-  "@mds-crate/theme-rich"
+  "@mds-crate/theme-rich",
+  "@mds-crate/theme-light",
+  "@mds-crate/theme-dark"
 ];
 const expectedRuntimeExports = {
   "@mds-crate/parser": "parseMds",
@@ -42,7 +46,9 @@ const expectedRuntimeExports = {
   "@mds-crate/theme-sdk-react": "defineReactTheme",
   "@mds-crate/theme-builder": "buildPackageTheme",
   "@mds-crate/theme-default": "theme",
-  "@mds-crate/theme-rich": "theme"
+  "@mds-crate/theme-rich": "theme",
+  "@mds-crate/theme-light": "theme",
+  "@mds-crate/theme-dark": "theme"
 };
 
 const packDirectory = await mkdtemp(join(tmpdir(), "mds-package-audit-"));
@@ -198,6 +204,18 @@ const { theme: richTheme, themeSource: richThemeSource } = await import("@mds-cr
 if (richTheme.name !== "rich" || !("blocks/data-table.html" in richThemeSource.files)) {
   throw new Error("The packed Rich theme did not expose its module or high-level block templates.");
 }
+for (const themeName of ["light", "dark"]) {
+  const { theme: appearanceTheme, themeSource: appearanceThemeSource } = await import(
+    "@mds-crate/theme-" + themeName
+  );
+  if (
+    appearanceTheme.name !== themeName ||
+    !("blocks/hero.html" in appearanceThemeSource.files) ||
+    !("blocks/context-menu.html" in appearanceThemeSource.files)
+  ) {
+    throw new Error("The packed " + themeName + " theme did not expose its complete portable artifact.");
+  }
+}
 const { readThemeRef } = await import("@mds-crate/theme-loader");
 const artifactThemeSource = await readThemeRef("@mds-crate/theme-default", { baseDirectory: process.cwd() });
 if (artifactThemeSource.manifest.name !== "default" || !("blocks/hero.html" in artifactThemeSource.files)) {
@@ -207,6 +225,7 @@ console.log(\`Imported \${packages.length} packed MDS libraries.\`);
 console.log("Rendered MDS source through the packed Node.js API.");
 console.log("Loaded the packed default theme through module and artifact entry points.");
 console.log("Loaded the packed Rich theme with its high-level block extensions.");
+console.log("Loaded the packed Light and Dark themes with complete portable artifacts.");
 `;
   const consumerScriptPath = join(consumerDirectory, "verify.mjs");
   await writeFile(consumerScriptPath, consumerScript, "utf8");

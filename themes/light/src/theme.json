@@ -1,0 +1,12 @@
+{
+  "name": "light",
+  "label": "Light",
+  "description": "A fixed-light editorial interface shaped by crisp grids, cobalt ink, and warm paper.",
+  "author": "MDS",
+  "preview": "preview.svg",
+  "tags": ["light", "editorial", "product", "accessible", "responsive"],
+  "supportedBlocks": ["hero", "float", "sticky"],
+  "css": "style.css",
+  "js": "script.js",
+  "shell": "shell.html"
+}

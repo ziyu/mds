@@ -1,0 +1,10 @@
+<!-- Light theme dialog structure with portable overlay hooks. -->
+<template data-block="dialog"><section{{ attrs }} class="dialog" data-mds-role="dialog" role="dialog" aria-modal="true" aria-hidden="true" aria-label="{{ attr:label:Dialog }}" hidden>
+  <button class="dialog-backdrop" data-mds-role="overlay-backdrop" type="button" tabindex="-1" aria-label="Close dialog" data-mds-overlay-close></button>
+  <div class="dialog-panel" data-mds-role="overlay-panel" tabindex="-1">
+    <button class="dialog-close" type="button" aria-label="Close dialog" data-mds-overlay-close>×</button>
+    {{ children }}
+    {{ slots }}
+  </div>
+</section>
+</template>
