@@ -152,10 +152,10 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 52px;
+      gap: 72px;
       width: 100%;
-      margin: auto 0;
-      padding: 24px 0;
+      height: 100%;
+      padding: 40px 0 56px;
     }
     .hook-item { display: flex; flex-direction: column; gap: 20px; width: 100%; }
     .hook-label {
@@ -303,9 +303,6 @@
       font-size: 24px;
       line-height: 1.45;
     }
-    .demo-stack:not(.has-preview) .code-body {
-      flex: 0 1 auto;
-    }
     .code-card .bar {
       display: flex;
       align-items: center;
@@ -334,6 +331,10 @@
       flex: 1;
       min-height: 0;
       overflow: hidden;
+    }
+    /* Must follow .code-body so typing stage keeps content optically centered */
+    .demo-stack:not(.has-preview) .code-card .code-body {
+      flex: 0 0 auto;
     }
     .code-body .tok-kw { color: var(--accent); }
     .code-body .tok-str { color: #ffb089; }
@@ -514,24 +515,26 @@
       width: 100%;
     }
     .preview-shell.show[data-mode="controls"] .th-controls { opacity: 1; transform: none; }
-    .preview-panel[data-panel="hero"] {
+    .preview-shell.show[data-mode="hero"] .preview-page,
+    .preview-shell.show[data-mode="controls"] .preview-page {
       justify-content: center;
-      padding-bottom: 28px;
-      position: relative;
     }
-    .preview-panel[data-panel="hero"] .th-note {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      margin-top: 0;
-      padding-top: 0;
-    }
+    .preview-panel[data-panel="hero"],
     .preview-panel[data-panel="controls"] {
       position: relative;
       justify-content: center;
-      padding-bottom: 28px;
+      flex: 0 1 auto;
+      width: 100%;
+      max-height: 100%;
+      padding-bottom: 36px;
     }
+    .preview-panel[data-panel="hero"] .th-controls,
+    .preview-panel[data-panel="controls"] .th-controls,
+    .preview-panel[data-panel="hero"] .th-hero {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+    .preview-panel[data-panel="hero"] .th-note,
     .preview-panel[data-panel="controls"] .th-note {
       position: absolute;
       left: 0;
