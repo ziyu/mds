@@ -32,6 +32,8 @@
     "build:theme:clarity": "pnpm build:theme themes/clarity",
     "build:theme:canvas": "pnpm build:theme themes/canvas",
     "test:visual": "tsx scripts/visual-smoke.ts",
+    "test:visual:motion": "tsx scripts/visual-smoke.ts --example=motion",
+    "test:visual:rich": "tsx scripts/visual-smoke.ts --theme=rich --example=rich",
     "test:editor-e2e": "node scripts/editor-browser-e2e.mjs --cli packages/cli/dist/index.js",
     "release:check": "node scripts/check-release-readiness.mjs",
     "release:configure-trust": "node scripts/configure-trusted-publishers.mjs",

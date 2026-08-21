@@ -61,7 +61,11 @@ const implementation = String.raw`  const builtInActions = new Set(["open", "clo
       tablist.dataset.mdsRole = "tab-list";
       tablist.setAttribute("role", "tablist");
       tablist.setAttribute("aria-label", root.getAttribute("data-attr-label") || "Sections");
-      panelsContainer.before(tablist);
+      if (panelsContainer === root) {
+        root.insertBefore(tablist, panels[0] || root.firstChild);
+      } else {
+        panelsContainer.before(tablist);
+      }
 
       const tabs = panels.map((panel, index) => {
         const tab = document.createElement("button");

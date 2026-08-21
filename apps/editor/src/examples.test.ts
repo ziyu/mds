@@ -157,6 +157,61 @@ describe("editor examples", () => {
     expect(theme.css).not.toContain(":where(details, .mds-details) + .action");
   });
 
+  it("keeps Rich extensions separate from the portable block runtime", async () => {
+    const themeDirectory = fileURLToPath(new URL("../../../themes/rich", import.meta.url));
+    const build = await buildPackageTheme(themeDirectory);
+    const inspection = await inspectThemeArtifact(build.outputDirectory);
+    const theme = await loadThemeDirectory(build.outputDirectory);
+    const script = theme.js ?? "";
+
+    expect(inspection.diagnostics).toEqual([]);
+    expect(inspection.blocks).toHaveLength(102);
+    expect(inspection.supportedBlocks).toHaveLength(102);
+    expect(script.match(/function setupTabs\(/g)).toHaveLength(1);
+    expect(script.match(/function setupMotion\(/g)).toHaveLength(1);
+    expect(script.match(/function setupDataTables\(/g)).toHaveLength(1);
+    expect(script.match(/function setupMessageScrollers\(/g)).toHaveLength(1);
+    expect(script).not.toContain('querySelectorAll(".tabs")');
+    expect(script).not.toContain('querySelectorAll(".dialog.is-open, .drawer.is-open")');
+    expect(script).not.toContain("Rich theme viewport motion");
+    expect(theme.css).toContain("[data-motion-ready]");
+    expect(theme.css).toContain("var(--motion-item-delay, var(--motion-delay))");
+    expect(theme.css).not.toContain("--rich-order");
+
+    const result = renderHtmlResult(
+      parseMds(`::: data-table label="Releases" filter="Filter releases" page-size=10 selectable
+--- columns
+:: data-column key="package" label="Package" sortable
+:: data-column key="version" label="Version" sortable
+
+--- rows
+::: data-row
+::: data-cell column="package"
+@mds-crate/blocks
+:::
+::: data-cell column="version"
+0.2.0
+:::
+:::
+:::
+
+::: message-scroller label="Conversation" follow=true height="24rem"
+::: message align="start" sender="MDS" status="Delivered"
+--- body
+::: bubble variant="secondary"
+All checks passed.
+:::
+:::
+:::`),
+      { theme }
+    );
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.html).toContain('class="data-table-shell"');
+    expect(result.html).toContain('class="message-scroller"');
+    expect(result.html).not.toContain('data-fallback="true"');
+  });
+
   it("keeps progress atomic across the remaining official themes that support it", async () => {
     for (const themeName of ["folio", "atelier", "rich"]) {
       const themeDirectory = fileURLToPath(new URL(`../../../themes/${themeName}`, import.meta.url));

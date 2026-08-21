@@ -389,7 +389,7 @@ For editor development mode, the dev server may compose pack sources before send
 
 7. **Add visual smoke tests**
 
-   Status: partially implemented through `pnpm test:visual`. The Components gallery covers exactly the 64 shared blocks and exercises `default` and `canvas` at 390x844, 820x1000, and 1440x1000. Chrome DevTools Protocol captures PNGs and rejects initial scroll/focus movement, horizontal overflow, broken menu geometry, inconsistent shared state, overlay coverage/inertness/focus failures, or render diagnostics. The Motion fixture separately checks timing, stagger, reduced trigger state, and replay across both themes. It does not yet provide complete official-theme coverage, per-block isolated fixtures, or reviewed screenshot-diff baselines.
+   Status: partially implemented through `pnpm test:visual`, `pnpm test:visual:motion`, and `pnpm test:visual:rich`. The Components gallery covers exactly the 64 shared blocks and exercises `default`, `canvas`, and the public `rich` theme at 390x844, 820x1000, and 1440x1000. Chrome DevTools Protocol captures PNGs and rejects initial scroll/focus movement, horizontal overflow, broken menu geometry, inconsistent shared state, overlay coverage/inertness/focus failures, or render diagnostics. The Motion fixture checks timing, stagger, reduced trigger state, and replay across all three themes. A Rich-specific fixture verifies data-table filtering, pagination, selection, and message-scroller setup. It does not yet provide complete repository-theme coverage, per-block isolated fixtures, or reviewed screenshot-diff baselines.
 
 8. **Move portable state machines into blocks**
 

@@ -252,6 +252,7 @@ describe("MDS block packs", () => {
     expect(script).toContain('sibling.inert = true');
     expect(script).toContain('focus({ preventScroll: true })');
     expect(script).toContain('update(0, false)');
+    expect(script).toContain('root.insertBefore(tablist, panels[0] || root.firstChild)');
     expect(styles).toContain('[data-mds-role="overlay-backdrop"]');
   });
 
