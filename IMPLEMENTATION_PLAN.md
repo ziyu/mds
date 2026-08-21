@@ -472,7 +472,7 @@ The loader still consumes `ThemeSource` or a theme directory. JSX is only a conv
 For checked-in themes, generated block templates should be committed so runtime tools do not need to execute TSX. The authoring loop can be:
 
 ```sh
-pnpm build:theme:atelier
+pnpm build:theme:canvas
 ```
 
 ### Package Theme Development
@@ -517,7 +517,7 @@ The first builder package is `@mds-crate/theme-builder`. Its MVP command reads `
 
 `mds theme pack` and `mds-theme pack` read the same built artifact, validate it, and write a clean shareable theme directory without package source files or `.mds-theme-build.json`.
 
-`themes/clarity` is the separated package-style example: source files live under `src/`, a local component module is imported by `src/theme.tsx`, local CSS imports are bundled, `src/script.ts` is bundled to artifact JavaScript, and the committed runtime artifact lives under `dist/theme`.
+`themes/canvas` is the framework-authored package example: source files live under `src/`, local components are imported by `src/theme.tsx`, Tailwind CSS and `src/script.ts` are bundled, and the runtime artifact is written under `dist/theme`. The publishable Default, Light, Dark, and Rich themes use the same source/artifact separation with file-authored templates.
 
 Future builder phases can add Vite dev integration, Preact/Vue adapters, richer CSS transforms, and package distribution polish. Those are development-time features only; the renderer and editor continue to load `theme.json` artifacts.
 

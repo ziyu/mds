@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-labelledby="title description">
+  <title id="title">Dark theme preview</title>
+  <desc id="description">A nocturnal editorial page with parchment type and copper details.</desc>
+  <rect width="640" height="400" fill="#0e0c0b"/>
+  <rect x="42" y="28" width="556" height="344" fill="#181411" stroke="#4d3c30"/>
+  <path d="M42 36h556" stroke="#d9834f" stroke-width="2"/>
+  <circle cx="73" cy="67" r="6" fill="#d9834f"/>
+  <path d="M92 67h92M506 67h58" stroke="#eee2d1" stroke-width="5"/>
+  <path d="M72 111h156M72 130h328M72 149h276" stroke="#f3e5d0" stroke-width="12"/>
+  <path d="M72 184h202M72 197h168" stroke="#a89989" stroke-width="5"/>
+  <rect x="72" y="239" width="229" height="83" fill="#201a16" stroke="#5c4738"/>
+  <rect x="319" y="239" width="245" height="83" fill="#bd673d"/>
+  <path d="M92 264h110M92 282h159" stroke="#eee2d1" stroke-width="6"/>
+  <path d="M339 264h96M339 282h142M339 300h75" stroke="#17110d" stroke-width="6"/>
+  <path d="M72 345h492" stroke="#76533e" stroke-width="2"/>
+</svg>

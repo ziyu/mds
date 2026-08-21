@@ -591,7 +591,7 @@ Best for checked-in themes in this repository and small developer-authored theme
 Source:
 
 ```txt
-themes/atelier/
+themes/my-theme/
   package.json
   src/
     theme.tsx
@@ -603,7 +603,7 @@ themes/atelier/
 Generated artifact:
 
 ```txt
-themes/atelier/
+themes/my-theme/
   dist/theme/
     theme.json
     style.css
@@ -615,7 +615,7 @@ themes/atelier/
 Command:
 
 ```sh
-pnpm build:theme:atelier
+pnpm build:theme path/to/theme-package
 ```
 
 Editor and CLI resolve the package to `package.json#mdsTheme.dist` and load only the generated artifact; they do not execute TSX.
@@ -684,15 +684,13 @@ Repository example:
 ```sh
 pnpm build:theme:default
 pnpm build:theme:rich
-pnpm build:theme:folio
-pnpm build:theme:atelier
-pnpm build:theme:clarity
-mds-theme inspect ./themes/clarity
+pnpm build:theme:light
+pnpm build:theme:dark
+pnpm build:theme:canvas
+mds-theme inspect ./themes/light
 ```
 
-`themes/default`, `themes/rich`, `themes/folio`, and `themes/atelier` all separate authoring source under `src/` from the complete generated artifact under `dist/theme`. They compose explicit primitive packs and own only the templates that need theme-specific structure or behavior. Rich is the official broad-content theme: it composes all 64 shared primitives and owns the 38 higher-level data, documentation, guidance, gallery, and conversation names.
-
-`themes/clarity` keeps source files under `src/`, imports a local component module, bundles CSS imports, bundles `src/script.ts` to artifact JavaScript, and commits the built `dist/theme` artifact. Runtime loading resolves the package directory to `package.json#mdsTheme.dist`.
+`themes/default`, `themes/light`, `themes/dark`, and `themes/rich` all separate authoring source under `src/` from the complete generated artifact under `dist/theme`. They compose explicit primitive packs and own only the templates that need theme-specific structure or behavior. Light and Dark are fixed-palette appearance systems over the same portable contract. Rich is the official broad-content theme: it composes all 64 shared primitives and owns the 38 higher-level data, documentation, guidance, gallery, and conversation names.
 
 `themes/canvas` exercises the React SDK and Tailwind v4 pipeline. It uses local shadcn-style components, `@mds-crate/theme-sdk-react`, `mdsTheme.pipeline.css = "tailwind"`, and still emits a plain artifact under `dist/theme`.
 
@@ -1024,8 +1022,8 @@ Compatibility policy:
 
 Status: completed.
 
-- Keep `themes/default` and `themes/folio` as simple file-authored package themes.
-- Keep `themes/atelier` as the JSX-authored package example.
+- Keep `themes/default`, `themes/light`, `themes/dark`, and `themes/rich` as file-authored package themes over the same portable block contract.
+- Keep `themes/canvas` as the React/Tailwind package-authoring example.
 - Keep source and generated artifacts separate so shared-pack output is never mistaken for theme-owned implementation.
 - Keep editor and CLI loading artifact directories.
 
@@ -1034,7 +1032,9 @@ Acceptance:
 - `pnpm check`
 - `pnpm test`
 - `pnpm build`
-- `pnpm build:theme:atelier`
+- `pnpm build:theme:light`
+- `pnpm build:theme:dark`
+- `pnpm build:theme:canvas`
 
 ### Phase 1: Theme Artifact Validation
 
@@ -1074,7 +1074,7 @@ Tasks:
 - Support output cleanup rules. Done for generated dist output and retained for legacy in-place packages.
 - Support asset copying with nested paths. Done.
 - Support TS/TSX source loading from the built `mds-theme` CLI. Done.
-- Support local component imports in TSX theme source. Done, including `themes/clarity`.
+- Support local component imports in TSX theme source. Done and covered by builder integration tests and the Canvas package example.
 - Validate generated artifacts before writing. Done.
 - Print non-fatal validation warnings from `mds-theme build`. Done.
 - Support sourcemap/debug metadata for generated templates. Basic deterministic build metadata done, including package input files and generated template mappings.
@@ -1103,7 +1103,7 @@ Tasks:
 Acceptance:
 
 - `--theme @scope/theme-name` loads built artifact. Covered by CLI integration test.
-- Source files are not executed during render. Covered by package resolution loading only `mdsTheme.dist` and by `themes/clarity`.
+- Source files are not executed during render. Covered by package resolution loading only `mdsTheme.dist` across the official package themes.
 
 ### Phase 4: Ecosystem Adapters
 

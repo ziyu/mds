@@ -1,0 +1,12 @@
+{
+  "name": "dark",
+  "label": "Dark",
+  "description": "A fixed-dark nocturne of charcoal, parchment, and ember-toned interface details.",
+  "author": "MDS",
+  "preview": "preview.svg",
+  "tags": ["dark", "nocturne", "editorial", "accessible", "responsive"],
+  "supportedBlocks": ["hero", "float", "sticky"],
+  "css": "style.css",
+  "js": "script.js",
+  "shell": "shell.html"
+}

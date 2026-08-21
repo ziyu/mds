@@ -168,14 +168,14 @@ describe("loadThemeDirectory", () => {
     );
     expect(themes).toContainEqual(
       expect.objectContaining({
-        name: "folio",
-        label: "Folio"
+        name: "light",
+        label: "Light"
       })
     );
     expect(themes).toContainEqual(
       expect.objectContaining({
-        name: "atelier",
-        label: "Atelier"
+        name: "dark",
+        label: "Dark"
       })
     );
     expect(themes).toContainEqual(
@@ -184,26 +184,21 @@ describe("loadThemeDirectory", () => {
         label: "Rich"
       })
     );
-    expect(themes).toContainEqual(
-      expect.objectContaining({
-        name: "clarity",
-        label: "Clarity"
-      })
-    );
+    expect(themes).toHaveLength(5);
 
     const theme = await registry.loadTheme("default");
     expect(theme.name).toBe("default");
     expect(theme.blockRenderers?.hero).toBeDefined();
 
-    const folioTheme = await registry.loadTheme("folio");
-    expect(folioTheme.name).toBe("folio");
-    expect(folioTheme.css).toContain(".folio-frame");
-    expect(folioTheme.blockRenderers?.hero).toBeDefined();
+    const lightTheme = await registry.loadTheme("light");
+    expect(lightTheme.name).toBe("light");
+    expect(lightTheme.css).toContain("Porcelain Ledger");
+    expect(lightTheme.blockRenderers?.hero).toBeDefined();
 
-    const atelierTheme = await registry.loadTheme("atelier");
-    expect(atelierTheme.name).toBe("atelier");
-    expect(atelierTheme.css).toContain(".hero-media");
-    expect(atelierTheme.blockRenderers?.callout).toBeDefined();
+    const darkTheme = await registry.loadTheme("dark");
+    expect(darkTheme.name).toBe("dark");
+    expect(darkTheme.css).toContain("Ember Archive");
+    expect(darkTheme.blockRenderers?.callout).toBeDefined();
 
     const richTheme = await registry.loadTheme("rich");
     expect(richTheme.name).toBe("rich");

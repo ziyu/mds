@@ -1,0 +1,10 @@
+<!-- Light theme drawer structure with portable overlay hooks. -->
+<template data-block="drawer"><aside{{ attrs }} class="drawer" data-mds-role="drawer" role="dialog" aria-modal="true" aria-hidden="true" aria-label="{{ attr:label:Drawer }}" hidden>
+  <button class="drawer-backdrop" data-mds-role="overlay-backdrop" type="button" tabindex="-1" aria-label="Close drawer" data-mds-overlay-close></button>
+  <div class="drawer-panel" data-mds-role="overlay-panel" tabindex="-1">
+    <button class="drawer-close" type="button" aria-label="Close drawer" data-mds-overlay-close>×</button>
+    {{ children }}
+    {{ slots }}
+  </div>
+</aside>
+</template>

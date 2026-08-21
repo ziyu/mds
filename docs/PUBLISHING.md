@@ -1,6 +1,6 @@
 # Publishing MDS
 
-MDS publishes twelve fixed-version public packages under `@mds-crate`. The authenticated `0.1.0-beta.1` bootstrap release covered the original eleven packages; the next release adds `@mds-crate/theme-rich`, which must receive the same GitHub Actions trusted-publisher configuration. Subsequent releases use npm trusted publishing.
+MDS publishes fourteen fixed-version public packages under `@mds-crate`. The authenticated `0.1.0-beta.1` bootstrap release covered the original eleven packages; the next release set adds `@mds-crate/theme-rich`, `@mds-crate/theme-light`, and `@mds-crate/theme-dark`, which must receive the same GitHub Actions trusted-publisher configuration. Subsequent releases use npm trusted publishing.
 
 Reference: [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/), [`npm trust github`](https://docs.npmjs.com/cli/v11/commands/npm-trust/), and [npm provenance](https://docs.npmjs.com/generating-provenance-statements/).
 
@@ -34,7 +34,7 @@ pnpm release:verify:next
 
 The registry verifier creates a clean temporary consumer and:
 
-- installs all twelve packages from `next`;
+- installs all fourteen packages from `next`;
 - imports their public entry points and checks the fixed version;
 - renders with `@mds-crate/renderer-html` and `@mds-crate/theme-default`;
 - invokes the installed CLI;
@@ -44,7 +44,7 @@ The registry verifier creates a clean temporary consumer and:
 
 ## Trusted publishing after bootstrap
 
-Trusted publishing is configured per public package with GitHub repository `ziyu/mds`, workflow `publish.yml`, environment `npm`, and publish permission. Run the configuration command after the first manual publication of any newly introduced package, including `@mds-crate/theme-rich`.
+Trusted publishing is configured per public package with GitHub repository `ziyu/mds`, workflow `publish.yml`, environment `npm`, and publish permission. Run the configuration command after the first manual publication of any newly introduced package, including the Rich, Light, and Dark theme packages.
 
 After every package exists on npm:
 

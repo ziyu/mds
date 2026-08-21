@@ -53,6 +53,7 @@ The first public milestone is `0.1.0-beta.1`, not an immediate stable `0.1.0` re
 - [x] Add `mds theme init` and `mds-theme init`.
 - [x] Provide artifact-first HTML, JSX, and React authoring templates.
 - [x] Build `@mds-crate/theme-default` as both a browser-safe module and a Node-resolvable artifact package.
+- [x] Add fixed Light and Dark appearance themes with the same portable package and artifact contract.
 - [x] Exclude theme source and development build metadata from published theme packages.
 - [x] Test init, dependency installation, build, inspect, pack, package-name resolution, rendering, and Vite bundling from tarballs.
 - [x] Bootstrap the packages on npm and run the same acceptance flow against registry versions.
@@ -94,8 +95,9 @@ Current evidence:
 - The [Editor app](../apps/editor/src/app.tsx) keeps the example playground for development and switches to real file sessions under `mds edit`.
 - The CLI [production server](../packages/cli/src/editor-server.ts) owns theme/file APIs, security checks, persistence, and packaged static assets; the Vite plugin remains the development adapter.
 - [`@mds-crate/theme-default`](../themes/default/package.json) is published and exports both a browser-safe module and `dist/theme` artifact.
+- [`@mds-crate/theme-light`](../themes/light/package.json) and [`@mds-crate/theme-dark`](../themes/dark/package.json) provide fixed appearance systems over the complete portable block contract.
 - [`@mds-crate/theme-rich`](../themes/rich/package.json) is prepared as the official high-level content theme and follows the same module-plus-artifact contract.
-- The release set now contains twelve public packages; the next beta publishes Rich with the fixed-version package group.
+- The release set now contains fourteen public packages; the next beta publishes Rich, Light, and Dark with the fixed-version package group.
 - Sequential package audits now verify clean tarball contents and packed manifests without leaked `workspace:` dependency ranges.
 - GitHub Actions uses npm trusted publishing for subsequent releases; the public repository makes provenance available to future OIDC publications.
 
@@ -110,6 +112,8 @@ These packages should be documented as the normal public entry points:
 | `@mds-crate/renderer-html` | Application developers | Parse-and-render convenience APIs, AST rendering, fragment/document output, and renderer diagnostics. |
 | `@mds-crate/theme-default` | Application developers and editor users | A supported default theme available as both a Node-resolvable artifact and a browser-safe module. |
 | `@mds-crate/theme-rich` | Application developers and document authors | An official theme for data, documentation, guidance, gallery, and conversation blocks. |
+| `@mds-crate/theme-light` | Application developers and editor users | A supported fixed-light appearance theme with the complete portable block contract. |
+| `@mds-crate/theme-dark` | Application developers and editor users | A supported fixed-dark appearance theme with the complete portable block contract. |
 | `@mds-crate/cli` | Authors and local editor users | `build`, `check`, `edit`, and delegated `theme` commands. |
 | `@mds-crate/theme-builder` | Theme developers | Theme build, watch, inspect, pack, and initialization workflows. |
 | `@mds-crate/theme-sdk-html` | Theme developers | Tagged-HTML theme authoring. |
@@ -128,8 +132,8 @@ These packages still need to be public because they appear in runtime or type de
 ### Packages that should remain private initially
 
 - `@mds-crate/editor` should remain a workspace application. Its production assets should be bundled into the CLI/editor distribution rather than exposing the React app as a public component-library API.
-- `@mds-crate/theme-folio`, `@mds-crate/theme-atelier`, `@mds-crate/theme-clarity`, and `@mds-crate/theme-canvas` should remain repository examples for the first release.
-- `@mds-crate/theme-default` and `@mds-crate/theme-rich` are the supported published themes in `0.1`: Default stays compact; Rich owns the optional high-level vocabulary.
+- `@mds-crate/theme-canvas` remains a private repository example for React/Tailwind authoring.
+- `@mds-crate/theme-default`, `@mds-crate/theme-light`, `@mds-crate/theme-dark`, and `@mds-crate/theme-rich` are the supported published themes in `0.1`: Default stays compact, Light and Dark provide fixed appearance systems, and Rich owns the optional high-level vocabulary.
 
 ## P0: Shared Release Foundation
 
@@ -137,7 +141,7 @@ These tasks block all three public user journeys.
 
 ### 1. Complete identity, visibility, and license setup
 
-- The npm `@mds-crate` scope is confirmed; the release automation now covers all twelve public package names.
+- The npm `@mds-crate` scope is confirmed; the release automation now covers all fourteen public package names.
 - The `ziyu/mds` repository is public for source, documentation, issues, and release notes.
 - Keep Apache-2.0 license metadata and the root license text aligned across public packages.
 - Add a root `README.md` that leads with three quick starts: render MDS, edit an MDS file, and create a theme.
@@ -226,9 +230,9 @@ Requirements:
 - Parser, renderer, and theme diagnostics have deterministic ordering and source metadata.
 - The API behaves the same in Node.js and browser bundlers when given the same `HtmlTheme`.
 
-### 2. Publish portable Default and Rich themes
+### 2. Publish portable Default, Light, Dark, and Rich themes
 
-`@mds-crate/theme-default` and `@mds-crate/theme-rich` must support both consumption modes:
+`@mds-crate/theme-default`, `@mds-crate/theme-light`, `@mds-crate/theme-dark`, and `@mds-crate/theme-rich` must support both consumption modes. For example:
 
 ```ts
 // Browser or bundled application
@@ -239,6 +243,9 @@ await readThemeRef("@mds-crate/theme-default");
 
 import { theme as richTheme } from "@mds-crate/theme-rich";
 await readThemeRef("@mds-crate/theme-rich");
+
+import { theme as lightTheme } from "@mds-crate/theme-light";
+import { theme as darkTheme } from "@mds-crate/theme-dark";
 ```
 
 The published package should contain:
@@ -503,7 +510,7 @@ The release tool should calculate dependency order, but the expected first-relea
 3. `@mds-crate/renderer-html` and `@mds-crate/theme-loader`
 4. `@mds-crate/blocks`, `@mds-crate/theme-sdk-html`, and `@mds-crate/theme-sdk-react`
 5. `@mds-crate/theme-builder`
-6. `@mds-crate/theme-default` and `@mds-crate/theme-rich`
+6. `@mds-crate/theme-default`, `@mds-crate/theme-light`, `@mds-crate/theme-dark`, and `@mds-crate/theme-rich`
 7. `@mds-crate/cli` with packaged Editor assets
 
 The bootstrap publication caused npm to create `latest` at `0.1.0-beta.1`; that tag is intentionally retained. Prerelease automation continues to target `next`, and no future tag movement should occur until every package in the release set passes registry acceptance.
@@ -668,7 +675,7 @@ Acceptance:
 1. The GitHub repository is public for the external beta.
 2. The stable Editor command is `mds edit`; no alias is required for the first beta.
 3. Hosted and native desktop Editors are deferred until after the local Editor beta.
-4. `@mds-crate/theme-default` and `@mds-crate/theme-rich` export both `theme` and `themeSource`, and npm theme packages are artifact-first.
+4. `@mds-crate/theme-default`, `@mds-crate/theme-light`, `@mds-crate/theme-dark`, and `@mds-crate/theme-rich` export both `theme` and `themeSource`, and npm theme packages are artifact-first.
 
 ## Recommended Next Work Order
 

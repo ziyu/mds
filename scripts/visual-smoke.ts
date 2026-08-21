@@ -11,7 +11,64 @@ import { examples } from "../apps/editor/src/examples.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outputDirectory = join(root, ".tmp/visual-smoke");
-const themeNames = ["default", "canvas"] as const;
+const themeNames = ["default", "canvas", "rich", "light", "dark"] as const;
+const richExample = {
+  id: "rich",
+  label: "Rich extensions",
+  source: `---
+title: Rich Theme Extensions
+description: Browser fixture for Rich-owned data and conversation behavior.
+---
+
+::: page
+::: section
+## Release data
+
+::: data-table label="Releases" filter="Filter releases" page-size=1 selectable
+--- columns
+:: data-column key="package" label="Package" sortable
+:: data-column key="version" label="Version" sortable
+
+--- rows
+::: data-row
+::: data-cell column="package"
+@mds-crate/blocks
+:::
+::: data-cell column="version"
+0.2.0
+:::
+:::
+::: data-row
+::: data-cell column="package"
+@mds-crate/theme-rich
+:::
+::: data-cell column="version"
+0.1.0
+:::
+:::
+:::
+:::
+
+::: section
+## Conversation
+
+::: message-scroller label="Conversation" follow=true height="12rem"
+::: message sender="MDS" status="Delivered"
+--- body
+::: bubble variant="secondary"
+All checks passed.
+:::
+:::
+::: message sender="Release bot" status="Delivered"
+--- body
+The artifact is ready.
+:::
+:::
+:::
+:::
+`
+} as const;
+const visualExamples = [...examples, richExample];
 const viewports = [
   { name: "mobile", width: 390, height: 844 },
   { name: "tablet", width: 820, height: 1000 },
@@ -49,16 +106,33 @@ interface CommandMetrics {
 interface SharedEnhancementMetrics {
   calendar: boolean;
   dropdownFloating: boolean;
+  dropdownItemsFit: boolean;
   contextMenu: boolean;
+  contextMenuEnhanced: boolean;
+  contextMenuOpen: boolean;
+  contextMenuPositioned: boolean;
+  contextMenuLeftFits: boolean;
+  contextMenuRightFits: boolean;
+  contextMenuTopFits: boolean;
+  contextMenuBottomFits: boolean;
   contextMenuFloating: boolean;
+  contextMenuItemsFit: boolean;
   menubar: boolean;
   menubarFloating: boolean;
+  menubarItemsFit: boolean;
 }
 
 interface PortableInteractionMetrics {
   tabs: boolean;
+  tabsInitialized: boolean;
+  tabsHasSourcePanels: boolean;
+  tabsRelationships: boolean;
+  tabsKeyboard: boolean;
+  tabsSelection: boolean;
+  tabsVisibility: boolean;
   accordion: boolean;
   detailsToggle: boolean;
+  inputGroupOrder: boolean;
   commandActions: boolean;
   dialogClass: boolean;
   dialogAria: boolean;
@@ -104,6 +178,27 @@ interface MotionEnhancementMetrics {
   replays: boolean;
 }
 
+interface RichEnhancementMetrics {
+  dataTableEnhanced: boolean;
+  dataTableFilters: boolean;
+  dataTableRestores: boolean;
+  dataTablePaginates: boolean;
+  dataTableSelects: boolean;
+  messageScrollerEnhanced: boolean;
+  messageScrollerHeight: boolean;
+}
+
+interface ActionStyleMetrics {
+  actionExists: boolean;
+  actionVisible: boolean;
+  actionContrast: boolean;
+  actionUsesControlGeometry: boolean;
+  display: string;
+  width: number;
+  height: number;
+  viewportWidth: number;
+}
+
 async function main(): Promise<void> {
   const htmlOnly = process.argv.includes("--html-only");
   const requestedTheme = process.argv.find((argument) => argument.startsWith("--theme="))?.slice("--theme=".length);
@@ -116,7 +211,7 @@ async function main(): Promise<void> {
     throw new Error(`Unknown visual smoke theme: ${requestedTheme}. Expected one of ${themeNames.join(", ")}.`);
   }
   const chrome = htmlOnly ? undefined : await resolveChromeExecutable();
-  const selectedExample = examples.find((example) => example.id === requestedExample);
+  const selectedExample = visualExamples.find((example) => example.id === requestedExample);
   if (selectedExample === undefined) {
     throw new Error(`Unknown editor example: ${requestedExample}.`);
   }
@@ -126,7 +221,7 @@ async function main(): Promise<void> {
 
   for (const themeName of selectedThemes) {
     const themeDirectory = join(root, "themes", themeName);
-    const themeOutput = join(outputDirectory, themeName);
+    const themeOutput = join(outputDirectory, selectedExample.id, themeName);
     await rm(themeOutput, { recursive: true, force: true });
     const build = await buildPackageTheme(themeDirectory);
     const theme = await loadThemeDirectory(build.outputDirectory);
@@ -174,7 +269,9 @@ async function main(): Promise<void> {
           viewport.height,
           themeName,
           selectedExample.id === "components",
-          selectedExample.id === "motion"
+          selectedExample.id === "motion",
+          selectedExample.id === "rich",
+          themeName === "rich" && selectedExample.id === "actions"
         );
         const screenshotStat = await stat(screenshotPath);
         if (screenshotStat.size === 0) {
@@ -192,8 +289,8 @@ async function main(): Promise<void> {
 
   const manifestPath =
     selectedThemes.length === themeNames.length
-      ? join(outputDirectory, "manifest.json")
-      : join(outputDirectory, selectedThemes[0]!, "manifest.json");
+      ? join(outputDirectory, selectedExample.id, "manifest.json")
+      : join(outputDirectory, selectedExample.id, selectedThemes[0]!, "manifest.json");
   await writeFile(
     manifestPath,
     `${JSON.stringify(
@@ -242,7 +339,9 @@ async function captureScreenshot(
   height: number,
   themeName: (typeof themeNames)[number],
   verifyEnhancements: boolean,
-  verifyMotion: boolean
+  verifyMotion: boolean,
+  verifyRichExtensions: boolean,
+  verifyActionStyles: boolean
 ): Promise<LayoutMetrics> {
   const profileDirectory = `${screenshotPath}.chrome-profile`;
   await rm(profileDirectory, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
@@ -263,6 +362,8 @@ async function captureScreenshot(
     { stdio: ["ignore", "ignore", "pipe"] }
   );
   let client: CdpClient | undefined;
+  let removeRuntimeErrorListener: (() => void) | undefined;
+  const runtimeErrors: string[] = [];
 
   try {
     client = await CdpClient.connect(await waitForDevToolsUrl(child, 30_000));
@@ -297,6 +398,27 @@ async function captureScreenshot(
     }
     await client.send("Page.enable", {}, sessionId);
     await client.send("Runtime.enable", {}, sessionId);
+    removeRuntimeErrorListener = client.onEvent((message) => {
+      if (message.sessionId !== sessionId) {
+        return;
+      }
+      if (message.method === "Runtime.exceptionThrown") {
+        const details = (message.params as { exceptionDetails?: { text?: string; exception?: { description?: string } } } | undefined)
+          ?.exceptionDetails;
+        runtimeErrors.push(details?.exception?.description ?? details?.text ?? "Uncaught browser exception");
+      }
+      if (message.method === "Runtime.consoleAPICalled") {
+        const params = message.params as
+          | { type?: string; args?: Array<{ value?: unknown; description?: string }> }
+          | undefined;
+        if (params?.type === "error") {
+          runtimeErrors.push(
+            params.args?.map((argument) => String(argument.value ?? argument.description ?? "")).join(" ") ||
+              "Browser console error"
+          );
+        }
+      }
+    });
     const domReady = client.waitForEvent("Page.domContentEventFired", sessionId, 15_000);
     await client.send("Page.navigate", { url: pathToFileURL(htmlPath).href }, sessionId);
     await domReady;
@@ -346,6 +468,19 @@ async function captureScreenshot(
         expression: `(async () => {
           const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
           const insideViewport = (rect) => rect.left >= -1 && rect.right <= innerWidth + 1 && rect.top >= -1 && rect.bottom <= innerHeight + 1;
+          const enforceRichMenuLayout = ${themeName === "rich" ? "true" : "false"};
+          const menuItemsFit = (content) => {
+            if (!(content instanceof HTMLElement)) return false;
+            const contentRect = content.getBoundingClientRect();
+            const labels = [...content.querySelectorAll('.menu-item-label')];
+            return contentRect.width >= Math.min(240, innerWidth - 16) - 1 && labels.length > 0 && labels.every((label) => {
+              if (!(label instanceof HTMLElement)) return false;
+              const style = getComputedStyle(label);
+              const lineHeight = Number.parseFloat(style.lineHeight) || Number.parseFloat(style.fontSize) * 1.2;
+              return style.whiteSpace === 'nowrap' && style.overflowWrap !== 'anywhere' &&
+                label.getBoundingClientRect().height <= lineHeight * 1.5;
+            });
+          };
           document.documentElement.style.scrollBehavior = 'auto';
 
           const calendarRoot = document.querySelector('.calendar');
@@ -378,6 +513,7 @@ async function captureScreenshot(
             standaloneRootRect.height <= standaloneTriggerRect.height + 4 &&
             standaloneContentRect.width <= Math.min(374, innerWidth - 8) + 1 &&
             insideViewport(standaloneContentRect);
+          const dropdownItemsFit = !enforceRichMenuLayout || menuItemsFit(standaloneContent);
           if (standaloneDropdown instanceof HTMLDetailsElement) standaloneDropdown.open = false;
 
           const contextRoot = document.querySelector('.context-menu');
@@ -403,11 +539,17 @@ async function captureScreenshot(
           await nextFrame();
           await nextFrame();
           const contextFixedRect = contextContent?.getBoundingClientRect();
+          const contextMenuEnhanced = contextRoot instanceof HTMLDetailsElement && contextRoot.classList.contains('is-enhanced');
+          const contextMenuOpen = contextRoot instanceof HTMLDetailsElement && contextRoot.open && contextRoot.classList.contains('is-context-open');
+          const contextMenuPositioned = contextContent instanceof HTMLElement && getComputedStyle(contextContent).position === 'fixed';
+          const contextMenuLeftFits = contextFixedRect !== undefined && contextFixedRect.left >= -1;
+          const contextMenuRightFits = contextFixedRect !== undefined && contextFixedRect.right <= innerWidth + 1;
+          const contextMenuTopFits = contextFixedRect !== undefined && contextFixedRect.top >= -1;
+          const contextMenuBottomFits = contextFixedRect !== undefined && contextFixedRect.bottom <= innerHeight + 1;
           const contextMenu = contextRoot instanceof HTMLDetailsElement &&
-            contextRoot.classList.contains('is-enhanced') && contextRoot.open &&
-            contextRoot.classList.contains('is-context-open') &&
-            contextContent instanceof HTMLElement && getComputedStyle(contextContent).position === 'fixed' &&
+            contextMenuEnhanced && contextMenuOpen && contextMenuPositioned &&
             contextFixedRect !== undefined && insideViewport(contextFixedRect);
+          const contextMenuItemsFit = !enforceRichMenuLayout || menuItemsFit(contextContent);
           if (contextRoot instanceof HTMLDetailsElement) contextRoot.open = false;
 
           const menubarRoot = document.querySelector('.menubar');
@@ -436,13 +578,14 @@ async function captureScreenshot(
             Math.abs(menubarOpenRect.width - menubarClosedRect.width) <= 1 &&
             Math.abs(menubarOpenRect.height - menubarClosedRect.height) <= 1 &&
             insideViewport(menubarContentRect);
+          const menubarItemsFit = !enforceRichMenuLayout || menuItemsFit(menubarContent);
           const menubar = menubarRoot instanceof HTMLElement &&
             menubarRoot.classList.contains('is-enhanced') && menubarKeyboard;
           if (menubarMenu instanceof HTMLDetailsElement) menubarMenu.open = false;
           if (menubarRoot instanceof HTMLElement) menubarRoot.style.removeProperty('margin-left');
 
           window.scrollTo(0, 0);
-          return { calendar, dropdownFloating, contextMenu, contextMenuFloating, menubar, menubarFloating };
+          return { calendar, dropdownFloating, dropdownItemsFit, contextMenu, contextMenuEnhanced, contextMenuOpen, contextMenuPositioned, contextMenuLeftFits, contextMenuRightFits, contextMenuTopFits, contextMenuBottomFits, contextMenuFloating, contextMenuItemsFit, menubar, menubarFloating, menubarItemsFit };
         })()`,
         awaitPromise: true,
         returnByValue: true
@@ -463,17 +606,24 @@ async function captureScreenshot(
           const tabsRoot = document.querySelector('[data-mds-role="tabs"]');
           const tabButtons = [...(tabsRoot?.querySelectorAll('[data-mds-role="tab"]') ?? [])];
           const tabPanels = [...(tabsRoot?.querySelectorAll('[data-mds-role="tab-panel"]') ?? [])];
-          let tabs = tabButtons.length > 1 && tabButtons.length === tabPanels.length &&
+          const tabsHasSourcePanels = (tabsRoot?.querySelectorAll('[data-slot], .tabs-item').length ?? 0) > 1;
+          const tabsInitialized = tabsRoot instanceof HTMLElement && tabsRoot.dataset.mdsTabs === 'true' && tabButtons.length > 1;
+          const tabsRelationships = tabButtons.length === tabPanels.length &&
             tabButtons.every((button, index) => button.getAttribute('aria-controls') === tabPanels[index]?.id) &&
             tabPanels.every((panel, index) => panel.getAttribute('aria-labelledby') === tabButtons[index]?.id);
-          if (tabs && tabButtons[0] instanceof HTMLElement && tabButtons[1] instanceof HTMLElement) {
+          let tabsKeyboard = false;
+          let tabsSelection = false;
+          let tabsVisibility = false;
+          if (tabsInitialized && tabsRelationships && tabButtons[0] instanceof HTMLElement && tabButtons[1] instanceof HTMLElement) {
             tabButtons[0].focus();
             tabButtons[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-            tabs = document.activeElement === tabButtons[1] &&
-              tabButtons[1].getAttribute('aria-selected') === 'true' &&
+            tabsKeyboard = document.activeElement === tabButtons[1];
+            tabsSelection = tabButtons[1].getAttribute('aria-selected') === 'true';
+            tabsVisibility =
               tabPanels[0] instanceof HTMLElement && tabPanels[0].hidden &&
               tabPanels[1] instanceof HTMLElement && !tabPanels[1].hidden;
           }
+          const tabs = tabsInitialized && tabsRelationships && tabsKeyboard && tabsSelection && tabsVisibility;
 
           const accordionRoot = document.querySelector('[data-mds-role="accordion"]');
           const accordionButtons = [...(accordionRoot?.querySelectorAll('[data-mds-role="accordion-trigger"]') ?? [])];
@@ -499,6 +649,17 @@ async function captureScreenshot(
           detailsControl?.click();
           detailsToggle = detailsToggle && detailsTarget instanceof HTMLDetailsElement && !detailsTarget.open &&
             detailsControl?.getAttribute('aria-pressed') === 'false';
+
+          const inputGroupFrame = document.querySelector('.input-group-frame');
+          const inputGroupPrefix = inputGroupFrame?.querySelector('.input-group-prefix');
+          const inputGroupControl = inputGroupFrame?.querySelector('.input-group-control');
+          const inputGroupSuffix = inputGroupFrame?.querySelector('.input-group-suffix');
+          const prefixRect = inputGroupPrefix?.getBoundingClientRect();
+          const controlRect = inputGroupControl?.getBoundingClientRect();
+          const suffixRect = inputGroupSuffix?.getBoundingClientRect();
+          const inputGroupOrder = inputGroupPrefix instanceof HTMLElement && inputGroupControl instanceof HTMLInputElement &&
+            inputGroupSuffix instanceof HTMLElement && prefixRect !== undefined && controlRect !== undefined && suffixRect !== undefined &&
+            prefixRect.right <= controlRect.left + 1 && controlRect.right <= suffixRect.left + 1;
 
           const commandAction = document.querySelector('button.action.command');
           const commandActions = commandAction instanceof HTMLButtonElement &&
@@ -549,7 +710,7 @@ async function captureScreenshot(
           const drawerFocusRestored = document.activeElement === drawerTrigger;
 
           window.scrollTo(0, 0);
-          return { tabs, accordion, detailsToggle, commandActions, dialogClass, dialogAria, dialogBodyLock, dialogFocus, dialogCoversViewport, dialogBackgroundInert, dialogStateClosed, dialogAriaClosed, dialogBodyUnlocked, dialogFocusRestored, drawerOpen, drawerCoversViewport, drawerBackgroundInert, drawerStateClosed, drawerAriaClosed, drawerBodyUnlocked, drawerFocusRestored };
+          return { tabs, tabsInitialized, tabsHasSourcePanels, tabsRelationships, tabsKeyboard, tabsSelection, tabsVisibility, accordion, detailsToggle, inputGroupOrder, commandActions, dialogClass, dialogAria, dialogBodyLock, dialogFocus, dialogCoversViewport, dialogBackgroundInert, dialogStateClosed, dialogAriaClosed, dialogBodyUnlocked, dialogFocusRestored, drawerOpen, drawerCoversViewport, drawerBackgroundInert, drawerStateClosed, drawerAriaClosed, drawerBodyUnlocked, drawerFocusRestored };
         })()`,
         awaitPromise: true,
         returnByValue: true
@@ -696,6 +857,98 @@ async function captureScreenshot(
         throw new Error(`Portable motion enhancement failed for ${screenshotPath}: ${JSON.stringify(motion)}.`);
       }
     }
+    if (verifyRichExtensions) {
+      const richEvaluated = await client.send<{ result: { value: RichEnhancementMetrics } }>(
+        "Runtime.evaluate",
+        {
+          expression: `(() => {
+            const shell = document.querySelector('.data-table-shell');
+            const input = shell?.querySelector('.data-table-filter-input');
+            const rows = [...(shell?.querySelectorAll('tbody > tr') ?? [])];
+            const pagination = shell?.querySelector('.data-table-pagination');
+            const next = shell?.querySelector('.data-table-next');
+            const firstCheckbox = shell?.querySelector('.data-table-row-select');
+            const dataTableEnhanced = shell instanceof HTMLElement && shell.dataset.mdsDataTable === 'true' &&
+              shell.classList.contains('is-enhanced') && input instanceof HTMLInputElement && !input.closest('header')?.hidden;
+
+            if (input instanceof HTMLInputElement) {
+              input.value = 'theme-rich';
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            const dataTableFilters = rows.length === 2 && rows.filter((row) => row instanceof HTMLElement && !row.hidden).length === 1 &&
+              rows.some((row) => row instanceof HTMLElement && !row.hidden && row.textContent?.includes('theme-rich'));
+
+            if (input instanceof HTMLInputElement) {
+              input.value = '';
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            const dataTableRestores = rows.filter((row) => row instanceof HTMLElement && !row.hidden).length === 1 &&
+              pagination instanceof HTMLElement && !pagination.hidden && next instanceof HTMLButtonElement && !next.disabled;
+            next?.click();
+            const dataTablePaginates = rows[1] instanceof HTMLElement && !rows[1].hidden && next instanceof HTMLButtonElement && next.disabled;
+            if (firstCheckbox instanceof HTMLInputElement) firstCheckbox.click();
+            const dataTableSelects = firstCheckbox instanceof HTMLInputElement && firstCheckbox.checked &&
+              firstCheckbox.closest('tr')?.getAttribute('aria-selected') === 'true';
+
+            const scroller = document.querySelector('.message-scroller');
+            const viewport = scroller?.querySelector('.message-scroller-viewport');
+            const messageScrollerEnhanced = scroller instanceof HTMLElement && scroller.dataset.mdsMessageScroller === 'true' &&
+              scroller.classList.contains('is-enhanced');
+            const messageScrollerHeight = viewport instanceof HTMLElement && viewport.style.maxHeight === '12rem';
+
+            return { dataTableEnhanced, dataTableFilters, dataTableRestores, dataTablePaginates, dataTableSelects, messageScrollerEnhanced, messageScrollerHeight };
+          })()`,
+          returnByValue: true
+        },
+        sessionId
+      );
+      const rich = richEvaluated.result.value;
+      if (Object.values(rich).some((value) => !value)) {
+        throw new Error(`Rich theme enhancement failed for ${screenshotPath}: ${JSON.stringify(rich)}.`);
+      }
+    }
+    if (verifyActionStyles) {
+      const actionEvaluated = await client.send<{ result: { value: ActionStyleMetrics } }>(
+        "Runtime.evaluate",
+        {
+          expression: `(async () => {
+            const action = document.querySelector('button.action.command[data-action="open"][data-target="actionDetails"]');
+            if (!(action instanceof HTMLButtonElement)) {
+              return { actionExists: false, actionVisible: false, actionContrast: false, actionUsesControlGeometry: false, display: '', width: 0, height: 0, viewportWidth: innerWidth };
+            }
+            const channelValues = (value) => (value.match(/[\\d.]+/g) ?? []).slice(0, 3).map(Number);
+            const luminance = (value) => {
+              const channels = channelValues(value).map((channel) => {
+                const normalized = channel / 255;
+                return normalized <= 0.04045 ? normalized / 12.92 : Math.pow((normalized + 0.055) / 1.055, 2.4);
+              });
+              return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+            };
+            const style = getComputedStyle(action);
+            const foreground = luminance(style.color);
+            const background = luminance(style.backgroundColor);
+            const contrast = (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05);
+            const rect = action.getBoundingClientRect();
+            const actionExists = true;
+            const actionVisible = style.visibility !== 'hidden' && Number.parseFloat(style.opacity) > 0.98 && rect.width > 0 && rect.height > 0;
+            const actionContrast = contrast >= 4.5;
+            const actionUsesControlGeometry = (style.display === 'inline-flex' || style.display === 'flex') &&
+              rect.height <= 56 && rect.width < innerWidth * 0.8;
+            document.documentElement.style.scrollBehavior = 'auto';
+            action.scrollIntoView({ block: 'center' });
+            await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            return { actionExists, actionVisible, actionContrast, actionUsesControlGeometry, display: style.display, width: rect.width, height: rect.height, viewportWidth: innerWidth };
+          })()`,
+          awaitPromise: true,
+          returnByValue: true
+        },
+        sessionId
+      );
+      const actionStyles = actionEvaluated.result.value;
+      if (!actionStyles.actionExists || !actionStyles.actionVisible || !actionStyles.actionContrast || !actionStyles.actionUsesControlGeometry) {
+        throw new Error(`Rich action styling failed for ${screenshotPath}: ${JSON.stringify(actionStyles)}.`);
+      }
+    }
     const evaluated = await client.send<{ result: { value: LayoutMetrics } }>(
       "Runtime.evaluate",
       {
@@ -719,6 +972,9 @@ async function captureScreenshot(
             .join(", ")}.`
       );
     }
+    if (runtimeErrors.length > 0) {
+      throw new Error(`Browser runtime errors in ${screenshotPath}: ${runtimeErrors.join(" | ")}.`);
+    }
     const screenshot = await client.send<{ data: string }>(
       "Page.captureScreenshot",
       { format: "png", fromSurface: true, captureBeyondViewport: false },
@@ -727,6 +983,7 @@ async function captureScreenshot(
     await writeFile(screenshotPath, screenshot.data, "base64");
     return layout;
   } finally {
+    removeRuntimeErrorListener?.();
     client?.close();
     await stopProcess(child);
     await rm(profileDirectory, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
@@ -792,6 +1049,12 @@ async function waitForDevToolsUrl(
   });
 }
 
+interface CdpEvent {
+  method: string;
+  sessionId?: string;
+  params?: unknown;
+}
+
 class CdpClient {
   private nextId = 1;
   private readonly pending = new Map<
@@ -805,6 +1068,7 @@ class CdpClient {
     reject: (error: Error) => void;
     timeout: ReturnType<typeof setTimeout>;
   }> = [];
+  private readonly eventListeners = new Set<(message: CdpEvent) => void>();
 
   private constructor(private readonly socket: WebSocket) {
     socket.addEventListener("message", (event) => this.handleMessage(String(event.data)));
@@ -856,6 +1120,11 @@ class CdpClient {
     });
   }
 
+  onEvent(listener: (message: CdpEvent) => void): () => void {
+    this.eventListeners.add(listener);
+    return () => this.eventListeners.delete(listener);
+  }
+
   close(): void {
     this.socket.close();
   }
@@ -865,6 +1134,7 @@ class CdpClient {
       id?: number;
       method?: string;
       sessionId?: string;
+      params?: unknown;
       result?: unknown;
       error?: { message?: string };
     };
@@ -882,6 +1152,13 @@ class CdpClient {
     }
 
     if (message.method !== undefined) {
+      for (const listener of this.eventListeners) {
+        listener({
+          method: message.method,
+          ...(message.sessionId === undefined ? {} : { sessionId: message.sessionId }),
+          ...(message.params === undefined ? {} : { params: message.params })
+        });
+      }
       const index = this.eventWaiters.findIndex(
         (waiter) => waiter.method === message.method && waiter.sessionId === message.sessionId
       );

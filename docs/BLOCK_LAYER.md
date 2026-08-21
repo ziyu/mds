@@ -377,7 +377,7 @@ For editor development mode, the dev server may compose pack sources before send
 
 4. **Move existing themes gradually**
 
-   Status: implemented for `default`, `folio`, `atelier`, and `rich`. Themes explicitly compose `foundation`, `media`, and `motion` as needed, keep source under `src/`, and materialize complete plain runtime artifacts under `dist/theme`. The shared vocabulary contains 64 blocks across nine packs. Rich adds 38 higher-level names and exposes 102 capabilities in its final artifact.
+   Status: implemented for `default`, `light`, `dark`, and `rich`; the private `canvas` theme exercises the React/Tailwind authoring path. Themes explicitly compose `foundation`, `media`, and `motion` as needed, keep source under `src/`, and materialize complete plain runtime artifacts under `dist/theme`. The shared vocabulary contains 64 blocks across nine packs. Rich adds 38 higher-level names and exposes 102 capabilities in its final artifact.
 
 5. **Update package SDKs**
 
@@ -389,7 +389,7 @@ For editor development mode, the dev server may compose pack sources before send
 
 7. **Add visual smoke tests**
 
-   Status: partially implemented through `pnpm test:visual`. The Components gallery covers exactly the 64 shared blocks and exercises `default` and `canvas` at 390x844, 820x1000, and 1440x1000. Chrome DevTools Protocol captures PNGs and rejects initial scroll/focus movement, horizontal overflow, broken menu geometry, inconsistent shared state, overlay coverage/inertness/focus failures, or render diagnostics. The Motion fixture separately checks timing, stagger, reduced trigger state, and replay across both themes. It does not yet provide complete official-theme coverage, per-block isolated fixtures, or reviewed screenshot-diff baselines.
+   Status: partially implemented through `pnpm test:visual`, `pnpm test:visual:motion`, and `pnpm test:visual:rich`. The Components gallery covers exactly the 64 shared blocks and exercises `default`, `canvas`, `rich`, `light`, and `dark` at 390x844, 820x1000, and 1440x1000. Chrome DevTools Protocol captures PNGs and rejects initial scroll/focus movement, horizontal overflow, broken menu geometry, inconsistent shared state, overlay coverage/inertness/focus failures, or render diagnostics. The Motion fixture checks timing, stagger, reduced trigger state, and replay across all five themes. A Rich-specific fixture verifies data-table filtering, pagination, selection, and message-scroller setup. Reviewed screenshot-diff baselines remain future work.
 
 8. **Move portable state machines into blocks**
 

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-labelledby="title description">
+  <title id="title">Light theme preview</title>
+  <desc id="description">A crisp editorial page with cobalt typography and a vermilion accent.</desc>
+  <rect width="640" height="400" fill="#e7e2d5"/>
+  <rect x="42" y="28" width="556" height="344" fill="#fffdf8" stroke="#b8b1a3"/>
+  <rect x="42" y="28" width="556" height="8" fill="#1646d8"/>
+  <circle cx="73" cy="67" r="6" fill="#f04c38"/>
+  <path d="M92 67h92M506 67h58" stroke="#22201d" stroke-width="5"/>
+  <path d="M72 111h156M72 130h328M72 149h276" stroke="#1646d8" stroke-width="12"/>
+  <path d="M72 184h202M72 197h168" stroke="#777066" stroke-width="5"/>
+  <rect x="72" y="239" width="229" height="83" fill="#f3efe4" stroke="#c5beb0"/>
+  <rect x="319" y="239" width="245" height="83" fill="#1646d8"/>
+  <path d="M92 264h110M92 282h159M339 264h96M339 282h142" stroke="#22201d" stroke-width="6"/>
+  <path d="M339 300h75" stroke="#fffdf8" stroke-width="6"/>
+  <rect x="72" y="344" width="492" height="2" fill="#f04c38"/>
+</svg>

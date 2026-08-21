@@ -67,7 +67,7 @@ Expected result: the generated project builds and validates a complete artifact 
 
 - The Editor is a local browser application launched through `mds edit`; native desktop installers are not part of this beta.
 - Public packages require Node.js 20.19 or newer and are ESM-only.
-- `@mds-crate/theme-default` is the compact general-purpose theme; `@mds-crate/theme-rich` adds data, documentation, guidance, gallery, and conversation blocks.
+- `@mds-crate/theme-default` is the compact general-purpose theme; `@mds-crate/theme-light` and `@mds-crate/theme-dark` provide fixed appearance systems; `@mds-crate/theme-rich` adds data, documentation, guidance, gallery, and conversation blocks.
 - Installed theme packages are trusted dependencies. Review them before installation or build.
 - APIs and artifact contracts may receive compatibility fixes before `0.1.0`; pin exact versions when reproducibility matters.
 

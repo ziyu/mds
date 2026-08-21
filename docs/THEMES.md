@@ -379,17 +379,17 @@ Declare the package theme in `package.json`:
 Build, watch, inspect, and pack:
 
 ```sh
-mds theme build ./themes/clarity
-mds theme watch ./themes/clarity
-mds theme inspect ./themes/clarity
-mds theme pack ./themes/clarity ./dist/clarity-theme
+mds theme build ./themes/light
+mds theme watch ./themes/light
+mds theme inspect ./themes/light
+mds theme pack ./themes/light ./dist/light-theme
 ```
 
 The dedicated builder binary exposes the same commands:
 
 ```sh
-mds-theme build ./themes/clarity
-mds-theme inspect ./themes/clarity
+mds-theme build ./themes/light
+mds-theme inspect ./themes/light
 ```
 
 Package naming conventions for shareable themes:
@@ -402,12 +402,12 @@ Package naming conventions for shareable themes:
 Use `--json` when another tool needs the same build, inspection, or packing contract:
 
 ```sh
-mds theme build ./themes/clarity --json
-mds-theme build ./themes/clarity --json
-mds theme inspect ./themes/clarity --json
-mds-theme inspect ./themes/clarity --json
-mds theme pack ./themes/clarity ./dist/clarity-theme --json
-mds-theme pack ./themes/clarity ./dist/clarity-theme --json
+mds theme build ./themes/light --json
+mds-theme build ./themes/light --json
+mds theme inspect ./themes/light --json
+mds-theme inspect ./themes/light --json
+mds theme pack ./themes/light ./dist/light-theme --json
+mds-theme pack ./themes/light ./dist/light-theme --json
 ```
 
 Successful JSON builds print the `PackageThemeBuildResult` object. If building fails, JSON builds print `{ "diagnostics": [...] }` and exits with code `1`.
@@ -470,10 +470,10 @@ Use `Root` for the block root element. Use `Content`, `Slots`, and `Slot` for bo
 
 Repository examples:
 
-- `themes/default` and `themes/folio`: file-authored package themes with source under `src/`, shared block packs, and artifacts under `dist/theme`.
-- `themes/atelier`: JSX-authored package theme with source under `src/`, shared block packs, and an artifact under `dist/theme`. Run `pnpm build:theme:atelier`.
-- `themes/clarity`: package-style theme with source under `src/` and artifact under `dist/theme`. Run `pnpm build:theme:clarity`.
-- `themes/canvas`: React SDK package theme with Tailwind v4 pipeline and shadcn-style local components. Run `pnpm build:theme:canvas`.
+- `themes/default`, `themes/light`, `themes/dark`, and `themes/rich`: publishable file-authored package themes with source under `src/`, all shared block packs, browser-safe module exports, and artifacts under `dist/theme`.
+- Light and Dark are fixed-palette appearance themes. They keep the portable 64-block contract while owning distinct typography, color, spacing, responsive composition, and visible interaction states.
+- Rich adds the official higher-level data, documentation, guidance, gallery, and conversation vocabulary.
+- `themes/canvas`: private React SDK package theme with a Tailwind v4 pipeline and shadcn-style local components. Run `pnpm build:theme:canvas`.
 
 ## HTML SDK Authoring
 

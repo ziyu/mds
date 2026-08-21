@@ -67,3 +67,11 @@ jobs:
       - name: Run visual smoke test
         if: matrix.node-version == '24.x'
         run: pnpm test:visual
+
+      - name: Run motion conformance smoke test
+        if: matrix.node-version == '24.x'
+        run: pnpm test:visual:motion
+
+      - name: Run Rich extension smoke test
+        if: matrix.node-version == '24.x'
+        run: pnpm test:visual:rich
