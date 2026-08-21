@@ -1,6 +1,6 @@
 # Publishing MDS
 
-MDS publishes fourteen fixed-version public packages under `@mds-crate`. The authenticated `0.1.0-beta.1` bootstrap release covered the original eleven packages; the next release set adds `@mds-crate/theme-rich`, `@mds-crate/theme-light`, and `@mds-crate/theme-dark`, which must receive the same GitHub Actions trusted-publisher configuration. Subsequent releases use npm trusted publishing.
+MDS publishes fourteen fixed-version public packages under `@mds-crate`. The authenticated `0.1.0-beta.1` bootstrap release covered the original eleven packages, and `0.1.0-beta.2` added `@mds-crate/theme-rich`, `@mds-crate/theme-light`, and `@mds-crate/theme-dark`. All fourteen packages now use the same GitHub Actions trusted-publisher configuration. Subsequent releases use npm trusted publishing.
 
 Reference: [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/), [`npm trust github`](https://docs.npmjs.com/cli/v11/commands/npm-trust/), and [npm provenance](https://docs.npmjs.com/generating-provenance-statements/).
 
@@ -30,7 +30,7 @@ pnpm release:publish:next
 pnpm release:verify:next
 ```
 
-The `0.1.0-beta.2` release must use this authenticated bootstrap path for the complete fourteen-package set because the Rich, Light, and Dark package objects do not exist yet. Do not dispatch the OIDC workflow until registry verification passes and trusted publishers have been configured for those three packages. After verification, push the package tags, create the umbrella `v0.1.0-beta.2` tag, and publish the reviewed GitHub release notes.
+The `0.1.0-beta.2` release used this authenticated bootstrap path because the Rich, Light, and Dark package objects did not exist yet. Registry verification passed before package tags and `v0.1.0-beta.2` were pushed, and the three new packages now have the same trusted-publisher configuration as the original eleven. Future releases must use the reviewed OIDC workflow instead of repeating the bootstrap path.
 
 `release:publish:next` packs every package with pnpm so `workspace:` dependencies become publishable version references, then publishes those tarballs with npm in dependency order. The command is hard-coded to the `next` dist-tag and creates package Git tags only after every npm publish succeeds. Use `pnpm release:publish:next:dry-run` to exercise the exact packing path without changing npm. npm automatically created `latest` during the first publication; that tag is intentionally retained, while future prereleases continue targeting `next`. If publication stops partway through, do not bump or reuse versions blindly: inspect the registry, let `release:check` report exact versions that already exist, and publish only a reviewed recovery release.
 
@@ -58,7 +58,7 @@ After every package exists on npm:
    pnpm release:configure-trust
    ```
 
-   This sets GitHub owner/repository `ziyu/mds`, workflow filename `publish.yml`, environment `npm`, and the `npm publish` action for every public package.
+   This sets GitHub owner/repository `ziyu/mds`, workflow filename `publish.yml`, environment `npm`, and the `npm publish` action for every public package. The command is safe to rerun: matching relationships are skipped, missing relationships are created, and conflicting relationships fail without being replaced.
 4. Protect the GitHub `npm` environment with required reviewers for stable releases.
 5. Remove long-lived npm publish tokens after OIDC succeeds.
 6. Publish prereleases with `next`; move to `latest` only after registry acceptance and external beta feedback.

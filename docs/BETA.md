@@ -1,6 +1,6 @@
 # MDS 0.1.0 Beta
 
-`0.1.0-beta.1` is the first external MDS beta. The current registry release contains the original eleven public packages under [`@mds-crate`](https://www.npmjs.com/org/mds-crate). The `0.1.0-beta.2` release candidate expands the fixed release set to fourteen packages with the Rich, Light, and Dark themes. Prerelease installs should use the npm `next` tag.
+`0.1.0-beta.2` is the current external MDS prerelease. It contains fourteen public packages under [`@mds-crate`](https://www.npmjs.com/org/mds-crate), including the Rich, Light, and Dark themes added after the first beta. Prerelease installs should use the npm `next` tag; `latest` intentionally remains on `0.1.0-beta.1` until the stable-release decision.
 
 ## Requirements
 

@@ -1,6 +1,6 @@
 # MDS Release Plan
 
-Status: `0.1.0-beta.1` published; `0.1.0-beta.2` release preparation in progress
+Status: `0.1.0-beta.1` and `0.1.0-beta.2` published; external beta.2 validation in progress
 
 Last updated: 2026-08-21
 
@@ -681,8 +681,8 @@ Acceptance:
 1. Publish `0.1.0-beta.1` and verify all three journeys against registry packages. Completed.
 2. Publish source, installation documentation, release notes, and structured feedback forms. Completed for the beta launch.
 3. Collect real external feedback across operating systems, browsers, package managers, and framework integrations. In progress.
-4. Publish `0.1.0-beta.2` with the expanded fourteen-package release set. In progress.
+4. Publish `0.1.0-beta.2` with the expanded fourteen-package release set. Completed.
 5. Repeat registry and external acceptance across operating systems, supported Node.js versions, package managers, and all three product journeys.
 6. Declare `0.1.0` after the three journeys have no blocking compatibility or security issues.
 
-All three product journeys pass locally, from tarballs, and against the `0.1.0-beta.1` registry packages. The remaining beta.2 work is publishing and verifying the expanded fourteen-package set; the remaining stable-release work is real-user feedback and the final compatibility decision.
+All three product journeys pass locally, from tarballs, and against the expanded fourteen-package `0.1.0-beta.2` registry release. The remaining stable-release work is external beta.2 feedback across the compatibility matrix and the final decision between another beta and `0.1.0`.
