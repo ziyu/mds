@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1080, height=1920" />
+  <title>MDS Intro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Noto+Sans+SC:wght@400;500;700;900&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0c100e;
+      --ink: #f2efe6;
+      --muted: #9aa39a;
+      --accent: #d2f25c;
+      --accent-2: #ff6b3d;
+      --line: rgba(242, 239, 230, 0.12);
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+      --sans: "Noto Sans SC", "Syne", system-ui, sans-serif;
+      --display: "Syne", "Noto Sans SC", sans-serif;
+      /* default-theme inspired preview tokens */
+      --th-bg: #f1eee7;
+      --th-paper: #fbfaf6;
+      --th-text: #20221f;
+      --th-muted: #686b65;
+      --th-line: #d8d3c8;
+      --th-accent: #285474;
+      --th-accent-soft: #e1ebf0;
+      --th-serif: "Instrument Serif", "Noto Sans SC", Georgia, serif;
+      --th-ui: "Noto Sans SC", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+    }
+
+    .grain {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      opacity: 0.18;
+      mix-blend-mode: soft-light;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      z-index: 50;
+    }
+
+    .glow {
+      position: absolute;
+      width: 720px;
+      height: 720px;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.28;
+      z-index: 0;
+    }
+
+    .glow.a {
+      top: -120px;
+      left: -160px;
+      background: radial-gradient(circle, #365228 0%, transparent 70%);
+    }
+
+    .glow.b {
+      right: -200px;
+      bottom: 180px;
+      background: radial-gradient(circle, #5a2a1c 0%, transparent 70%);
+    }
+
+    .frame {
+      position: relative;
+      z-index: 1;
+      width: 1080px;
+      height: 1920px;
+      padding: 96px 72px 88px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 22px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .topbar .mark {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .stage {
+      position: relative;
+      flex: 1;
+      margin-top: 56px;
+    }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .scene.active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 24px;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 28px;
+    }
+
+    .hook {
+      font-family: var(--sans);
+      font-weight: 900;
+      font-size: 56px;
+      line-height: 1.28;
+      letter-spacing: -0.02em;
+      max-width: 940px;
+    }
+
+    .hook .q {
+      display: block;
+    }
+
+    .hook .q + .q {
+      margin-top: 28px;
+    }
+
+    .hook em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .brand-block { margin-top: 100px; }
+
+    .logo {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 200px;
+      line-height: 0.9;
+      letter-spacing: -0.06em;
+    }
+
+    .tagline {
+      margin-top: 32px;
+      font-family: var(--mono);
+      font-size: 34px;
+      color: var(--accent);
+      line-height: 1.45;
+    }
+
+    .tagline span {
+      display: block;
+      color: var(--ink);
+    }
+
+    .brand-zh {
+      margin-top: 40px;
+      max-width: 880px;
+      font-size: 36px;
+      line-height: 1.55;
+      font-weight: 500;
+      color: var(--ink);
+    }
+
+    .brand-zh strong {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .explain {
+      margin-top: 80px;
+      font-size: 42px;
+      line-height: 1.6;
+      font-weight: 500;
+      color: var(--ink);
+      max-width: 900px;
+    }
+
+    .explain .line {
+      display: block;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .scene.active .explain .line:nth-child(1) { opacity: 1; transform: none; transition-delay: 0.05s; }
+    .scene.active .explain .line:nth-child(2) { opacity: 1; transform: none; transition-delay: 0.28s; }
+
+    .explain strong {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* Demo: code typing + themed preview */
+    .demo-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .code-card {
+      background: #151a17;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 28px 32px 30px;
+      font-family: var(--mono);
+      font-size: 26px;
+      line-height: 1.55;
+      color: #d7ddd4;
+      min-height: 360px;
+      flex-shrink: 0;
+    }
+
+    .code-card .bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .code-card .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #3a433c;
+    }
+
+    .code-card .dot:nth-child(1) { background: #ff6b3d; }
+    .code-card .dot:nth-child(2) { background: #d2f25c; }
+    .code-card .dot:nth-child(3) { background: #7ec8ff; }
+
+    .code-card .fname {
+      margin-left: 12px;
+      font-size: 20px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+
+    .code-body {
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 240px;
+    }
+
+    .code-body .tok-kw { color: var(--accent); }
+    .code-body .tok-str { color: #ffb089; }
+    .code-body .tok-title { color: #fff; font-weight: 600; }
+    .code-body .tok-body { color: #c4cbc2; }
+    .code-body .tok-link { color: #7ec8ff; }
+    .code-body .caret {
+      display: inline-block;
+      width: 2px;
+      height: 1.1em;
+      margin-left: 2px;
+      vertical-align: -0.1em;
+      background: var(--accent);
+      animation: blink 0.9s steps(1) infinite;
+    }
+
+    .code-body .caret.off { display: none; }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    .preview-shell {
+      flex: 1;
+      min-height: 560px;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid rgba(216, 211, 200, 0.35);
+      background: var(--th-bg);
+      opacity: 0;
+      transform: translateY(24px) scale(0.985);
+      transition: opacity 0.65s ease, transform 0.65s cubic-bezier(0.2, 0.8, 0.2, 1);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    .preview-shell.show {
+      opacity: 1;
+      transform: none;
+    }
+
+    .preview-chrome {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 22px;
+      background: color-mix(in srgb, var(--th-paper) 88%, #d8d3c8);
+      border-bottom: 1px solid var(--th-line);
+      font-family: var(--th-ui);
+      font-size: 18px;
+      color: var(--th-muted);
+    }
+
+    .preview-chrome .theme-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--th-accent-soft);
+      color: var(--th-accent);
+      font-weight: 600;
+      font-size: 16px;
+      letter-spacing: 0.04em;
+    }
+
+    .preview-chrome .theme-pill i {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--th-accent);
+    }
+
+    .preview-page {
+      background:
+        radial-gradient(circle at 82% 12%, color-mix(in srgb, var(--th-accent), transparent 72%), transparent 18rem),
+        linear-gradient(180deg, var(--th-paper), var(--th-bg));
+      color: var(--th-text);
+      padding: 44px 40px 40px;
+      min-height: 500px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .th-hero {
+      display: grid;
+      gap: 20px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--th-line);
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.55s ease 0.12s, transform 0.55s ease 0.12s;
+    }
+
+    .preview-shell.show .th-hero {
+      opacity: 1;
+      transform: none;
+    }
+
+    .th-eyebrow {
+      color: var(--th-accent);
+      font: 700 18px/1.3 var(--th-ui);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .th-title {
+      font-family: var(--th-serif);
+      font-size: 58px;
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+      max-width: 14ch;
+      font-weight: 400;
+    }
+
+    .th-body {
+      max-width: 22em;
+      color: var(--th-muted);
+      font-family: var(--th-ui);
+      font-size: 26px;
+      line-height: 1.55;
+    }
+
+    .th-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .th-note {
+      margin-top: auto;
+      padding-top: 28px;
+      color: var(--th-muted);
+      font-family: var(--th-ui);
+      font-size: 20px;
+      line-height: 1.45;
+      opacity: 0;
+      transition: opacity 0.45s ease 0.35s;
+    }
+
+    .preview-shell.show .th-note { opacity: 1; }
+
+    .preview-panel {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .preview-panel.active {
+      display: flex;
+    }
+
+    .th-controls {
+      display: grid;
+      gap: 28px;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.55s ease 0.1s, transform 0.55s ease 0.1s;
+    }
+
+    .preview-shell.show[data-mode="controls"] .th-controls {
+      opacity: 1;
+      transform: none;
+    }
+
+    .th-prose {
+      display: grid;
+      gap: 22px;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.55s ease 0.1s, transform 0.55s ease 0.1s;
+    }
+
+    .preview-shell.show[data-mode="md"] .th-prose {
+      opacity: 1;
+      transform: none;
+    }
+
+    .th-prose h1 {
+      font-family: var(--th-serif);
+      font-size: 52px;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      font-weight: 400;
+      color: var(--th-text);
+    }
+
+    .th-prose ul {
+      margin: 0;
+      padding-left: 1.2em;
+      color: var(--th-text);
+      font: 500 26px/1.55 var(--th-ui);
+    }
+
+    .th-prose li + li { margin-top: 8px; }
+
+    .th-prose blockquote {
+      margin: 0;
+      padding: 18px 22px;
+      border-left: 4px solid var(--th-accent);
+      background: var(--th-accent-soft);
+      color: var(--th-accent);
+      font: italic 500 24px/1.45 var(--th-serif);
+    }
+
+    .th-prose a {
+      display: inline-flex;
+      margin-top: 4px;
+      color: var(--th-accent);
+      font: 600 24px/1.4 var(--th-ui);
+      text-decoration: none;
+      border-bottom: 1.5px solid color-mix(in srgb, var(--th-accent), transparent 45%);
+    }
+
+    .th-control-label {
+      display: block;
+      margin-bottom: 12px;
+      color: var(--th-muted);
+      font: 600 18px/1.3 var(--th-ui);
+      letter-spacing: 0.04em;
+    }
+
+    .th-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 52px;
+      padding: 0 28px;
+      border: none;
+      border-radius: 6px;
+      background: var(--th-accent);
+      color: #fff;
+      font: 600 24px/1 var(--th-ui);
+      box-shadow: 0 10px 24px color-mix(in srgb, var(--th-accent), transparent 70%);
+    }
+
+    .th-slider {
+      display: grid;
+      gap: 10px;
+      padding: 22px 22px 20px;
+      border: 1px solid var(--th-line);
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--th-paper) 70%, #fff);
+    }
+
+    .th-slider-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .th-slider-value {
+      font: 700 22px/1 var(--mono);
+      color: var(--th-accent);
+    }
+
+    .th-range {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--th-accent) 60%, var(--th-line) 60%);
+      outline: none;
+    }
+
+    .th-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--th-accent);
+      border: 3px solid #fff;
+      box-shadow: 0 4px 12px rgb(40 84 116 / 35%);
+    }
+
+    .th-switch {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 20px;
+      border: 1px solid var(--th-line);
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--th-paper) 70%, #fff);
+    }
+
+    .th-switch-track {
+      position: relative;
+      width: 54px;
+      height: 30px;
+      border-radius: 999px;
+      background: var(--th-accent);
+      flex-shrink: 0;
+    }
+
+    .th-switch-track i {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 8px rgb(0 0 0 / 18%);
+    }
+
+    .demo-step {
+      font-family: var(--mono);
+      font-size: 18px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      margin-bottom: 14px;
+    }
+
+    .demo-step strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .th-btn {
+      font-family: var(--th-ui);
+      font-size: 22px;
+      font-weight: 600;
+      padding: 14px 22px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+    }
+
+    .th-btn.primary {
+      background: var(--th-accent);
+      color: #fff;
+    }
+
+    .th-btn.ghost {
+      background: transparent;
+      color: var(--th-text);
+      border-color: var(--th-line);
+    }
+
+    /* CTA */
+    .cta { margin-top: 40px; }
+
+    .cta h2 {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 84px;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+    }
+
+    .cta .meta {
+      margin-top: 28px;
+      font-size: 32px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .cta .cmd {
+      margin-top: 56px;
+      background: #151a17;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 36px 40px;
+      font-family: var(--mono);
+      font-size: 30px;
+      line-height: 1.6;
+      color: var(--accent);
+    }
+
+    .cta .cmd .prompt { color: var(--muted); }
+    .cta .cmd .pkg { color: var(--ink); }
+
+    .cta .github {
+      margin-top: 40px;
+      font-family: var(--mono);
+      font-size: 34px;
+      color: var(--ink);
+    }
+
+    .cta .github span { color: var(--accent-2); }
+
+    .cta .license {
+      margin-top: 48px;
+      font-family: var(--mono);
+      font-size: 22px;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+
+    .caption {
+      margin-top: auto;
+      padding-top: 36px;
+      border-top: 1px solid var(--line);
+      min-height: 120px;
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .caption p {
+      font-size: 34px;
+      line-height: 1.4;
+      font-weight: 500;
+      color: var(--ink);
+    }
+
+    .progress {
+      position: absolute;
+      left: 72px;
+      right: 72px;
+      bottom: 36px;
+      height: 4px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      z-index: 20;
+    }
+
+    .progress > i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    }
+  </style>
+</head>
+<body>
+  <div class="glow a"></div>
+  <div class="glow b"></div>
+  <div class="grain"></div>
+
+  <div class="frame">
+    <div class="topbar">
+      <div><span class="mark">MDS</span> / open source</div>
+      <div id="clock">00:00</div>
+    </div>
+
+    <div class="stage">
+      <section class="scene" data-scene="hook">
+        <div class="eyebrow">问题</div>
+        <h1 class="hook">
+          <span class="q">还在用 Markdown 写内容，<br />效果却太<em>单调</em>？</span>
+          <span class="q">想用 HTML 得到丰富的效果，<br />写起来却太<em>复杂</em>？</span>
+        </h1>
+      </section>
+
+      <section class="scene" data-scene="brand">
+        <div class="brand-block">
+          <div class="logo">MDS</div>
+          <div class="tagline">
+            Think in Markdown.
+            <span>Render in HTML.</span>
+          </div>
+          <p class="brand-zh">
+            仍旧在写 <strong>Markdown</strong>，但是渲染出<strong>网页级</strong>的效果。
+          </p>
+        </div>
+      </section>
+
+      <section class="scene" data-scene="explain">
+        <div class="eyebrow">核心</div>
+        <p class="explain">
+          <span class="line">你照常写 <strong>Markdown</strong>，只多写几个<strong>语义块</strong>。</span>
+          <span class="line">布局、动效和交互交给<strong>主题</strong>，最后得到像 <strong>HTML</strong> 一样丰富美观的页面效果。</span>
+        </p>
+      </section>
+
+      <section class="scene" data-scene="demo">
+        <div class="eyebrow">写法</div>
+        <div class="demo-step" id="demoStep">示例 01 · Markdown</div>
+        <div class="demo-stack">
+          <div class="code-card">
+            <div class="bar">
+              <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+              <span class="fname">page.mds</span>
+            </div>
+            <div class="code-body" id="codeBody"><span class="caret" id="caret"></span></div>
+          </div>
+          <div class="preview-shell" id="previewShell" data-mode="md">
+            <div class="preview-chrome">
+              <span>preview · fragment</span>
+              <span class="theme-pill"><i></i>theme-default</span>
+            </div>
+            <div class="preview-page">
+              <div class="preview-panel active" data-panel="md">
+                <div class="th-prose">
+                  <h1>欢迎使用 MDS</h1>
+                  <ul>
+                    <li>简洁写作</li>
+                    <li>主题渲染</li>
+                    <li>独立发布</li>
+                  </ul>
+                  <blockquote>Think in Markdown.</blockquote>
+                  <a href="#">开始 →</a>
+                </div>
+                <p class="th-note">Rendered by @mds-crate/theme-default</p>
+              </div>
+              <div class="preview-panel" data-panel="hero">
+                <div class="th-hero">
+                  <div class="th-eyebrow">MDS</div>
+                  <h3 class="th-title">像写 Markdown 一样写网页</h3>
+                  <p class="th-body">用语义块描述意图，交给主题呈现。</p>
+                  <div class="th-actions">
+                    <div class="th-btn primary">开始</div>
+                    <div class="th-btn ghost">查看文档</div>
+                  </div>
+                </div>
+                <p class="th-note">Rendered by @mds-crate/theme-default</p>
+              </div>
+              <div class="preview-panel" data-panel="controls">
+                <div class="th-controls">
+                  <div>
+                    <span class="th-control-label">button</span>
+                    <button class="th-button" type="button">开始</button>
+                  </div>
+                  <div class="th-slider">
+                    <div class="th-slider-row">
+                      <span class="th-control-label" style="margin:0">slider · 音量</span>
+                      <span class="th-slider-value">60</span>
+                    </div>
+                    <input class="th-range" type="range" min="0" max="100" value="60" disabled />
+                  </div>
+                  <div class="th-switch">
+                    <span class="th-switch-track" aria-hidden="true"><i></i></span>
+                    <span class="th-control-label" style="margin:0">switch · 深色模式</span>
+                  </div>
+                </div>
+                <p class="th-note">Rendered by @mds-crate/theme-default</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene" data-scene="cta">
+        <div class="cta">
+          <div class="eyebrow">开始使用</div>
+          <h2>公开 Beta<br />现已上线</h2>
+          <div class="meta">Node.js 20.19+ · ESM · npm `@mds-crate`</div>
+          <div class="cmd">
+            <div><span class="prompt">$</span> npm i -g <span class="pkg">@mds-crate/cli@next</span></div>
+            <div><span class="prompt">$</span> mds edit ./page.mds</div>
+          </div>
+          <div class="github">GitHub · <span>ziyu/mds</span></div>
+          <div class="license">欢迎上手反馈 · Apache-2.0</div>
+        </div>
+      </section>
+    </div>
+
+    <div class="caption">
+      <p id="captionText"></p>
+    </div>
+  </div>
+
+  <div class="progress"><i id="progressBar"></i></div>
+
+  <audio id="voice" src="/assets/narration.mp3" preload="auto"></audio>
+
+  <script>
+    const cues = [
+      { start: 0.10, end: 8.17, scene: "hook", text: "还在用 Markdown 写内容，效果却太单调？想用 HTML 得到丰富的效果，写起来却太复杂？" },
+      { start: 3.63, end: 8.17, scene: "hook", text: "想用 HTML 得到丰富的效果，写起来却太复杂？" },
+      { start: 8.17, end: 14.77, scene: "brand", text: "MDS 想帮你消除这些烦恼。仍旧在写 Markdown，但是渲染出网页级的效果。" },
+      { start: 10.93, end: 14.77, scene: "brand", text: "仍旧在写 Markdown，但是渲染出网页级的效果。" },
+      { start: 14.77, end: 24.81, scene: "explain", text: "照常写 Markdown，多几个语义块，主题负责呈现" },
+      { start: 17.98, end: 24.81, scene: "explain", text: "最后得到像 HTML 一样丰富美观的页面效果" },
+      { start: 24.81, end: 49.68, scene: "demo", text: "来看写法" },
+      { start: 26.20, end: 28.63, scene: "demo", text: "先写最基础的 Markdown" },
+      { start: 28.63, end: 33.86, scene: "demo", text: "标题、列表、引用，主题会渲染成漂亮的 HTML" },
+      { start: 33.86, end: 35.46, scene: "demo", text: "再写一个 hero" },
+      { start: 35.46, end: 38.61, scene: "demo", text: "标题、一句说明，再加一个按钮" },
+      { start: 38.61, end: 41.71, scene: "demo", text: "主题会立刻把它渲染成真正的页面" },
+      { start: 41.71, end: 45.77, scene: "demo", text: "当然，你也可以像 HTML 那样写各种控件" },
+      { start: 45.77, end: 50.54, scene: "demo", text: "比如 button、slider、switch，主题同样会渲染出来" },
+      { start: 50.54, end: 999, scene: "cta", text: "公开 Beta 已上线，通过下面的命令即可快速使用" },
+      { start: 55.06, end: 999, scene: "cta", text: "源代码已发布 GitHub，欢迎上手反馈" },
+    ];
+
+    const CODE_MD = `# 欢迎使用 MDS
+
+- 简洁写作
+- 主题渲染
+- 独立发布
+
+> Think in Markdown.
+
+[开始 -> /docs]`;
+
+    const CODE_HERO = `::: hero
+# 像写 Markdown 一样写网页
+
+用语义块描述意图，交给主题呈现。
+
+[开始 -> /docs]
+:::`;
+
+    const CODE_CONTROLS = `:: button label="开始"
+:: slider label="音量" min=0 max=100 value=60
+:: switch label="深色模式" checked`;
+
+    // Demo timeline (seconds)
+    const MD_TYPE_START = 26.20;
+    const MD_TYPE_END = 31.20;
+    const MD_PREVIEW_AT = 31.30;
+    const HERO_TYPE_START = 33.86;
+    const HERO_TYPE_END = 38.50;
+    const HERO_PREVIEW_AT = 38.61;
+    const CTRL_TYPE_START = 41.71;
+    const CTRL_TYPE_END = 46.80;
+    const CTRL_PREVIEW_AT = 47.00;
+
+    const audio = document.getElementById("voice");
+    const caption = document.getElementById("captionText");
+    const clock = document.getElementById("clock");
+    const progress = document.getElementById("progressBar");
+    const codeBody = document.getElementById("codeBody");
+    const previewShell = document.getElementById("previewShell");
+    const demoStep = document.getElementById("demoStep");
+    const scenes = [...document.querySelectorAll(".scene")];
+    const panels = [...document.querySelectorAll(".preview-panel")];
+
+    let currentScene = null;
+    let lastKey = "";
+    let maxHeard = 0;
+    let sceneLocked = null;
+    let bootstrapped = false;
+
+    function escapeHtml(s) {
+      return s
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    function highlight(src) {
+      return src.split("\n").map((line) => {
+        if (/^:::/.test(line)) {
+          const rest = line.slice(3).trim();
+          if (!rest) return `<span class="tok-kw">:::</span>`;
+          return `<span class="tok-kw">:::</span> <span class="tok-str">${escapeHtml(rest)}</span>`;
+        }
+        if (/^:: /.test(line)) {
+          const rest = line.slice(3);
+          const m = rest.match(/^(\w+)(.*)$/);
+          if (m) {
+            return `<span class="tok-kw">::</span> <span class="tok-str">${escapeHtml(m[1])}</span><span class="tok-body">${escapeHtml(m[2])}</span>`;
+          }
+          return `<span class="tok-kw">::</span> <span class="tok-body">${escapeHtml(rest)}</span>`;
+        }
+        if (/^# /.test(line)) return `<span class="tok-title">${escapeHtml(line)}</span>`;
+        if (/^> /.test(line)) return `<span class="tok-str">${escapeHtml(line)}</span>`;
+        if (/^- /.test(line)) return `<span class="tok-body">${escapeHtml(line)}</span>`;
+        if (/^\[/.test(line)) return `<span class="tok-link">${escapeHtml(line)}</span>`;
+        if (!line) return "";
+        return `<span class="tok-body">${escapeHtml(line)}</span>`;
+      }).join("\n");
+    }
+
+    function setTyped(code, len) {
+      const key = `${code.length}:${len}`;
+      if (key === lastKey) return;
+      lastKey = key;
+      const slice = code.slice(0, len);
+      const done = len >= code.length;
+      codeBody.innerHTML = highlight(slice) + `<span class="caret${done ? " off" : ""}"></span>`;
+    }
+
+    function setPreview(show, mode) {
+      previewShell.classList.toggle("show", show);
+      if (mode) {
+        previewShell.dataset.mode = mode;
+        panels.forEach((el) => el.classList.toggle("active", el.dataset.panel === mode));
+      }
+      if (mode === "md") {
+        demoStep.innerHTML = `示例 01 · <strong>Markdown</strong>`;
+      } else if (mode === "hero") {
+        demoStep.innerHTML = `示例 02 · <strong>hero</strong>`;
+      } else if (mode === "controls") {
+        demoStep.innerHTML = `示例 03 · <strong>控件</strong>`;
+      }
+    }
+
+    function resetDemo() {
+      lastKey = "";
+      setTyped(CODE_MD, 0);
+      previewShell.classList.remove("show");
+      previewShell.dataset.mode = "md";
+      panels.forEach((el) => el.classList.toggle("active", el.dataset.panel === "md"));
+      demoStep.innerHTML = `示例 01 · <strong>Markdown</strong>`;
+    }
+
+    function setScene(name) {
+      if (sceneLocked && name !== sceneLocked) return;
+      if (currentScene === name) return;
+      if (name === "demo" && currentScene !== "demo") resetDemo();
+      currentScene = name;
+      scenes.forEach((el) => {
+        el.classList.toggle("active", el.dataset.scene === name);
+      });
+    }
+
+    function easeOut(p) {
+      return 1 - Math.pow(1 - Math.min(1, Math.max(0, p)), 1.35);
+    }
+
+    function typeProgress(t, start, end, code) {
+      const p = easeOut((t - start) / (end - start));
+      setTyped(code, Math.floor(p * code.length));
+    }
+
+    function updateDemo(t) {
+      if (currentScene !== "demo") return;
+
+      if (t < MD_TYPE_START) {
+        setTyped(CODE_MD, 0);
+        setPreview(false, "md");
+        return;
+      }
+
+      // Example 1: plain Markdown
+      if (t < MD_PREVIEW_AT) {
+        typeProgress(t, MD_TYPE_START, MD_TYPE_END, CODE_MD);
+        setPreview(false, "md");
+        return;
+      }
+
+      if (t < HERO_TYPE_START) {
+        setTyped(CODE_MD, CODE_MD.length);
+        setPreview(true, "md");
+        return;
+      }
+
+      // Example 2: hero
+      if (t < HERO_PREVIEW_AT) {
+        typeProgress(t, HERO_TYPE_START, HERO_TYPE_END, CODE_HERO);
+        setPreview(false, "hero");
+        return;
+      }
+
+      if (t < CTRL_TYPE_START) {
+        setTyped(CODE_HERO, CODE_HERO.length);
+        setPreview(true, "hero");
+        return;
+      }
+
+      // Example 3: controls
+      if (t < CTRL_PREVIEW_AT) {
+        typeProgress(t, CTRL_TYPE_START, CTRL_TYPE_END, CODE_CONTROLS);
+        setPreview(false, "controls");
+        return;
+      }
+
+      setTyped(CODE_CONTROLS, CODE_CONTROLS.length);
+      setPreview(true, "controls");
+    }
+
+    function pickCue(time) {
+      let active = cues[0];
+      let matched = false;
+      for (const cue of cues) {
+        if (time >= cue.start && time < cue.end) {
+          active = cue;
+          matched = true;
+        }
+      }
+      if (!matched) {
+        for (const cue of cues) {
+          if (time >= cue.start) active = cue;
+        }
+      }
+      return active;
+    }
+
+    function tick() {
+      const dur = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 58.66;
+      let t = audio.currentTime || 0;
+
+      // Ignore accidental rewinds (browser media quirks) after playback has progressed
+      if (t + 0.4 < maxHeard && maxHeard > 2) {
+        t = maxHeard;
+      } else {
+        maxHeard = Math.max(maxHeard, t);
+      }
+
+      if (audio.ended || maxHeard >= dur - 0.15) {
+        sceneLocked = "cta";
+        t = Math.max(t, dur - 0.05, maxHeard);
+        maxHeard = Math.max(maxHeard, t);
+      }
+
+      const mm = String(Math.floor(t / 60)).padStart(2, "0");
+      const ss = String(Math.floor(t % 60)).padStart(2, "0");
+      clock.textContent = `${mm}:${ss}`;
+      progress.style.width = `${Math.min(100, (t / dur) * 100)}%`;
+
+      const active = sceneLocked
+        ? pickCue(Math.max(t, 55.06))
+        : pickCue(t);
+      setScene(sceneLocked || active.scene);
+      caption.textContent = active.text;
+      updateDemo(t);
+      requestAnimationFrame(tick);
+    }
+
+    window.__mdsPromo = {
+      play() { return audio.play(); },
+      duration() { return audio.duration || 58.66; },
+      ended() { return audio.ended; },
+      ready() { return audio.readyState >= 3; },
+      freezeCta() {
+        sceneLocked = "cta";
+        maxHeard = Math.max(maxHeard, audio.duration || 58.66);
+      },
+    };
+
+    audio.addEventListener("play", () => { bootstrapped = true; }, { once: true });
+    audio.addEventListener("ended", () => {
+      sceneLocked = "cta";
+      maxHeard = Math.max(maxHeard, audio.duration || 58.66);
+      setScene("cta");
+      caption.textContent = "源代码已发布 GitHub，欢迎上手反馈";
+    });
+
+    audio.addEventListener("loadeddata", () => {
+      if (bootstrapped || sceneLocked) return;
+      setScene("hook");
+      caption.textContent = cues[0].text;
+    });
+
+    requestAnimationFrame(tick);
+
+    const params = new URLSearchParams(location.search);
+    if (params.get("autoplay") === "1") {
+      const start = () => {
+        if (bootstrapped) return;
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      };
+      if (audio.readyState >= 3) start();
+      else audio.addEventListener("canplaythrough", start, { once: true });
+    }
+  </script>
+</body>
+</html>

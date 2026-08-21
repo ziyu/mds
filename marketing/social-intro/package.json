@@ -1,0 +1,12 @@
+{
+  "name": "mds-social-intro",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "record": "node record.mjs",
+    "serve": "python3 -m http.server 8765 --directory ."
+  },
+  "devDependencies": {
+    "playwright": "^1.54.2"
+  }
+}
