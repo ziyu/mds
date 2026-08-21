@@ -1,6 +1,6 @@
 {
   "name": "@mds-crate/blocks",
-  "version": "0.1.0-beta.1",
+  "version": "0.1.0-beta.2",
   "description": "Shared MDS block vocabulary and reusable theme block packs.",
   "keywords": [
     "mds",

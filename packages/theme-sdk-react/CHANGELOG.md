@@ -1,5 +1,14 @@
 # @mds-crate/theme-sdk-react
 
+## 0.1.0-beta.2
+
+### Patch Changes
+
+- Updated dependencies [85e8673]
+- Updated dependencies [d84aa9c]
+  - @mds-crate/theme-loader@0.1.0-beta.2
+  - @mds-crate/html-types@0.1.0-beta.2
+
 ## 0.1.0-beta.1
 
 ### Patch Changes
