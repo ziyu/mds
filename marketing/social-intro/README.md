@@ -1,6 +1,6 @@
 # MDS 社交媒体介绍短视频
 
-竖屏 **9:16** · **约 58 秒** · 中文口播 + 画面字幕
+竖屏 **9:16** · **约 62 秒** · 中文口播 + 画面字幕
 
 ## 成品
 
@@ -28,8 +28,8 @@ npm run record
 |------|------|
 | 0–8s | 双痛点 Hook（单调 vs 复杂） |
 | 8–15s | MDS + Think in Markdown / Render in HTML + 中文说明（口播保留「消除这些烦恼」，画面不显示） |
-| 15–25s | 核心机制 |
-| 25–34s | 示例 01：基础 Markdown → HTML 预览 |
-| 34–42s | 示例 02：hero 语义块 → 主题预览 |
-| 42–51s | 示例 03：button / slider / switch 控件 |
-| 51–59s | 安装命令 + GitHub；License 在底部 |
+| 15–26s | 核心机制（MDS 渲染器） |
+| 26–36s | 示例 01：基础 Markdown → HTML 预览 |
+| 36–44s | 示例 02：hero 语义块 → 页面预览 |
+| 44–54s | 示例 03：button / slider / switch 控件 |
+| 54–62s | 安装命令 + GitHub；License 在底部 |
