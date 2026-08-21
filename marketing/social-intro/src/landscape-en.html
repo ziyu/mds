@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1920, height=1080" />
+  <title>MDS Intro · 16:9 EN</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Noto+Sans+SC:wght@400;500;700;900&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0c100e;
+      --ink: #f2efe6;
+      --muted: #9aa39a;
+      --accent: #d2f25c;
+      --accent-2: #ff6b3d;
+      --line: rgba(242, 239, 230, 0.12);
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+      --sans: "Syne", system-ui, sans-serif;
+      --display: "Syne", system-ui, sans-serif;
+      /* default-theme inspired preview tokens */
+      --th-bg: #f1eee7;
+      --th-paper: #fbfaf6;
+      --th-text: #20221f;
+      --th-muted: #686b65;
+      --th-line: #d8d3c8;
+      --th-accent: #285474;
+      --th-accent-soft: #e1ebf0;
+      --th-serif: "Instrument Serif", Georgia, serif;
+      --th-ui: "Syne", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+    }
+
+    .grain {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      opacity: 0.18;
+      mix-blend-mode: soft-light;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      z-index: 50;
+    }
+
+    .glow {
+      position: absolute;
+      width: 720px;
+      height: 720px;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.28;
+      z-index: 0;
+    }
+
+    .glow.a {
+      top: -120px;
+      left: -160px;
+      background: radial-gradient(circle, #365228 0%, transparent 70%);
+    }
+
+    .glow.b {
+      right: -200px;
+      bottom: 180px;
+      background: radial-gradient(circle, #5a2a1c 0%, transparent 70%);
+    }
+
+    .frame {
+      position: relative;
+      z-index: 1;
+      width: 1920px;
+      height: 1080px;
+      padding: 48px 72px 40px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 18px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .topbar .mark {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .stage {
+      position: relative;
+      flex: 1;
+      margin-top: 28px;
+      min-height: 0;
+    }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .scene.active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 18px;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 28px;
+    }
+
+    .hook {
+      font-family: var(--sans);
+      font-weight: 900;
+      font-size: 48px;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+      max-width: none;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+
+    .hook .q {
+      display: block;
+    }
+
+    .hook .q + .q {
+      margin-top: 0;
+    }
+
+    .hook em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .brand-block { margin-top: 24px; display: grid; grid-template-columns: auto 1fr; gap: 48px 64px; align-items: center; }
+
+    .logo {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 180px;
+      line-height: 0.9;
+      letter-spacing: -0.06em;
+      grid-row: 1 / span 3;
+    }
+
+    .brand-def {
+      margin-top: 0;
+      font-size: 28px;
+      line-height: 1.45;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+    }
+
+    .brand-def strong {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .tagline {
+      margin-top: 0;
+      font-family: var(--mono);
+      font-size: 28px;
+      color: var(--accent);
+      line-height: 1.45;
+    }
+
+    .tagline span {
+      display: block;
+      color: var(--ink);
+    }
+
+    .brand-zh {
+      margin-top: 0;
+      max-width: 900px;
+      font-size: 30px;
+      line-height: 1.55;
+      font-weight: 500;
+      color: var(--ink);
+    }
+
+    .brand-zh strong {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .explain {
+      margin-top: 36px;
+      font-size: 36px;
+      line-height: 1.6;
+      font-weight: 500;
+      color: var(--ink);
+      max-width: 900px;
+    }
+
+    .explain .line {
+      display: block;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .scene.active .explain .line:nth-child(1) { opacity: 1; transform: none; transition-delay: 0.05s; }
+    .scene.active .explain .line:nth-child(2) { opacity: 1; transform: none; transition-delay: 0.28s; }
+
+    .explain strong {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* Demo: code typing + themed preview */
+    .demo-stack {
+      display: flex;
+      flex-direction: row;
+      gap: 24px;
+      flex: 1;
+      min-height: 0;
+      align-items: stretch;
+    }
+
+    .code-card {
+      background: #151a17;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 20px 24px 22px;
+      font-family: var(--mono);
+      font-size: 20px;
+      line-height: 1.5;
+      color: #d7ddd4;
+      min-height: 0;
+      flex: 1 1 46%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .code-card .bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .code-card .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #3a433c;
+    }
+
+    .code-card .dot:nth-child(1) { background: #ff6b3d; }
+    .code-card .dot:nth-child(2) { background: #d2f25c; }
+    .code-card .dot:nth-child(3) { background: #7ec8ff; }
+
+    .code-card .fname {
+      margin-left: 12px;
+      font-size: 20px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+
+    .code-body {
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 0;
+      flex: 1;
+    }
+
+    .code-body .tok-kw { color: var(--accent); }
+    .code-body .tok-str { color: #ffb089; }
+    .code-body .tok-title { color: #fff; font-weight: 600; }
+    .code-body .tok-body { color: #c4cbc2; }
+    .code-body .tok-link { color: #7ec8ff; }
+    .code-body .caret {
+      display: inline-block;
+      width: 2px;
+      height: 1.1em;
+      margin-left: 2px;
+      vertical-align: -0.1em;
+      background: var(--accent);
+      animation: blink 0.9s steps(1) infinite;
+    }
+
+    .code-body .caret.off { display: none; }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    .preview-shell {
+      flex: 1 1 54%;
+      min-height: 0;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(216, 211, 200, 0.35);
+      background: var(--th-bg);
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transform: translateY(24px) scale(0.985);
+      transition: opacity 0.65s ease, transform 0.65s cubic-bezier(0.2, 0.8, 0.2, 1);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    .preview-shell.show {
+      opacity: 1;
+      transform: none;
+    }
+
+    .preview-chrome {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 22px;
+      background: color-mix(in srgb, var(--th-paper) 88%, #d8d3c8);
+      border-bottom: 1px solid var(--th-line);
+      font-family: var(--th-ui);
+      font-size: 18px;
+      color: var(--th-muted);
+    }
+
+    .preview-chrome .theme-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--th-accent-soft);
+      color: var(--th-accent);
+      font-weight: 600;
+      font-size: 16px;
+      letter-spacing: 0.04em;
+    }
+
+    .preview-chrome .theme-pill i {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--th-accent);
+    }
+
+    .preview-page {
+      background:
+        radial-gradient(circle at 82% 12%, color-mix(in srgb, var(--th-accent), transparent 72%), transparent 18rem),
+        linear-gradient(180deg, var(--th-paper), var(--th-bg));
+      color: var(--th-text);
+      padding: 28px 30px 24px;
+      min-height: 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .th-hero {
+      display: grid;
+      gap: 20px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--th-line);
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.55s ease 0.12s, transform 0.55s ease 0.12s;
+    }
+
+    .preview-shell.show .th-hero {
+      opacity: 1;
+      transform: none;
+    }
+
+    .th-eyebrow {
+      color: var(--th-accent);
+      font: 700 18px/1.3 var(--th-ui);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .th-title {
+      font-family: var(--th-serif);
+      font-size: 40px;
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+      max-width: 14ch;
+      font-weight: 400;
+    }
+
+    .th-body {
+      max-width: 28em;
+      color: var(--th-muted);
+      font-family: var(--th-ui);
+      font-size: 20px;
+      line-height: 1.55;
+    }
+
+    .th-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .th-note {
+      margin-top: auto;
+      padding-top: 28px;
+      color: var(--th-muted);
+      font-family: var(--th-ui);
+      font-size: 20px;
+      line-height: 1.45;
+      opacity: 0;
+      transition: opacity 0.45s ease 0.35s;
+    }
+
+    .preview-shell.show .th-note { opacity: 1; }
+
+    .preview-panel {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .preview-panel.active {
+      display: flex;
+    }
+
+    .th-controls {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 18px;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.55s ease 0.1s, transform 0.55s ease 0.1s;
+    }
+
+    .th-controls .th-switch {
+      grid-column: 1 / -1;
+    }
+
+    .preview-shell.show[data-mode="controls"] .th-controls {
+      opacity: 1;
+      transform: none;
+    }
+
+    .th-prose {
+      display: grid;
+      gap: 22px;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.55s ease 0.1s, transform 0.55s ease 0.1s;
+    }
+
+    .preview-shell.show[data-mode="md"] .th-prose {
+      opacity: 1;
+      transform: none;
+    }
+
+    .th-prose h1 {
+      font-family: var(--th-serif);
+      font-size: 40px;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      font-weight: 400;
+      color: var(--th-text);
+    }
+
+    .th-prose ul {
+      margin: 0;
+      padding-left: 1.2em;
+      color: var(--th-text);
+      font: 500 22px/1.45 var(--th-ui);
+    }
+
+    .th-prose li + li { margin-top: 8px; }
+
+    .th-prose blockquote {
+      margin: 0;
+      padding: 18px 22px;
+      border-left: 4px solid var(--th-accent);
+      background: var(--th-accent-soft);
+      color: var(--th-accent);
+      font: italic 500 24px/1.45 var(--th-serif);
+    }
+
+    .th-prose a {
+      display: inline-flex;
+      margin-top: 4px;
+      color: var(--th-accent);
+      font: 600 24px/1.4 var(--th-ui);
+      text-decoration: none;
+      border-bottom: 1.5px solid color-mix(in srgb, var(--th-accent), transparent 45%);
+    }
+
+    .th-control-label {
+      display: block;
+      margin-bottom: 12px;
+      color: var(--th-muted);
+      font: 600 18px/1.3 var(--th-ui);
+      letter-spacing: 0.04em;
+    }
+
+    .th-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 52px;
+      padding: 0 28px;
+      border: none;
+      border-radius: 6px;
+      background: var(--th-accent);
+      color: #fff;
+      font: 600 24px/1 var(--th-ui);
+      box-shadow: 0 10px 24px color-mix(in srgb, var(--th-accent), transparent 70%);
+    }
+
+    .th-slider {
+      display: grid;
+      gap: 10px;
+      padding: 22px 22px 20px;
+      border: 1px solid var(--th-line);
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--th-paper) 70%, #fff);
+    }
+
+    .th-slider-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .th-slider-value {
+      font: 700 22px/1 var(--mono);
+      color: var(--th-accent);
+    }
+
+    .th-range {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--th-accent) 60%, var(--th-line) 60%);
+      outline: none;
+    }
+
+    .th-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--th-accent);
+      border: 3px solid #fff;
+      box-shadow: 0 4px 12px rgb(40 84 116 / 35%);
+    }
+
+    .th-switch {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 20px;
+      border: 1px solid var(--th-line);
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--th-paper) 70%, #fff);
+    }
+
+    .th-switch-track {
+      position: relative;
+      width: 54px;
+      height: 30px;
+      border-radius: 999px;
+      background: var(--th-accent);
+      flex-shrink: 0;
+    }
+
+    .th-switch-track i {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 8px rgb(0 0 0 / 18%);
+    }
+
+    .demo-step {
+      font-family: var(--mono);
+      font-size: 18px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      margin-bottom: 14px;
+    }
+
+    .demo-step strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .th-btn {
+      font-family: var(--th-ui);
+      font-size: 22px;
+      font-weight: 600;
+      padding: 14px 22px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+    }
+
+    .th-btn.primary {
+      background: var(--th-accent);
+      color: #fff;
+    }
+
+    .th-btn.ghost {
+      background: transparent;
+      color: var(--th-text);
+      border-color: var(--th-line);
+    }
+
+    /* Themes */
+    .themes-block { margin-top: 12px; }
+
+    .themes-lead {
+      font-size: 34px;
+      line-height: 1.45;
+      font-weight: 500;
+      max-width: 920px;
+    }
+
+    .themes-lead strong {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .theme-grid {
+      margin-top: 28px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+
+    .theme-swatch {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .scene.active .theme-swatch:nth-child(1) { opacity: 1; transform: none; transition-delay: 0.08s; }
+    .scene.active .theme-swatch:nth-child(2) { opacity: 1; transform: none; transition-delay: 0.18s; }
+    .scene.active .theme-swatch:nth-child(3) { opacity: 1; transform: none; transition-delay: 0.28s; }
+    .scene.active .theme-swatch:nth-child(4) { opacity: 1; transform: none; transition-delay: 0.38s; }
+
+    .theme-swatch .swatch-body {
+      flex: 1;
+      padding: 28px 26px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .theme-swatch .swatch-name {
+      font-family: var(--mono);
+      font-size: 20px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .theme-swatch .swatch-title {
+      font-size: 34px;
+      line-height: 1.2;
+      font-weight: 600;
+    }
+
+    .theme-swatch .swatch-bar {
+      margin-top: auto;
+      height: 10px;
+      border-radius: 999px;
+      width: 56%;
+    }
+
+    .theme-swatch.default .swatch-body {
+      background: linear-gradient(180deg, #fbfaf6, #f1eee7);
+      color: #20221f;
+    }
+    .theme-swatch.default .swatch-name { color: #285474; }
+    .theme-swatch.default .swatch-title { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; }
+    .theme-swatch.default .swatch-bar { background: #285474; }
+
+    .theme-swatch.light .swatch-body {
+      background: linear-gradient(180deg, #ffffff, #f3f6fa);
+      color: #152033;
+    }
+    .theme-swatch.light .swatch-name { color: #3b6ea5; }
+    .theme-swatch.light .swatch-bar { background: #3b6ea5; }
+
+    .theme-swatch.dark .swatch-body {
+      background: linear-gradient(180deg, #171a1f, #0f1216);
+      color: #e8ecf2;
+      border-color: rgba(255,255,255,0.08);
+    }
+    .theme-swatch.dark .swatch-name { color: #8fb4ff; }
+    .theme-swatch.dark .swatch-bar { background: #8fb4ff; }
+
+    .theme-swatch.rich .swatch-body {
+      background: linear-gradient(180deg, #f7f1e8, #ebe2d4);
+      color: #1c1915;
+    }
+    .theme-swatch.rich .swatch-name { color: #9a4a28; }
+    .theme-swatch.rich .swatch-title { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; }
+    .theme-swatch.rich .swatch-bar { background: #9a4a28; }
+
+    .themes-note {
+      margin-top: 24px;
+      font-size: 28px;
+      line-height: 1.5;
+      color: var(--muted);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.5s ease 0.55s, transform 0.5s ease 0.55s;
+    }
+
+    .scene.active .themes-note {
+      opacity: 1;
+      transform: none;
+    }
+
+    .themes-note strong {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* CTA */
+    .cta { margin-top: 8px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px 48px; align-items: start; }
+
+    .cta h2 {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 64px;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+    }
+
+    .cta .meta {
+      margin-top: 16px;
+      font-size: 24px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .cta .cmd {
+      margin-top: 0;
+      grid-column: 2;
+      grid-row: 1 / span 4;
+      background: #151a17;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 28px 32px;
+      font-family: var(--mono);
+      font-size: 26px;
+      align-self: stretch;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      line-height: 1.6;
+      color: var(--accent);
+    }
+
+    .cta .cmd .prompt { color: var(--muted); }
+    .cta .cmd .pkg { color: var(--ink); }
+
+    .cta .github {
+      margin-top: 8px;
+      font-family: var(--mono);
+      font-size: 26px;
+      color: var(--ink);
+    }
+
+    .cta .github span { color: var(--accent-2); }
+
+    .cta .license {
+      margin-top: 8px;
+      font-family: var(--mono);
+      font-size: 18px;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+
+    .caption {
+      margin-top: auto;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      min-height: 56px;
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .caption p {
+      font-size: 24px;
+      line-height: 1.4;
+      font-weight: 500;
+      color: var(--ink);
+    }
+
+    .progress {
+      position: absolute;
+      left: 72px;
+      right: 72px;
+      bottom: 18px;
+      height: 4px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      z-index: 20;
+    }
+
+    .progress > i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    }
+  </style>
+</head>
+<body>
+  <div class="glow a"></div>
+  <div class="glow b"></div>
+  <div class="grain"></div>
+
+  <div class="frame">
+    <div class="topbar">
+      <div><span class="mark">MDS</span> / open source</div>
+      <div id="clock">00:00</div>
+    </div>
+
+    <div class="stage">
+      <section class="scene" data-scene="hook">
+        <div class="eyebrow">Hook</div>
+        <h1 class="hook">
+          <span class="q">Still writing Markdown, but results feel too <em>plain</em>?</span>
+          <span class="q">Want rich HTML results, but writing feels too <em>complex</em>?</span>
+        </h1>
+      </section>
+
+      <section class="scene" data-scene="brand">
+        <div class="brand-block">
+          <div class="logo">MDS</div>
+          <p class="brand-def">A new markup language</p>
+          <div class="tagline">
+            Think in Markdown.
+            <span>Render in HTML.</span>
+          </div>
+          <p class="brand-zh">
+            Keep writing <strong>Markdown</strong> — get <strong>web-grade</strong> results.
+          </p>
+        </div>
+      </section>
+
+      <section class="scene" data-scene="explain">
+        <div class="eyebrow">Core</div>
+        <p class="explain">
+          <span class="line">Write <strong>Markdown</strong> as usual, plus a few <strong>semantic blocks</strong>.</span>
+          <span class="line">Layout, motion, and interaction go to the <strong>MDS renderer</strong> — rich pages that feel like <strong>HTML</strong>.</span>
+        </p>
+      </section>
+
+      <section class="scene" data-scene="demo">
+        <div class="eyebrow">Authoring</div>
+        <div class="demo-step" id="demoStep">Example 01 · Markdown</div>
+        <div class="demo-stack">
+          <div class="code-card">
+            <div class="bar">
+              <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+              <span class="fname">page.mds</span>
+            </div>
+            <div class="code-body" id="codeBody"><span class="caret" id="caret"></span></div>
+          </div>
+          <div class="preview-shell" id="previewShell" data-mode="md">
+            <div class="preview-chrome">
+              <span>preview · fragment</span>
+              <span class="theme-pill"><i></i>theme-default</span>
+            </div>
+            <div class="preview-page">
+              <div class="preview-panel active" data-panel="md">
+                <div class="th-prose">
+                  <h1>Welcome to MDS</h1>
+                  <ul>
+                    <li>Simple writing</li>
+                    <li>MDS rendering</li>
+                    <li>Ship standalone</li>
+                  </ul>
+                  <blockquote>Think in Markdown.</blockquote>
+                  <a href="#">Start →</a>
+                </div>
+                <p class="th-note">Rendered by MDS renderer</p>
+              </div>
+              <div class="preview-panel" data-panel="hero">
+                <div class="th-hero">
+                  <div class="th-eyebrow">MDS</div>
+                  <h3 class="th-title">Write web pages like Markdown</h3>
+                  <p class="th-body">Describe intent with semantic blocks; the MDS renderer presents it.</p>
+                  <div class="th-actions">
+                    <div class="th-btn primary">Start</div>
+                    <div class="th-btn ghost">Docs</div>
+                  </div>
+                </div>
+                <p class="th-note">Rendered by MDS renderer</p>
+              </div>
+              <div class="preview-panel" data-panel="controls">
+                <div class="th-controls">
+                  <div>
+                    <span class="th-control-label">button</span>
+                    <button class="th-button" type="button">Start</button>
+                  </div>
+                  <div class="th-slider">
+                    <div class="th-slider-row">
+                      <span class="th-control-label" style="margin:0">slider · Volume</span>
+                      <span class="th-slider-value">60</span>
+                    </div>
+                    <input class="th-range" type="range" min="0" max="100" value="60" disabled />
+                  </div>
+                  <div class="th-switch">
+                    <span class="th-switch-track" aria-hidden="true"><i></i></span>
+                    <span class="th-control-label" style="margin:0">switch · Dark mode</span>
+                  </div>
+                </div>
+                <p class="th-note">Rendered by MDS renderer</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene" data-scene="themes">
+        <div class="eyebrow">Themes</div>
+        <div class="themes-block">
+          <p class="themes-lead">Several <strong>default themes</strong> — switch and the look changes.</p>
+          <div class="theme-grid">
+            <div class="theme-swatch default">
+              <div class="swatch-body">
+                <div class="swatch-name">default</div>
+                <div class="swatch-title">Editorial paper</div>
+                <div class="swatch-bar"></div>
+              </div>
+            </div>
+            <div class="theme-swatch light">
+              <div class="swatch-body">
+                <div class="swatch-name">light</div>
+                <div class="swatch-title">Bright & clear</div>
+                <div class="swatch-bar"></div>
+              </div>
+            </div>
+            <div class="theme-swatch dark">
+              <div class="swatch-body">
+                <div class="swatch-name">dark</div>
+                <div class="swatch-title">Dark immersion</div>
+                <div class="swatch-bar"></div>
+              </div>
+            </div>
+            <div class="theme-swatch rich">
+              <div class="swatch-body">
+                <div class="swatch-name">rich</div>
+                <div class="swatch-title">Content-rich</div>
+                <div class="swatch-bar"></div>
+              </div>
+            </div>
+          </div>
+          <p class="themes-note">Or <strong>build your own theme</strong> if you want something different.</p>
+        </div>
+      </section>
+
+      <section class="scene" data-scene="cta">
+        <div class="cta">
+          <div>
+            <div class="eyebrow">Get started</div>
+            <h2>Public Beta<br />is live</h2>
+            <div class="meta">Node.js 20.19+ · ESM · npm `@mds-crate`</div>
+            <div class="github">GitHub · <span>ziyu/mds</span></div>
+            <div class="license">Feedback welcome · Apache-2.0</div>
+          </div>
+          <div class="cmd">
+            <div><span class="prompt">$</span> npm i -g <span class="pkg">@mds-crate/cli@next</span></div>
+            <div><span class="prompt">$</span> mds edit ./page.mds</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="caption">
+      <p id="captionText"></p>
+    </div>
+  </div>
+
+  <div class="progress"><i id="progressBar"></i></div>
+
+  <audio id="voice" src="/assets/narration-en.mp3" preload="auto"></audio>
+
+  <script>
+    const cues = [
+      { start: 0.10, end: 8.83, scene: "hook", text: "Still writing in Markdown, but the results feel too plain? Want rich HTML results, but writing HTML feels too complex?" },
+      { start: 3.79, end: 8.83, scene: "hook", text: "Want rich HTML results, but writing HTML feels too complex?" },
+      { start: 8.83, end: 14.95, scene: "brand", text: "MDS is here to clear that friction. Keep writing Markdown — get web-grade results." },
+      { start: 11.60, end: 14.95, scene: "brand", text: "Keep writing Markdown — get web-grade results." },
+      { start: 14.95, end: 26.40, scene: "explain", text: "Write Markdown as usual, add a few semantic blocks" },
+      { start: 18.67, end: 26.40, scene: "explain", text: "Layout, motion, and interaction go to the MDS renderer" },
+      { start: 26.40, end: 55.02, scene: "demo", text: "Let's look at the authoring flow" },
+      { start: 28.74, end: 30.88, scene: "demo", text: "Start with plain Markdown" },
+      { start: 30.88, end: 36.68, scene: "demo", text: "Headings, lists, quotes — the MDS renderer turns them into beautiful HTML" },
+      { start: 36.68, end: 38.50, scene: "demo", text: "Then write a hero" },
+      { start: 38.50, end: 41.88, scene: "demo", text: "A title, one line of copy, and a button" },
+      { start: 41.88, end: 45.67, scene: "demo", text: "The MDS renderer turns it into a real page right away" },
+      { start: 45.67, end: 50.04, scene: "demo", text: "Of course, you can also write controls the way you would in HTML" },
+      { start: 50.04, end: 55.02, scene: "demo", text: "Buttons, sliders, switches — the MDS renderer renders those too" },
+      { start: 55.02, end: 63.13, scene: "themes", text: "There are several default themes to choose from" },
+      { start: 57.86, end: 63.13, scene: "themes", text: "default, light, dark, and rich — or build your own" },
+      { start: 63.13, end: 999, scene: "cta", text: "Public Beta is live. Use the commands below to get started." },
+      { start: 67.98, end: 999, scene: "cta", text: "The source is on GitHub — feedback is welcome." },
+    ];
+
+    const CODE_MD = `# Welcome to MDS
+
+- Simple writing
+- MDS rendering
+- Ship standalone
+
+> Think in Markdown.
+
+[Start -> /docs]`;
+
+    const CODE_HERO = `::: hero
+# Write web pages like Markdown
+
+Describe intent with semantic blocks; the MDS renderer presents it.
+
+[Start -> /docs]
+:::`;
+
+    const CODE_CONTROLS = `:: button label="Start"
+:: slider label="Volume" min=0 max=100 value=60
+:: switch label="Dark mode" checked`;
+
+    // Demo timeline (seconds)
+    const MD_TYPE_START = 28.74;
+    const MD_TYPE_END = 34.50;
+    const MD_PREVIEW_AT = 34.60;
+    const HERO_TYPE_START = 36.68;
+    const HERO_TYPE_END = 41.80;
+    const HERO_PREVIEW_AT = 41.88;
+    const CTRL_TYPE_START = 45.67;
+    const CTRL_TYPE_END = 51.50;
+    const CTRL_PREVIEW_AT = 51.70;
+
+    const audio = document.getElementById("voice");
+    const caption = document.getElementById("captionText");
+    const clock = document.getElementById("clock");
+    const progress = document.getElementById("progressBar");
+    const codeBody = document.getElementById("codeBody");
+    const previewShell = document.getElementById("previewShell");
+    const demoStep = document.getElementById("demoStep");
+    const scenes = [...document.querySelectorAll(".scene")];
+    const panels = [...document.querySelectorAll(".preview-panel")];
+
+    let currentScene = null;
+    let lastKey = "";
+    let maxHeard = 0;
+    let sceneLocked = null;
+    let bootstrapped = false;
+
+    function escapeHtml(s) {
+      return s
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    function highlight(src) {
+      return src.split("\n").map((line) => {
+        if (/^:::/.test(line)) {
+          const rest = line.slice(3).trim();
+          if (!rest) return `<span class="tok-kw">:::</span>`;
+          return `<span class="tok-kw">:::</span> <span class="tok-str">${escapeHtml(rest)}</span>`;
+        }
+        if (/^:: /.test(line)) {
+          const rest = line.slice(3);
+          const m = rest.match(/^(\w+)(.*)$/);
+          if (m) {
+            return `<span class="tok-kw">::</span> <span class="tok-str">${escapeHtml(m[1])}</span><span class="tok-body">${escapeHtml(m[2])}</span>`;
+          }
+          return `<span class="tok-kw">::</span> <span class="tok-body">${escapeHtml(rest)}</span>`;
+        }
+        if (/^# /.test(line)) return `<span class="tok-title">${escapeHtml(line)}</span>`;
+        if (/^> /.test(line)) return `<span class="tok-str">${escapeHtml(line)}</span>`;
+        if (/^- /.test(line)) return `<span class="tok-body">${escapeHtml(line)}</span>`;
+        if (/^\[/.test(line)) return `<span class="tok-link">${escapeHtml(line)}</span>`;
+        if (!line) return "";
+        return `<span class="tok-body">${escapeHtml(line)}</span>`;
+      }).join("\n");
+    }
+
+    function setTyped(code, len) {
+      const key = `${code.length}:${len}`;
+      if (key === lastKey) return;
+      lastKey = key;
+      const slice = code.slice(0, len);
+      const done = len >= code.length;
+      codeBody.innerHTML = highlight(slice) + `<span class="caret${done ? " off" : ""}"></span>`;
+    }
+
+    function setPreview(show, mode) {
+      previewShell.classList.toggle("show", show);
+      if (mode) {
+        previewShell.dataset.mode = mode;
+        panels.forEach((el) => el.classList.toggle("active", el.dataset.panel === mode));
+      }
+      if (mode === "md") {
+        demoStep.innerHTML = `Example 01 · <strong>Markdown</strong>`;
+      } else if (mode === "hero") {
+        demoStep.innerHTML = `Example 02 · <strong>hero</strong>`;
+      } else if (mode === "controls") {
+        demoStep.innerHTML = `Example 03 · <strong>controls</strong>`;
+      }
+    }
+
+    function resetDemo() {
+      lastKey = "";
+      setTyped(CODE_MD, 0);
+      previewShell.classList.remove("show");
+      previewShell.dataset.mode = "md";
+      panels.forEach((el) => el.classList.toggle("active", el.dataset.panel === "md"));
+      demoStep.innerHTML = `Example 01 · <strong>Markdown</strong>`;
+    }
+
+    function setScene(name) {
+      if (sceneLocked && name !== sceneLocked) return;
+      if (currentScene === name) return;
+      if (name === "demo" && currentScene !== "demo") resetDemo();
+      currentScene = name;
+      scenes.forEach((el) => {
+        el.classList.toggle("active", el.dataset.scene === name);
+      });
+    }
+
+    function easeOut(p) {
+      return 1 - Math.pow(1 - Math.min(1, Math.max(0, p)), 1.35);
+    }
+
+    function typeProgress(t, start, end, code) {
+      const p = easeOut((t - start) / (end - start));
+      setTyped(code, Math.floor(p * code.length));
+    }
+
+    function updateDemo(t) {
+      if (currentScene !== "demo") return;
+
+      if (t < MD_TYPE_START) {
+        setTyped(CODE_MD, 0);
+        setPreview(false, "md");
+        return;
+      }
+
+      // Example 1: plain Markdown
+      if (t < MD_PREVIEW_AT) {
+        typeProgress(t, MD_TYPE_START, MD_TYPE_END, CODE_MD);
+        setPreview(false, "md");
+        return;
+      }
+
+      if (t < HERO_TYPE_START) {
+        setTyped(CODE_MD, CODE_MD.length);
+        setPreview(true, "md");
+        return;
+      }
+
+      // Example 2: hero
+      if (t < HERO_PREVIEW_AT) {
+        typeProgress(t, HERO_TYPE_START, HERO_TYPE_END, CODE_HERO);
+        setPreview(false, "hero");
+        return;
+      }
+
+      if (t < CTRL_TYPE_START) {
+        setTyped(CODE_HERO, CODE_HERO.length);
+        setPreview(true, "hero");
+        return;
+      }
+
+      // Example 3: controls
+      if (t < CTRL_PREVIEW_AT) {
+        typeProgress(t, CTRL_TYPE_START, CTRL_TYPE_END, CODE_CONTROLS);
+        setPreview(false, "controls");
+        return;
+      }
+
+      setTyped(CODE_CONTROLS, CODE_CONTROLS.length);
+      setPreview(true, "controls");
+    }
+
+    function pickCue(time) {
+      let active = cues[0];
+      let matched = false;
+      for (const cue of cues) {
+        if (time >= cue.start && time < cue.end) {
+          active = cue;
+          matched = true;
+        }
+      }
+      if (!matched) {
+        for (const cue of cues) {
+          if (time >= cue.start) active = cue;
+        }
+      }
+      return active;
+    }
+
+    function tick() {
+      const dur = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 71.28;
+      let t = audio.currentTime || 0;
+
+      // Ignore accidental rewinds (browser media quirks) after playback has progressed
+      if (t + 0.4 < maxHeard && maxHeard > 2) {
+        t = maxHeard;
+      } else {
+        maxHeard = Math.max(maxHeard, t);
+      }
+
+      if (audio.ended || maxHeard >= dur - 0.15) {
+        sceneLocked = "cta";
+        t = Math.max(t, dur - 0.05, maxHeard);
+        maxHeard = Math.max(maxHeard, t);
+      }
+
+      const mm = String(Math.floor(t / 60)).padStart(2, "0");
+      const ss = String(Math.floor(t % 60)).padStart(2, "0");
+      clock.textContent = `${mm}:${ss}`;
+      progress.style.width = `${Math.min(100, (t / dur) * 100)}%`;
+
+      const active = sceneLocked
+        ? pickCue(Math.max(t, 67.98))
+        : pickCue(t);
+      setScene(sceneLocked || active.scene);
+      caption.textContent = active.text;
+      updateDemo(t);
+      requestAnimationFrame(tick);
+    }
+
+    window.__mdsPromo = {
+      play() { return audio.play(); },
+      duration() { return audio.duration || 71.28; },
+      ended() { return audio.ended; },
+      ready() { return audio.readyState >= 3; },
+      freezeCta() {
+        sceneLocked = "cta";
+        maxHeard = Math.max(maxHeard, audio.duration || 71.28);
+      },
+    };
+
+    audio.addEventListener("play", () => { bootstrapped = true; }, { once: true });
+    audio.addEventListener("ended", () => {
+      sceneLocked = "cta";
+      maxHeard = Math.max(maxHeard, audio.duration || 71.28);
+      setScene("cta");
+      caption.textContent = "The source is on GitHub — feedback is welcome.";
+    });
+
+    audio.addEventListener("loadeddata", () => {
+      if (bootstrapped || sceneLocked) return;
+      setScene("hook");
+      caption.textContent = cues[0].text;
+    });
+
+    requestAnimationFrame(tick);
+
+    const params = new URLSearchParams(location.search);
+    if (params.get("autoplay") === "1") {
+      const start = () => {
+        if (bootstrapped) return;
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      };
+      if (audio.readyState >= 3) start();
+      else audio.addEventListener("canplaythrough", start, { once: true });
+    }
+  </script>
+</body>
+</html>

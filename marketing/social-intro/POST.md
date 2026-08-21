@@ -32,3 +32,30 @@ mds edit ./page.mds
 https://github.com/ziyu/mds
 
 #开源项目 #Markdown #前端开发 #开发者工具 #HTML
+
+---
+
+## English (YouTube / X / LinkedIn)
+
+Still writing Markdown, but results feel too plain?
+Want rich HTML results, but writing feels too complex?
+
+MDS clears that friction. Keep writing Markdown — get web-grade results.
+
+A new markup language. Think in Markdown. Render in HTML.
+
+Write Markdown as usual, add a few semantic blocks; layout, motion, and interaction go to the MDS renderer.
+
+Authoring is simple — plain Markdown, then hero, plus controls like button / slider / switch. Several default themes (default, light, dark, rich), or build your own.
+
+Public Beta is live:
+
+```bash
+npm i -g @mds-crate/cli@next
+mds edit ./page.mds
+```
+
+Source on GitHub — feedback welcome.
+https://github.com/ziyu/mds
+
+#OpenSource #Markdown #WebDev #DeveloperTools

@@ -8,12 +8,36 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
 const DIST = path.join(ROOT, "dist");
-const RAW = path.join(DIST, "raw.webm");
-const OUT = path.join(DIST, "mds-intro-9x16.mp4");
-const AUDIO = path.join(ROOT, "assets", "narration.mp3");
-const PORT = 8768;
-const WIDTH = 1080;
-const HEIGHT = 1920;
+
+const VARIANTS = {
+  "9x16": {
+    page: "/src/index.html",
+    audio: "assets/narration.mp3",
+    out: "mds-intro-9x16.mp4",
+    cover: "cover.png",
+    width: 1080,
+    height: 1920,
+    port: 8768,
+  },
+  "16x9-zh": {
+    page: "/src/landscape.html",
+    audio: "assets/narration.mp3",
+    out: "mds-intro-16x9.mp4",
+    cover: "cover-16x9.png",
+    width: 1920,
+    height: 1080,
+    port: 8769,
+  },
+  "16x9-en": {
+    page: "/src/landscape-en.html",
+    audio: "assets/narration-en.mp3",
+    out: "mds-intro-16x9-en.mp4",
+    cover: "cover-16x9-en.png",
+    width: 1920,
+    height: 1080,
+    port: 8770,
+  },
+};
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -24,6 +48,15 @@ const MIME = {
   ".png": "image/png",
   ".svg": "image/svg+xml",
 };
+
+function parseVariant() {
+  const arg = process.argv.find((a) => a.startsWith("--variant="));
+  const name = arg ? arg.slice("--variant=".length) : process.argv[2] || "9x16";
+  if (!VARIANTS[name]) {
+    throw new Error(`Unknown variant "${name}". Use: ${Object.keys(VARIANTS).join(", ")}`);
+  }
+  return { name, ...VARIANTS[name] };
+}
 
 async function exists(p) {
   try {
@@ -44,10 +77,10 @@ function run(cmd, args) {
   });
 }
 
-function startServer() {
+function startServer(port) {
   const server = createServer(async (req, res) => {
     try {
-      const url = new URL(req.url || "/", `http://127.0.0.1:${PORT}`);
+      const url = new URL(req.url || "/", `http://127.0.0.1:${port}`);
       let rel = decodeURIComponent(url.pathname);
       if (rel === "/") rel = "/src/index.html";
       const filePath = path.join(ROOT, rel);
@@ -72,17 +105,23 @@ function startServer() {
   });
 
   return new Promise((resolve) => {
-    server.listen(PORT, "127.0.0.1", () => resolve(server));
+    server.listen(port, "127.0.0.1", () => resolve(server));
   });
 }
 
-async function main() {
+async function recordVariant(variant) {
+  const AUDIO = path.join(ROOT, variant.audio);
+  const RAW = path.join(DIST, `raw-${variant.name}.webm`);
+  const OUT = path.join(DIST, variant.out);
+  const COVER = path.join(DIST, variant.cover);
+  const { width: WIDTH, height: HEIGHT, port: PORT } = variant;
+
   if (!(await exists(AUDIO))) {
     throw new Error(`Missing narration audio: ${AUDIO}`);
   }
   await mkdir(DIST, { recursive: true });
 
-  const server = await startServer();
+  const server = await startServer(PORT);
   const browser = await chromium.launch({
     headless: true,
     args: ["--autoplay-policy=no-user-gesture-required"],
@@ -101,8 +140,7 @@ async function main() {
   const video = page.video();
   const recStartedAt = Date.now();
 
-  // Do not autoplay — start narration only after recorder is ready (keeps A/V aligned)
-  await page.goto(`http://127.0.0.1:${PORT}/src/index.html`, {
+  await page.goto(`http://127.0.0.1:${PORT}${variant.page}`, {
     waitUntil: "domcontentloaded",
   });
 
@@ -112,7 +150,6 @@ async function main() {
     { timeout: 60000 }
   );
 
-  // Ensure media element has a finite duration before we start
   await page.evaluate(async () => {
     const a = document.getElementById("voice");
     a.loop = false;
@@ -142,7 +179,7 @@ async function main() {
   });
 
   const durationSec = await page.evaluate(() => window.__mdsPromo.duration());
-  console.log(`Recording audio ${durationSec.toFixed(2)}s (trim lead-in ${leadInSec.toFixed(2)}s)`);
+  console.log(`[${variant.name}] Recording audio ${durationSec.toFixed(2)}s (trim lead-in ${leadInSec.toFixed(2)}s)`);
 
   await page.waitForFunction(() => window.__mdsPromo.ended() === true, null, {
     timeout: Math.ceil(durationSec * 1000) + 15000,
@@ -158,7 +195,6 @@ async function main() {
   server.close();
   await video.delete().catch(() => {});
 
-  // Trim recorder lead-in, then mux with narration audio
   const trimStart = Math.min(Math.max(leadInSec, 0), 8);
   await run("ffmpeg", [
     "-y",
@@ -191,8 +227,16 @@ async function main() {
     OUT,
   ]);
 
+  await run("ffmpeg", ["-y", "-ss", "1.2", "-i", OUT, "-frames:v", "1", COVER]);
+
   console.log(`\nWrote ${OUT}`);
-  console.log(`Raw capture: ${RAW}`);
+  console.log(`Cover ${COVER}`);
+  await access(RAW).then(() => run("rm", ["-f", RAW])).catch(() => {});
+}
+
+async function main() {
+  const variant = parseVariant();
+  await recordVariant(variant);
 }
 
 main().catch((err) => {

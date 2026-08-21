@@ -3,7 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "record": "node record.mjs",
+    "record": "node record.mjs --variant=9x16",
+    "record:landscape": "node record.mjs --variant=16x9-zh",
+    "record:landscape-en": "node record.mjs --variant=16x9-en",
+    "record:all": "npm run record && npm run record:landscape && npm run record:landscape-en",
     "serve": "python3 -m http.server 8765 --directory ."
   },
   "devDependencies": {
