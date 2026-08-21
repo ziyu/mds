@@ -181,6 +181,7 @@ Lower-level packages:
 - [Editor plan](./docs/EDITOR_APP_PLAN.md)
 - [Local Editor guide](./docs/EDITOR.md)
 - [AI authoring rules](./docs/AI_AUTHORING.md)
+- [AI generation roadmap](./docs/AI_GENERATION.md)
 
 ## Security Model
 
