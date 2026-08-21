@@ -1,5 +1,18 @@
 # @mds-crate/cli
 
+## 0.1.0-beta.2
+
+### Patch Changes
+
+- Updated dependencies [85e8673]
+- Updated dependencies [d84aa9c]
+- Updated dependencies [a05b18a]
+  - @mds-crate/theme-default@0.1.0-beta.2
+  - @mds-crate/parser@0.1.0-beta.2
+  - @mds-crate/renderer-html@0.1.0-beta.2
+  - @mds-crate/theme-loader@0.1.0-beta.2
+  - @mds-crate/theme-builder@0.1.0-beta.2
+
 ## 0.1.0-beta.1
 
 ### Minor Changes

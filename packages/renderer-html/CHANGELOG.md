@@ -1,5 +1,18 @@
 # @mds-crate/renderer-html
 
+## 0.1.0-beta.2
+
+### Minor Changes
+
+- 85e8673: Redesign the Default theme as a quiet editorial system with consistent typography, controls, responsive layouts, dark and print modes. Add the missing shared semantic `header` landmark alongside `footer`. Correct tabs and accordion behavior, accessible overlays, anchored dropdown/context-menu/menubar geometry, command/action style isolation, named-slot duplication, details labels, keyboard tooltips, and media sizing. Clarify the shared motion primitives and fully implement presets, triggers, timing, replay, staggered children, normal-block motion attributes, visual scenes, and reduced-motion behavior without changing the existing contracts.
+
+### Patch Changes
+
+- Updated dependencies [85e8673]
+  - @mds-crate/parser@0.1.0-beta.2
+  - @mds-crate/ast@0.1.0-beta.2
+  - @mds-crate/html-types@0.1.0-beta.2
+
 ## 0.1.0-beta.1
 
 ### Minor Changes

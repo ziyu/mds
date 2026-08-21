@@ -1,6 +1,6 @@
 {
   "name": "@mds-crate/theme-sdk-html",
-  "version": "0.1.0-beta.1",
+  "version": "0.1.0-beta.2",
   "description": "Tagged HTML authoring SDK for package-defined MDS themes.",
   "keywords": [
     "mds",
