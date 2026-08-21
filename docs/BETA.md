@@ -1,6 +1,6 @@
 # MDS 0.1.0 Beta
 
-`0.1.0-beta.1` is the first external MDS beta. Twelve public packages are available under [`@mds-crate`](https://www.npmjs.com/org/mds-crate), and prerelease installs should use the npm `next` tag.
+`0.1.0-beta.1` is the first external MDS beta. The current registry release contains the original eleven public packages under [`@mds-crate`](https://www.npmjs.com/org/mds-crate). The `0.1.0-beta.2` release candidate expands the fixed release set to fourteen packages with the Rich, Light, and Dark themes. Prerelease installs should use the npm `next` tag.
 
 ## Requirements
 
@@ -67,7 +67,7 @@ Expected result: the generated project builds and validates a complete artifact 
 
 - The Editor is a local browser application launched through `mds edit`; native desktop installers are not part of this beta.
 - Public packages require Node.js 20.19 or newer and are ESM-only.
-- `@mds-crate/theme-default` is the compact general-purpose theme; `@mds-crate/theme-light` and `@mds-crate/theme-dark` provide fixed appearance systems; `@mds-crate/theme-rich` adds data, documentation, guidance, gallery, and conversation blocks.
+- `@mds-crate/theme-default` is the compact general-purpose theme. Starting with `0.1.0-beta.2`, `@mds-crate/theme-light` and `@mds-crate/theme-dark` provide fixed appearance systems, while `@mds-crate/theme-rich` adds data, documentation, guidance, gallery, and conversation blocks.
 - Installed theme packages are trusted dependencies. Review them before installation or build.
 - APIs and artifact contracts may receive compatibility fixes before `0.1.0`; pin exact versions when reproducibility matters.
 

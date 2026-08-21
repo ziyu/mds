@@ -1,8 +1,8 @@
 # MDS Release Plan
 
-Status: `0.1.0-beta.1` published; external feedback in progress
+Status: `0.1.0-beta.1` published; `0.1.0-beta.2` release preparation in progress
 
-Last updated: 2026-08-14
+Last updated: 2026-08-21
 
 This document records the product, development, packaging, and release work behind the MDS public beta and the remaining path to `0.1.0`. It covers three release goals:
 
@@ -438,7 +438,6 @@ These are valuable but should not block the first complete external journeys:
 - Framework-specific renderer adapters beyond examples.
 - Watch/streaming renderer APIs.
 - CommonJS builds.
-- Multiple officially supported visual themes.
 - Formatter and linter packages.
 
 ## Release Automation
@@ -605,7 +604,7 @@ Exit criteria:
 Recommended tags:
 
 1. `0.1.0-beta.1`: the locally complete Renderer, Theme, and Local Editor journeys.
-2. `0.1.0-beta.2` if needed: fixes from the first registry-package and external feedback cycle.
+2. `0.1.0-beta.2`: the 64-block portable runtime, redesigned Default and Rich themes, fixed Light and Dark themes, Editor workspace improvements, concise leaf blocks, and accumulated compatibility fixes.
 3. `0.1.0`: all three user journeys pass against registry packages and no blocking compatibility issue remains.
 
 ## End-to-End Release Acceptance
@@ -682,7 +681,8 @@ Acceptance:
 1. Publish `0.1.0-beta.1` and verify all three journeys against registry packages. Completed.
 2. Publish source, installation documentation, release notes, and structured feedback forms. Completed for the beta launch.
 3. Collect real external feedback across operating systems, browsers, package managers, and framework integrations. In progress.
-4. Publish `0.1.0-beta.2` only if the first feedback cycle requires compatibility fixes.
-5. Declare `0.1.0` after the three journeys have no blocking compatibility or security issues.
+4. Publish `0.1.0-beta.2` with the expanded fourteen-package release set. In progress.
+5. Repeat registry and external acceptance across operating systems, supported Node.js versions, package managers, and all three product journeys.
+6. Declare `0.1.0` after the three journeys have no blocking compatibility or security issues.
 
-All three product journeys pass locally, from tarballs, and from registry packages. The remaining release work is real-user feedback and the stable-release decision.
+All three product journeys pass locally, from tarballs, and against the `0.1.0-beta.1` registry packages. The remaining beta.2 work is publishing and verifying the expanded fourteen-package set; the remaining stable-release work is real-user feedback and the final compatibility decision.
