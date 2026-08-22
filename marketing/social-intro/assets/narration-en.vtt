@@ -1,0 +1,76 @@
+1
+00:00:00,100 --> 00:00:03,835
+Still writing in Markdown, but the results feel too plain?
+
+2
+00:00:03,785 --> 00:00:08,833
+Want rich HTML results, but writing HTML feels too complex?
+
+3
+00:00:08,833 --> 00:00:11,595
+MDS is here to clear that friction.
+
+4
+00:00:11,595 --> 00:00:14,952
+Keep writing Markdown — get web-grade results.
+
+5
+00:00:14,952 --> 00:00:18,666
+Write Markdown as usual, add a few semantic blocks.
+
+6
+00:00:18,666 --> 00:00:26,404
+Layout, motion, and interaction go to the MDS renderer, and you get rich, polished pages that feel like HTML.
+
+7
+00:00:26,404 --> 00:00:28,738
+Let's look at the authoring flow.
+
+8
+00:00:28,738 --> 00:00:30,880
+Start with plain Markdown.
+
+9
+00:00:30,880 --> 00:00:36,678
+Headings, lists, quotes — the MDS renderer turns them into beautiful HTML.
+
+10
+00:00:36,678 --> 00:00:38,500
+Then write a hero.
+
+11
+00:00:38,500 --> 00:00:41,880
+A title, one line of copy, and a button.
+
+12
+00:00:41,880 --> 00:00:45,666
+The MDS renderer turns it into a real page right away.
+
+13
+00:00:45,666 --> 00:00:50,035
+Of course, you can also write controls the way you would in HTML.
+
+14
+00:00:50,035 --> 00:00:55,023
+Buttons, sliders, switches — the MDS renderer renders those too.
+
+15
+00:00:55,023 --> 00:00:57,857
+There are several default themes to choose from.
+
+16
+00:00:57,857 --> 00:01:03,130
+default, light, dark, and rich — or build your own if you want something different.
+
+17
+00:01:03,130 --> 00:01:05,261
+Public Beta is live.
+
+18
+00:01:05,261 --> 00:01:07,976
+Use the commands below to get started.
+
+19
+00:01:07,976 --> 00:01:11,238
+The source is on GitHub — feedback is welcome.
+

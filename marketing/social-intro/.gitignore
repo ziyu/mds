@@ -1,0 +1,8 @@
+node_modules/
+dist/raw.webm
+dist/raw-*.webm
+dist/frames/
+dist/_*.png
+package-lock.json
+assets/narration.aiff
+assets/narration.wav

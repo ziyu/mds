@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1920, height=1080" />
+  <title>MDS Showcase · 16:9</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@400;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b0f0c;
+      --ink: #f2efe6;
+      --muted: #8f988f;
+      --accent: #d2f25c;
+      --accent-2: #ff6b3d;
+      --line: rgba(242, 239, 230, 0.12);
+      --panel: #121712;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+      --sans: "Noto Sans SC", "Syne", system-ui, sans-serif;
+      --display: "Syne", "Noto Sans SC", sans-serif;
+      --th-bg: #f1eee7;
+      --th-paper: #fbfaf6;
+      --th-text: #20221f;
+      --th-muted: #686b65;
+      --th-line: #d8d3c8;
+      --th-line-strong: #aaa69c;
+      --th-accent: #285474;
+      --th-accent-soft: #e1ebf0;
+      --th-orange: #9a4a28;
+      --th-orange-soft: #f5e8df;
+      --th-green: #2f6b45;
+      --th-green-soft: #e3f0e8;
+      --th-red: #8b3a32;
+      --th-red-soft: #f3e4e2;
+      --th-serif: "Noto Serif SC", Charter, "Iowan Old Style", Georgia, serif;
+      --th-ui: "Noto Sans SC", "Avenir Next", system-ui, sans-serif;
+      --th-radius: 6px;
+      --th-shadow: 0 18px 40px rgb(30 31 28 / 12%);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+    }
+
+    .grain {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      opacity: 0.16;
+      mix-blend-mode: soft-light;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      z-index: 50;
+    }
+
+    .glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(110px);
+      opacity: 0.34;
+      z-index: 0;
+    }
+
+    .glow.a {
+      top: -280px;
+      left: -120px;
+      width: 900px;
+      height: 900px;
+      background: radial-gradient(circle, #3a5528 0%, transparent 68%);
+    }
+
+    .glow.b {
+      right: -180px;
+      bottom: -320px;
+      width: 900px;
+      height: 900px;
+      background: radial-gradient(circle, #5c2618 0%, transparent 68%);
+    }
+
+    .glow.c {
+      top: 40%;
+      left: 42%;
+      width: 520px;
+      height: 520px;
+      opacity: 0.12;
+      background: radial-gradient(circle, #d2f25c 0%, transparent 70%);
+    }
+
+    .frame {
+      position: relative;
+      z-index: 1;
+      width: 1920px;
+      height: 1080px;
+      padding: 36px 56px 24px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 0;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 15px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .topbar .mark { color: var(--accent); font-weight: 600; }
+
+    .stage {
+      position: relative;
+      min-height: 0;
+      margin: 10px 0 6px;
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    /* —— Tier rail —— */
+    .tier-rail {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0;
+      padding: 24px 0;
+    }
+
+    .tier-step {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 0;
+      opacity: 0.32;
+      transition: opacity 0.45s ease;
+    }
+
+    .tier-step.active { opacity: 1; }
+    .tier-step.done { opacity: 0.55; }
+
+    .tier-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid var(--muted);
+      flex-shrink: 0;
+      transition: border-color 0.4s ease, background 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    .tier-step.active .tier-dot {
+      border-color: var(--accent);
+      background: var(--accent);
+      box-shadow: 0 0 16px rgba(210, 242, 92, 0.45);
+    }
+
+    .tier-step.done .tier-dot {
+      border-color: var(--accent);
+      background: transparent;
+    }
+
+    .tier-label {
+      font-family: var(--mono);
+      font-size: 14px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      transition: color 0.4s ease;
+    }
+
+    .tier-step.active .tier-label { color: var(--accent); font-weight: 600; }
+    .tier-step.done .tier-label { color: var(--ink); }
+
+    .tier-line {
+      width: 1px;
+      height: 28px;
+      margin-left: 4px;
+      background: var(--line);
+    }
+
+    /* —— Scene area —— */
+    .scene-wrap {
+      position: relative;
+      min-height: 0;
+      min-width: 0;
+    }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transform: translateY(14px) scale(0.985);
+      transition: opacity 0.55s ease, transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .scene.active {
+      opacity: 1;
+      transform: none;
+      pointer-events: auto;
+    }
+
+    .scene-head {
+      display: flex;
+      align-items: baseline;
+      gap: 18px;
+      margin-bottom: 14px;
+      flex-shrink: 0;
+    }
+
+    .scene-eyebrow {
+      font-family: var(--mono);
+      font-size: 14px;
+      color: var(--accent);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .scene-title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    /* —— Title scene —— */
+    .title-scene {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .title-scene .big {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 120px;
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+      margin-bottom: 24px;
+    }
+
+    .title-scene .sub {
+      font-family: var(--mono);
+      font-size: 22px;
+      color: var(--muted);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .title-scene .tag {
+      margin-top: 36px;
+      display: inline-flex;
+      gap: 10px;
+      padding: 10px 18px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-family: var(--mono);
+      font-size: 14px;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+    }
+
+    /* —— Outro —— */
+    .outro-scene {
+      justify-content: center;
+      align-items: center;
+    }
+
+    .outro-block {
+      display: flex;
+      align-items: center;
+      gap: 72px;
+    }
+
+    .outro-logo {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 160px;
+      line-height: 0.85;
+      letter-spacing: -0.06em;
+    }
+
+    .outro-copy {
+      display: grid;
+      gap: 20px;
+      border-left: 1px solid var(--line);
+      padding-left: 48px;
+    }
+
+    .outro-copy .line1 {
+      font-size: 32px;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    .outro-copy .cmd {
+      font-family: var(--mono);
+      font-size: 22px;
+      color: var(--accent);
+      line-height: 1.6;
+    }
+
+    .outro-copy .meta {
+      font-family: var(--mono);
+      font-size: 15px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+
+    /* —— Preview shell —— */
+    .preview-shell {
+      flex: 1;
+      min-height: 0;
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(216, 211, 200, 0.28);
+      background: var(--th-bg);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
+    }
+
+    .preview-chrome {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 18px;
+      background: color-mix(in srgb, var(--th-paper) 88%, #d8d3c8);
+      border-bottom: 1px solid var(--th-line);
+      font-family: var(--th-ui);
+      font-size: 13px;
+      color: var(--th-muted);
+      flex-shrink: 0;
+    }
+
+    .preview-chrome .theme-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--th-accent-soft);
+      color: var(--th-accent);
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+    }
+
+    .preview-chrome .theme-pill i {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--th-accent);
+    }
+
+    .preview-page {
+      position: relative;
+      background: var(--th-paper);
+      color: var(--th-text);
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-family: var(--th-serif);
+      font-size: 17px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      border-top: 3px solid var(--th-accent);
+    }
+
+    .preview-panel {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      min-height: 0;
+      position: relative;
+      padding: 32px 36px 40px;
+      overflow: hidden;
+    }
+
+    .preview-panel.active { display: flex; }
+    .preview-panel.centered { justify-content: center; }
+
+    .preview-page .page {
+      display: grid;
+      gap: 0;
+      width: 100%;
+      margin: 0;
+      padding: 4px 0 0;
+    }
+    .preview-page .page > * + * { margin-top: 18px; }
+
+    .preview-page .page > h1 {
+      position: relative;
+      max-width: 12em;
+      margin: 0;
+      padding-top: 16px;
+      font-family: var(--th-serif);
+      font-weight: 600;
+      font-size: 34px;
+      line-height: 1.08;
+      letter-spacing: -0.025em;
+    }
+    .preview-page .page > h1::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 42px;
+      height: 2px;
+      background: var(--th-accent);
+    }
+
+    .preview-page ul {
+      margin: 0;
+      padding-left: 1.25em;
+      max-width: 28em;
+      font: 400 17px/1.55 var(--th-serif);
+    }
+    .preview-page li + li { margin-top: 4px; }
+
+    .preview-page blockquote {
+      margin: 0;
+      max-width: 28em;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--th-text);
+      font: 400 17px/1.55 var(--th-serif);
+    }
+    .preview-page blockquote p { margin: 0; }
+
+    .preview-page a.action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 40px;
+      margin-top: 2px;
+      padding: 10px 16px;
+      border: 1px solid var(--th-accent);
+      border-radius: var(--th-radius);
+      background: var(--th-accent);
+      color: #fff;
+      font: 650 15px/1.2 var(--th-ui);
+      letter-spacing: 0.01em;
+      text-decoration: none;
+      width: fit-content;
+    }
+
+    /* Hero */
+    .preview-page .hero {
+      display: grid;
+      gap: 0;
+      width: 100%;
+      margin: 0;
+      padding: 8px 0 4px;
+      border-bottom: 1px solid var(--th-line);
+    }
+    .preview-page .hero-copy { display: grid; gap: 16px; }
+    .preview-page .hero-flow { display: grid; gap: 16px; }
+    .preview-page .hero-flow > h1 {
+      margin: 0;
+      max-width: 14em;
+      font-family: var(--th-serif);
+      font-weight: 600;
+      font-size: 32px;
+      line-height: 1.12;
+      letter-spacing: -0.025em;
+    }
+    .preview-page .hero-flow > p {
+      margin: 0;
+      max-width: 28em;
+      color: var(--th-muted);
+      font: 400 17px/1.55 var(--th-serif);
+    }
+
+    /* Callout */
+    .preview-page .callout {
+      display: grid;
+      grid-template-columns: minmax(5rem, 0.22fr) minmax(0, 1fr);
+      gap: 14px;
+      max-width: 32em;
+      border-block: 1px solid var(--th-line);
+      background: color-mix(in srgb, var(--th-accent-soft), transparent 55%);
+      padding: 14px;
+    }
+    .preview-page .callout-label {
+      color: var(--th-accent);
+      font: 750 11px/1.5 var(--th-ui);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .preview-page .callout-body p { margin: 0; font: 400 16px/1.55 var(--th-serif); }
+    .preview-page .callout.warning {
+      background: var(--th-orange-soft);
+    }
+    .preview-page .callout.warning .callout-label { color: var(--th-orange); }
+    .preview-page .callout.success {
+      background: var(--th-green-soft);
+    }
+    .preview-page .callout.success .callout-label { color: var(--th-green); }
+
+    /* Details */
+    .preview-page .details {
+      max-width: 32em;
+      border: 1px solid var(--th-line);
+      border-radius: var(--th-radius);
+      background: #fffefa;
+      overflow: hidden;
+    }
+    .preview-page .details > summary {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      min-height: 44px;
+      padding: 10px 14px;
+      list-style: none;
+      cursor: default;
+      font: 650 14px/1.35 var(--th-ui);
+    }
+    .preview-page .details > summary::-webkit-details-marker { display: none; }
+    .preview-page .details > summary::before {
+      color: var(--th-accent);
+      content: "+";
+      font: 500 18px/1 var(--th-ui);
+      transition: transform 0.25s ease;
+    }
+    .preview-page .details[open] > summary::before { content: "−"; }
+    .preview-page .details-body {
+      padding: 0 14px 14px 38px;
+      color: var(--th-muted);
+      font: 400 15px/1.55 var(--th-serif);
+    }
+
+    /* Controls */
+    .preview-page .controls-stack {
+      display: grid;
+      gap: 20px;
+      width: min(100%, 26em);
+    }
+    .preview-page .action.control-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      padding: 10px 16px;
+      border: 1px solid var(--th-line-strong);
+      border-radius: var(--th-radius);
+      background: #fffefa;
+      color: var(--th-text);
+      font: 650 15px/1.2 var(--th-ui);
+      cursor: default;
+    }
+    .preview-page .form-field { display: grid; gap: 8px; min-width: 0; }
+    .preview-page .field-label {
+      color: var(--th-text);
+      font: 700 13px/1.35 var(--th-ui);
+      letter-spacing: 0.012em;
+    }
+    .preview-page .slider-field > input[type="range"] {
+      width: 100%;
+      height: 22px;
+      margin: 0;
+      accent-color: var(--th-accent);
+    }
+    .preview-page .choice-field.switch {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      width: fit-content;
+      font: 550 15px/1.4 var(--th-ui);
+    }
+    .preview-page .switch > input[role="switch"] {
+      position: relative;
+      width: 42px;
+      height: 24px;
+      margin: 0;
+      appearance: none;
+      border: 1px solid var(--th-line-strong);
+      border-radius: 999px;
+      background: #f5f2eb;
+    }
+    .preview-page .switch > input[role="switch"]::after {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--th-muted);
+      content: "";
+      transition: left 0.25s ease, right 0.25s ease, background 0.25s ease;
+    }
+    .preview-page .switch > input[role="switch"]:checked {
+      border-color: var(--th-accent);
+      background: var(--th-accent);
+    }
+    .preview-page .switch > input[role="switch"]:checked::after {
+      left: auto;
+      right: 2px;
+      background: #fff;
+    }
+    .preview-page .input-field > input {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--th-line-strong);
+      border-radius: var(--th-radius);
+      background: #fffefa;
+      color: var(--th-text);
+      padding: 8px 12px;
+      font: 500 15px/1.35 var(--th-ui);
+    }
+
+    /* Grid & cards */
+    .preview-page .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      width: 100%;
+    }
+    .preview-page .card {
+      display: grid;
+      gap: 10px;
+      border: 1px solid var(--th-line);
+      border-radius: var(--th-radius);
+      background: #fffefa;
+      padding: 18px 16px;
+      box-shadow: 0 1px 0 rgb(30 31 28 / 3%);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.45s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .preview-page .card.show {
+      opacity: 1;
+      transform: none;
+    }
+    .preview-page .card h3 {
+      margin: 0;
+      font-family: var(--th-serif);
+      font-weight: 600;
+      font-size: 20px;
+      line-height: 1.15;
+    }
+    .preview-page .card p {
+      margin: 0;
+      color: var(--th-muted);
+      font: 400 14px/1.5 var(--th-serif);
+    }
+    .preview-page .card .bar {
+      margin-top: auto;
+      height: 4px;
+      width: 40%;
+      border-radius: 999px;
+      background: var(--th-accent);
+    }
+
+    /* Split */
+    .preview-page .split {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 28px;
+      width: 100%;
+      align-items: start;
+    }
+    .preview-page .split-pane h2 {
+      margin: 0 0 12px;
+      font-family: var(--th-serif);
+      font-weight: 600;
+      font-size: 26px;
+      line-height: 1.15;
+      max-width: 12ch;
+    }
+    .preview-page .split-pane p {
+      margin: 0;
+      color: var(--th-muted);
+      font: 400 15px/1.55 var(--th-serif);
+      max-width: 22em;
+    }
+    .preview-page .split-media {
+      aspect-ratio: 4/3;
+      border-radius: var(--th-radius);
+      background: linear-gradient(135deg, var(--th-accent-soft), #f5f2eb);
+      border: 1px solid var(--th-line);
+      display: grid;
+      place-items: center;
+      color: var(--th-accent);
+      font: 650 13px/1 var(--th-ui);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* Tabs */
+    .preview-page .tabs {
+      display: grid;
+      gap: 14px;
+      width: 100%;
+      border-top: 1px solid var(--th-line);
+      padding-top: 14px;
+    }
+    .preview-page .mds-tabs-list {
+      display: flex;
+      gap: 18px;
+      border-bottom: 1px solid var(--th-line);
+    }
+    .preview-page .mds-tab {
+      position: relative;
+      border: 0;
+      background: transparent;
+      color: var(--th-muted);
+      padding: 8px 2px 12px;
+      font: 650 13px/1.2 var(--th-ui);
+      cursor: default;
+    }
+    .preview-page .mds-tab::after {
+      position: absolute;
+      right: 0;
+      bottom: -1px;
+      left: 0;
+      height: 2px;
+      background: transparent;
+      content: "";
+      transition: background 0.25s ease;
+    }
+    .preview-page .mds-tab[aria-selected="true"] {
+      color: var(--th-accent);
+    }
+    .preview-page .mds-tab[aria-selected="true"]::after {
+      background: var(--th-accent);
+    }
+    .preview-page .tabs-item {
+      padding: 8px 0;
+      font: 400 15px/1.55 var(--th-serif);
+      color: var(--th-text);
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .preview-page .tabs-item.active {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* Dialog & drawer (contained in preview) */
+    .preview-page .overlay-root {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .preview-page .dialog,
+    .preview-page .drawer {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.28s ease, visibility 0s linear 0.28s;
+    }
+
+    .preview-page .dialog { place-items: center; padding: 24px; }
+    .preview-page .dialog.is-open,
+    .preview-page .drawer.is-open {
+      visibility: visible;
+      opacity: 1;
+      pointer-events: auto;
+      transition-delay: 0s;
+    }
+
+    .preview-page .dialog-backdrop,
+    .preview-page .drawer-backdrop {
+      position: absolute;
+      inset: 0;
+      border: 0;
+      background: rgb(13 17 17 / 52%);
+      backdrop-filter: blur(2px);
+    }
+
+    .preview-page .dialog-panel {
+      position: relative;
+      z-index: 1;
+      width: min(100%, 420px);
+      border: 1px solid var(--th-line);
+      border-radius: calc(var(--th-radius) + 2px);
+      background: #fffefa;
+      padding: 28px 24px;
+      box-shadow: var(--th-shadow);
+      transform: translateY(10px) scale(0.98);
+      transition: transform 0.28s ease;
+    }
+    .preview-page .dialog.is-open .dialog-panel { transform: none; }
+    .preview-page .dialog-panel h2 {
+      margin: 0 0 12px;
+      font-family: var(--th-serif);
+      font-weight: 600;
+      font-size: 24px;
+      line-height: 1.15;
+    }
+    .preview-page .dialog-panel p {
+      margin: 0 0 18px;
+      color: var(--th-muted);
+      font: 400 15px/1.55 var(--th-serif);
+    }
+
+    .preview-page .drawer { justify-items: end; }
+    .preview-page .drawer-panel {
+      position: relative;
+      z-index: 1;
+      width: min(72%, 340px);
+      height: 100%;
+      border-left: 1px solid var(--th-line);
+      background: #fffefa;
+      padding: 28px 22px;
+      box-shadow: var(--th-shadow);
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .preview-page .drawer.is-open .drawer-panel { transform: none; }
+    .preview-page .drawer-panel h2 {
+      margin: 0 0 12px;
+      font-family: var(--th-serif);
+      font-weight: 600;
+      font-size: 22px;
+    }
+    .preview-page .drawer-panel p {
+      margin: 0;
+      color: var(--th-muted);
+      font: 400 15px/1.55 var(--th-serif);
+    }
+
+    /* Themes montage */
+    .theme-montage {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      width: 100%;
+      height: 100%;
+      align-content: center;
+    }
+
+    .theme-card {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transform: translateY(16px) scale(0.96);
+      transition: opacity 0.5s ease, transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .theme-card.show { opacity: 1; transform: none; }
+
+    .theme-card .body {
+      flex: 1;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .theme-card .name {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .theme-card .sample {
+      font-size: 26px;
+      line-height: 1.2;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .theme-card .bar {
+      margin-top: auto;
+      height: 6px;
+      border-radius: 999px;
+      width: 44%;
+    }
+
+    .theme-card.default .body { background: linear-gradient(180deg, #fbfaf6, #f1eee7); color: #20221f; }
+    .theme-card.default .name { color: #285474; }
+    .theme-card.default .sample { font-family: var(--th-serif); font-weight: 400; }
+    .theme-card.default .bar { background: #285474; }
+
+    .theme-card.light .body { background: linear-gradient(180deg, #ffffff, #f3f6fa); color: #152033; }
+    .theme-card.light .name { color: #3b6ea5; }
+    .theme-card.light .bar { background: #3b6ea5; }
+
+    .theme-card.dark .body { background: linear-gradient(180deg, #171a1f, #0f1216); color: #e8ecf2; }
+    .theme-card.dark .name { color: #8fb4ff; }
+    .theme-card.dark .bar { background: #8fb4ff; }
+
+    .theme-card.rich .body { background: linear-gradient(180deg, #f7f1e8, #ebe2d4); color: #1c1915; }
+    .theme-card.rich .name { color: #9a4a28; }
+    .theme-card.rich .sample { font-family: var(--th-serif); font-weight: 400; }
+    .theme-card.rich .bar { background: #9a4a28; }
+
+    .th-note {
+      position: absolute;
+      left: 36px;
+      right: 36px;
+      bottom: 14px;
+      margin: 0;
+      color: var(--th-muted);
+      font: 400 12px/1.4 var(--th-ui);
+      opacity: 0.7;
+    }
+
+    .foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      padding-top: 4px;
+    }
+
+    .progress {
+      position: absolute;
+      left: 56px;
+      right: 56px;
+      bottom: 12px;
+      height: 3px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      z-index: 20;
+    }
+
+    .progress > i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width 0.12s linear;
+    }
+  </style>
+</head>
+<body>
+  <div class="glow a"></div>
+  <div class="glow b"></div>
+  <div class="glow c"></div>
+  <div class="grain"></div>
+
+  <div class="frame">
+    <div class="topbar">
+      <div><span class="mark">MDS</span> / 效果展示</div>
+      <div id="clock">00:00</div>
+    </div>
+
+    <div class="stage">
+      <nav class="tier-rail" id="tierRail" aria-label="progress">
+        <div class="tier-step" data-tier="intro"><span class="tier-dot"></span><span class="tier-label">开场</span></div>
+        <div class="tier-line"></div>
+        <div class="tier-step" data-tier="basic"><span class="tier-dot"></span><span class="tier-label">基础</span></div>
+        <div class="tier-line"></div>
+        <div class="tier-step" data-tier="interact"><span class="tier-dot"></span><span class="tier-label">交互</span></div>
+        <div class="tier-line"></div>
+        <div class="tier-step" data-tier="layout"><span class="tier-dot"></span><span class="tier-label">布局</span></div>
+        <div class="tier-line"></div>
+        <div class="tier-step" data-tier="advanced"><span class="tier-dot"></span><span class="tier-label">进阶</span></div>
+      </nav>
+
+      <div class="scene-wrap">
+        <!-- Title -->
+        <section class="scene title-scene active" data-scene="title">
+          <div>
+            <div class="big">MDS</div>
+            <div class="sub">效果展示 · Effects Showcase</div>
+            <div class="tag">基础 → 交互 → 布局 → 进阶</div>
+          </div>
+        </section>
+
+        <!-- Basic: Markdown -->
+        <section class="scene" data-scene="basic-md">
+          <div class="scene-head">
+            <span class="scene-eyebrow">基础</span>
+            <h2 class="scene-title">Markdown 语义</h2>
+          </div>
+          <div class="preview-shell">
+            <div class="preview-chrome">
+              <span>preview · prose</span>
+              <span class="theme-pill"><i></i>theme-default</span>
+            </div>
+            <div class="preview-page">
+              <div class="preview-panel active centered">
+                <main class="page">
+                  <h1>欢迎使用 MDS</h1>
+                  <ul>
+                    <li>简洁写作</li>
+                    <li>语义渲染</li>
+                    <li>独立发布</li>
+                  </ul>
+                  <blockquote><p>Think in Markdown. Render in HTML.</p></blockquote>
+                  <a class="action primary" href="#">开始</a>
+                </main>
+                <p class="th-note">theme-default · MDS renderer</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Basic: Hero -->
+        <section class="scene" data-scene="basic-hero">
+          <div class="scene-head">
+            <span class="scene-eyebrow">基础</span>
+            <h2 class="scene-title">Hero 区块</h2>
+          </div>
+          <div class="preview-shell">
+            <div class="preview-chrome">
+              <span>preview · hero</span>
+              <span class="theme-pill"><i></i>theme-default</span>
+            </div>
+            <div class="preview-page">
+              <div class="preview-panel active centered">
+                <section class="hero">
+                  <div class="hero-copy">
+                    <div class="hero-flow">
+                      <h1>像写 Markdown 一样写网页</h1>
+                      <p>用语义块描述意图，交给 MDS 渲染器呈现完整页面结构。</p>
+                      <a class="action primary" href="#">开始</a>
+                    </div>
+                  </div>
+                </section>
+                <p class="th-note">theme-default · MDS renderer</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Basic: Callout + Details -->
+        <section class="scene" data-scene="basic-callout">
+          <div class="scene-head">
+            <span class="scene-eyebrow">基础</span>
+            <h2 class="scene-title">Callout · Details</h2>
+          </div>
+          <div class="preview-shell">
+            <div class="preview-chrome">
+              <span>preview · callout</span>
+              <span class="theme-pill"><i></i>theme-default</span>
+            </div>
+            <div class="preview-page">
+              <div class="preview-panel active centered">
+                <main class="page">
+                  <div class="callout">
+                    <div class="callout-label">Info</div>
+                    <div class="callout-body"><p>语义块让 Markdown 拥有结构化提示与视觉层次。</p></div>
+                  </div>
+                  <div class="callout warning">
+                    <div class="callout-label">Note</div>
+                    <div class="callout-body"><p>多种 tone 预设，warning / success / danger 一键切换。</p></div>
+                  </div>
+                  <details class="details" id="detailsBlock">
+                    <summary>展开查看更多</summary>
+                    <div class="details-body">Details 折叠内容，适合 FAQ 与补充说明。</div>
+                  </details>
+                </main>
+                <p class="th-note">theme-default · MDS renderer</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Interactive: Controls -->
+        <section class="scene" data-scene="interact-controls">
+          <div class="scene-head">
+            <span class="scene-eyebrow">交互</span>
+            <h2 class="scene-title">控件 · Controls</h2>
+          </div>
+          <div class="preview-shell">
+            <div class="preview-chrome">
+              <span>preview · controls</span>
+              <span class="theme-pill"><i></i>theme-default</span>
+            </div>
+            <div class="preview-page">
+              <div class="preview-panel active centered">
+                <div class="controls-stack">
+                  <button class="action control-button" type="button">开始</button>
+                  <label class="form-field slider-field">
+                    <span class="field-label">音量</span>
+                    <input type="range" id="demoSlider" min="0" max="100" value="30" />
+                  </label>
+                  <label class="form-field choice-field switch">
+                    <input type="checkbox" id="demoSwitch" role="switch" />
+                    <span>深色模式</span>
+                  </label>
+                </div>
+                <p class="th-note">theme-default · MDS renderer</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Interactive: Form -->
+        <section class="scene" data-scene="interact-form">
+          <div class="scene-head">
+            <span class="scene-eyebrow">交互</span>
+            <h2 class="scene-title">表单 · Form</h2>
+          </div>
+          <div class="preview-shell">
+            <div class="preview-chrome">
+              <span>preview · form</span>
+              <span class="theme-pill"><i></i>theme-default</span>
+            </div>
+            <div class="preview-page">
+              <div class="preview-panel active centered">
+                <div class="controls-stack">
+                  <label class="form-field input-field">
+                    <span class="field-label">项目名称</span>
+                    <input type="text" id="demoInput" value="" placeholder="my-docs" />
+                  </label>
+                  <label class="form-field slider-field">
+                    <span class="field-label">动画延迟 (ms)</span>
+                    <input type="range" min="0" max="500" value="180" disabled />
+                  </label>
+                  <a class="action primary" href="#">提交</a>
+                </div>
+                <p class="th-note">theme-default · MDS renderer</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Interactive: Dialog -->
+        <section class="scene" data-scene="interact-dialog">
+          <div class="scene-head">
+            <span class="scene-eyebrow">交互</span>
+            <h2 class="scene-title">对话框 · Dialog</h2>
+          </div>
+          <div class="preview-shell">
+            <div class="preview-chrome">
+              <span>preview · dialog</span>
+              <span class="theme-pill"><i></i>theme-default</span>
+            </div>
+            <div class="preview-page">
+              <div class="preview-panel active centered">
+                <div class="controls-stack">
+                  <button class="action control-button primary" type="button" style="border-color:var(--th-accent);background:var(--th-accent);color:#fff;">打开对话框</button>
+                </div>
+                <div class="overlay-root">
+                  <div class="dialog" id="demoDialog">
+                    <button class="dialog-backdrop" type="button" tabindex="-1" aria-hidden="true"></button>
+                    <div class="dialog-panel">
+                      <h2>预览对话框</h2>
+                      <p>MDS 渲染器将 dialog 语义块映射为可访问的模态层。</p>
+                      <a class="action primary" href="#">确认</a>
+                    </div>
+                  </div>
+                </div>
+                <p class="th-note">theme-default · MDS renderer</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Layout: Grid -->
+        <section class="scene" data-scene="layout-grid">
+          <div class="scene-head">
+            <span class="scene-eyebrow">布局</span>
+            <h2 class="scene-title">卡片网格 · Grid</h2>
+          </div>
+          <div class="preview-shell">
+            <div class="preview-chrome">
+              <span>preview · grid</span>
+              <span class="theme-pill"><i></i>theme-default</span>
+            </div>
+            <div class="preview-page">
+              <div class="preview-panel active">
+                <div class="grid">
+                  <article class="card" data-card="0">
+                    <h3>写作</h3>
+                    <p>Markdown 语法，零学习成本。</p>
+                    <div class="bar"></div>
+                  </article>
+                  <article class="card" data-card="1">
+                    <h3>渲染</h3>
+                    <p>语义块驱动 HTML 结构。</p>
+                    <div class="bar"></div>
+                  </article>
+                  <article class="card" data-card="2">
+                    <h3>发布</h3>
+                    <p>静态站点，随处部署。</p>
+                    <div class="bar"></div>
+                  </article>
+                </div>
+                <p class="th-note">theme-default · MDS renderer</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Layout: Split -->
+        <section class="scene" data-scene="layout-split">
+          <div class="scene-head">
+            <span class="scene-eyebrow">布局</span>
+            <h2 class="scene-title">分栏 · Split</h2>
+          </div>
+          <div class="preview-shell">
+            <div class="preview-chrome">
+              <span>preview · split</span>
+              <span class="theme-pill"><i></i>theme-default</span>
+            </div>
+            <div class="preview-page">
+              <div class="preview-panel active">
+                <div class="split">
+                  <div class="split-pane">
+                    <h2>内容与媒体并排</h2>
+                    <p>Split 语义块自动构建响应式双栏布局，适合功能介绍与图文混排。</p>
+                  </div>
+                  <div class="split-media">Media</div>
+                </div>
+                <p class="th-note">theme-default · MDS renderer</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Layout: Tabs -->
+        <section class="scene" data-scene="layout-tabs">
+          <div class="scene-head">
+            <span class="scene-eyebrow">布局</span>
+            <h2 class="scene-title">标签页 · Tabs</h2>
+          </div>
+          <div class="preview-shell">
+            <div class="preview-chrome">
+              <span>preview · tabs</span>
+              <span class="theme-pill"><i></i>theme-default</span>
+            </div>
+            <div class="preview-page">
+              <div class="preview-panel active">
+                <div class="tabs">
+                  <div class="mds-tabs-list" role="tablist">
+                    <button class="mds-tab" type="button" role="tab" data-tab="0" aria-selected="true">概述</button>
+                    <button class="mds-tab" type="button" role="tab" data-tab="1" aria-selected="false">组件</button>
+                    <button class="mds-tab" type="button" role="tab" data-tab="2" aria-selected="false">主题</button>
+                  </div>
+                  <div class="tabs-item active" data-panel="0">MDS 用 Markdown 写内容，用语义块扩展布局与交互。</div>
+                  <div class="tabs-item" data-panel="1">Button、Slider、Switch、Dialog、Drawer 开箱即用。</div>
+                  <div class="tabs-item" data-panel="2">Default、Light、Dark、Rich 四套主题，亦可自定义。</div>
+                </div>
+                <p class="th-note">theme-default · MDS renderer</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Advanced: Drawer -->
+        <section class="scene" data-scene="advanced-drawer">
+          <div class="scene-head">
+            <span class="scene-eyebrow">进阶</span>
+            <h2 class="scene-title">抽屉 · Drawer</h2>
+          </div>
+          <div class="preview-shell">
+            <div class="preview-chrome">
+              <span>preview · drawer</span>
+              <span class="theme-pill"><i></i>theme-default</span>
+            </div>
+            <div class="preview-page">
+              <div class="preview-panel active centered">
+                <div class="controls-stack">
+                  <button class="action control-button" type="button">打开抽屉</button>
+                  <p style="margin:0;color:var(--th-muted);font:400 15px/1.55 var(--th-serif);max-width:22em;">侧边面板适合导航、设置与辅助内容，MDS 渲染器处理焦点与动画。</p>
+                </div>
+                <div class="overlay-root">
+                  <div class="drawer" id="demoDrawer">
+                    <button class="drawer-backdrop" type="button" tabindex="-1" aria-hidden="true"></button>
+                    <div class="drawer-panel">
+                      <h2>设置面板</h2>
+                      <p>Drawer 从右侧滑入，与 Dialog 互补，覆盖不同交互场景。</p>
+                    </div>
+                  </div>
+                </div>
+                <p class="th-note">theme-default · MDS renderer</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Advanced: Themes -->
+        <section class="scene" data-scene="advanced-themes">
+          <div class="scene-head">
+            <span class="scene-eyebrow">进阶</span>
+            <h2 class="scene-title">主题切换 · Themes</h2>
+          </div>
+          <div class="preview-shell">
+            <div class="preview-chrome">
+              <span>preview · themes</span>
+              <span class="theme-pill"><i></i>multi-theme</span>
+            </div>
+            <div class="preview-page" style="background:var(--panel);border-top-color:var(--accent);">
+              <div class="preview-panel active">
+                <div class="theme-montage">
+                  <div class="theme-card default" data-theme-card="0">
+                    <div class="body">
+                      <div class="name">default</div>
+                      <div class="sample">编辑纸感</div>
+                      <div class="bar"></div>
+                    </div>
+                  </div>
+                  <div class="theme-card light" data-theme-card="1">
+                    <div class="body">
+                      <div class="name">light</div>
+                      <div class="sample">明亮清晰</div>
+                      <div class="bar"></div>
+                    </div>
+                  </div>
+                  <div class="theme-card dark" data-theme-card="2">
+                    <div class="body">
+                      <div class="name">dark</div>
+                      <div class="sample">深色沉浸</div>
+                      <div class="bar"></div>
+                    </div>
+                  </div>
+                  <div class="theme-card rich" data-theme-card="3">
+                    <div class="body">
+                      <div class="name">rich</div>
+                      <div class="sample">内容增强</div>
+                      <div class="bar"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Outro -->
+        <section class="scene outro-scene" data-scene="outro">
+          <div class="outro-block">
+            <div class="outro-logo">MDS</div>
+            <div class="outro-copy">
+              <div class="line1">Think in Markdown.<br />Render in HTML.</div>
+              <div class="cmd">npm i -g @mds-crate/cli@next</div>
+              <div class="meta">github.com/ziyu/mds · Apache-2.0</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span>无口播 · 纯效果展示</span>
+      <span id="sceneLabel">开场</span>
+    </div>
+  </div>
+
+  <div class="progress"><i id="progressBar"></i></div>
+
+  <script>
+    const TOTAL_SEC = 78;
+
+    const TIMELINE = [
+      { start: 0, end: 3.5, scene: "title", tier: "intro", label: "开场" },
+      { start: 3.5, end: 10, scene: "basic-md", tier: "basic", label: "Markdown" },
+      { start: 10, end: 16, scene: "basic-hero", tier: "basic", label: "Hero" },
+      { start: 16, end: 23, scene: "basic-callout", tier: "basic", label: "Callout" },
+      { start: 23, end: 30, scene: "interact-controls", tier: "interact", label: "Controls" },
+      { start: 30, end: 36, scene: "interact-form", tier: "interact", label: "Form" },
+      { start: 36, end: 43, scene: "interact-dialog", tier: "interact", label: "Dialog" },
+      { start: 43, end: 50, scene: "layout-grid", tier: "layout", label: "Grid" },
+      { start: 50, end: 55.5, scene: "layout-split", tier: "layout", label: "Split" },
+      { start: 55.5, end: 62.5, scene: "layout-tabs", tier: "layout", label: "Tabs" },
+      { start: 62.5, end: 68.5, scene: "advanced-drawer", tier: "advanced", label: "Drawer" },
+      { start: 68.5, end: 74, scene: "advanced-themes", tier: "advanced", label: "Themes" },
+      { start: 74, end: 999, scene: "outro", tier: "advanced", label: "Fin" },
+    ];
+
+    const TIER_ORDER = ["intro", "basic", "interact", "layout", "advanced"];
+
+    const scenes = [...document.querySelectorAll(".scene")];
+    const tierSteps = [...document.querySelectorAll(".tier-step")];
+    const clock = document.getElementById("clock");
+    const progress = document.getElementById("progressBar");
+    const sceneLabel = document.getElementById("sceneLabel");
+
+    let playing = false;
+    let startMs = 0;
+    let sceneLocked = null;
+    let currentScene = null;
+    let rafId = 0;
+
+    function pickCue(t) {
+      for (let i = TIMELINE.length - 1; i >= 0; i--) {
+        if (t >= TIMELINE[i].start) return TIMELINE[i];
+      }
+      return TIMELINE[0];
+    }
+
+    function setScene(name) {
+      if (sceneLocked && name !== sceneLocked) return;
+      if (currentScene === name) return;
+      currentScene = name;
+      scenes.forEach((el) => el.classList.toggle("active", el.dataset.scene === name));
+    }
+
+    function setTier(tier) {
+      const idx = TIER_ORDER.indexOf(tier);
+      tierSteps.forEach((el) => {
+        const t = el.dataset.tier;
+        const ti = TIER_ORDER.indexOf(t);
+        el.classList.toggle("active", t === tier);
+        el.classList.toggle("done", ti >= 0 && ti < idx);
+      });
+    }
+
+    function updateAnimations(t) {
+      const details = document.getElementById("detailsBlock");
+      if (details) details.open = t >= 19;
+
+      const slider = document.getElementById("demoSlider");
+      if (slider) {
+        const local = t - 24;
+        if (local >= 0 && local <= 6) {
+          slider.value = String(Math.round(30 + (local / 6) * 55));
+        }
+      }
+
+      const sw = document.getElementById("demoSwitch");
+      if (sw) sw.checked = t >= 27;
+
+      const input = document.getElementById("demoInput");
+      if (input) {
+        const text = "my-docs";
+        const local = t - 30.5;
+        if (local < 0) input.value = "";
+        else if (local >= 0 && local <= 2.5) {
+          const n = Math.min(text.length, Math.floor((local / 2.5) * text.length) + 1);
+          input.value = text.slice(0, n);
+        } else input.value = text;
+      }
+
+      const dialog = document.getElementById("demoDialog");
+      if (dialog) dialog.classList.toggle("is-open", t >= 38.5 && t < 43);
+
+      document.querySelectorAll("[data-card]").forEach((el) => {
+        const i = Number(el.dataset.card);
+        const base = 43.5 + i * 0.35;
+        el.classList.toggle("show", t >= base);
+      });
+
+      const tabIdx = t < 58 ? 0 : t < 60.2 ? 1 : 2;
+      document.querySelectorAll(".mds-tab").forEach((el) => {
+        const sel = Number(el.dataset.tab) === tabIdx;
+        el.setAttribute("aria-selected", sel ? "true" : "false");
+      });
+      document.querySelectorAll(".tabs-item").forEach((el) => {
+        el.classList.toggle("active", Number(el.dataset.panel) === tabIdx);
+      });
+
+      const drawer = document.getElementById("demoDrawer");
+      if (drawer) drawer.classList.toggle("is-open", t >= 64 && t < 68.5);
+
+      document.querySelectorAll("[data-theme-card]").forEach((el) => {
+        const i = Number(el.dataset.themeCard);
+        el.classList.toggle("show", t >= 69 + i * 0.22);
+      });
+    }
+
+    function tick(now) {
+      if (!playing && !sceneLocked) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+
+      const t = sceneLocked
+        ? TOTAL_SEC
+        : Math.min(TOTAL_SEC, (now - startMs) / 1000);
+
+      const cue = pickCue(t);
+      setScene(sceneLocked || cue.scene);
+      setTier(cue.tier);
+      sceneLabel.textContent = cue.label;
+      updateAnimations(t);
+
+      const mm = String(Math.floor(t / 60)).padStart(2, "0");
+      const ss = String(Math.floor(t % 60)).padStart(2, "0");
+      clock.textContent = `${mm}:${ss}`;
+      progress.style.width = `${Math.min(100, (t / TOTAL_SEC) * 100)}%`;
+
+      if (!sceneLocked && t >= TOTAL_SEC) {
+        sceneLocked = "outro";
+        setScene("outro");
+        setTier("advanced");
+      }
+
+      rafId = requestAnimationFrame(tick);
+    }
+
+    window.__mdsShowcase = {
+      play() {
+        if (playing) return Promise.resolve();
+        playing = true;
+        startMs = performance.now();
+        setScene("title");
+        setTier("intro");
+        return Promise.resolve();
+      },
+      duration() { return TOTAL_SEC; },
+      ended() { return playing && (performance.now() - startMs) / 1000 >= TOTAL_SEC + 0.5; },
+      ready() { return true; },
+      freezeCta() {
+        sceneLocked = "outro";
+        setScene("outro");
+        setTier("advanced");
+      },
+    };
+
+    // Also expose as __mdsPromo alias for record.mjs compatibility
+    window.__mdsPromo = window.__mdsShowcase;
+
+    requestAnimationFrame(tick);
+
+    const params = new URLSearchParams(location.search);
+    if (params.get("autoplay") === "1") {
+      window.__mdsShowcase.play();
+    }
+  </script>
+</body>
+</html>

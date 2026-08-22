@@ -1,0 +1,20 @@
+Still writing in Markdown, but the results feel too plain? Want rich HTML results, but writing HTML feels too complex?
+
+MDS is here to clear that friction. Keep writing Markdown — get web-grade results.
+
+Write Markdown as usual, add a few semantic blocks. Layout, motion, and interaction go to the MDS renderer, and you get rich, polished pages that feel like HTML.
+
+Let's look at the authoring flow.
+Start with plain Markdown.
+Headings, lists, quotes — the MDS renderer turns them into beautiful HTML.
+Then write a hero.
+A title, one line of copy, and a button.
+The MDS renderer turns it into a real page right away.
+Of course, you can also write controls the way you would in HTML.
+Buttons, sliders, switches — the MDS renderer renders those too.
+
+There are several default themes to choose from.
+default, light, dark, and rich — or build your own if you want something different.
+
+Public Beta is live. Use the commands below to get started.
+The source is on GitHub — feedback is welcome.

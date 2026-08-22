@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1080, height=1920" />
+  <title>MDS Intro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@400;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+
+    :root {
+      --bg: #0b0f0c;
+      --ink: #f2efe6;
+      --muted: #8f988f;
+      --accent: #d2f25c;
+      --accent-2: #ff6b3d;
+      --line: rgba(242, 239, 230, 0.12);
+      --panel: #121712;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+      --sans: "Noto Sans SC", "Syne", system-ui, sans-serif;
+      --display: "Syne", "Noto Sans SC", sans-serif;
+      --th-bg: #f1eee7;
+      --th-paper: #fbfaf6;
+      --th-text: #20221f;
+      --th-muted: #686b65;
+      --th-line: #d8d3c8;
+      --th-accent: #285474;
+      --th-accent-soft: #e1ebf0;
+      --th-serif: "Noto Serif SC", Charter, "Iowan Old Style", Georgia, serif;
+      --th-ui: "Noto Sans SC", "Avenir Next", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+    }
+
+    .grain {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      opacity: 0.16;
+      mix-blend-mode: soft-light;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      z-index: 50;
+    }
+
+    .glow {
+      position: absolute;
+      width: 820px;
+      height: 820px;
+      border-radius: 50%;
+      filter: blur(110px);
+      opacity: 0.32;
+      z-index: 0;
+    }
+
+    .glow.a {
+      top: -220px;
+      left: -180px;
+      background: radial-gradient(circle, #3a5528 0%, transparent 68%);
+    }
+
+    .glow.b {
+      right: -220px;
+      bottom: 120px;
+      background: radial-gradient(circle, #5c2618 0%, transparent 68%);
+    }
+
+    .glow.c {
+      top: 42%;
+      left: 18%;
+      width: 480px;
+      height: 480px;
+      opacity: 0.1;
+      background: radial-gradient(circle, #d2f25c 0%, transparent 70%);
+    }
+
+    .frame {
+      position: relative;
+      z-index: 1;
+      width: 1080px;
+      height: 1920px;
+      padding: 56px 56px 48px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 0;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 18px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .topbar .mark { color: var(--accent); font-weight: 600; }
+
+    .stage {
+      position: relative;
+      min-height: 0;
+      margin: 36px 0 20px;
+    }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.5s ease, transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 0;
+    }
+
+    .scene.active {
+      opacity: 1;
+      transform: none;
+      pointer-events: auto;
+    }
+
+    .scene[data-scene="demo"],
+    .scene[data-scene="themes"],
+    .scene[data-scene="cta"] {
+      justify-content: flex-start;
+    }
+
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 18px;
+      color: var(--accent);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+    }
+
+    /* Hook: cohesive pair, optically centered — not pinned to edges */
+    .hook-stack {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 72px;
+      width: 100%;
+      height: 100%;
+      padding: 40px 0 56px;
+    }
+    .hook-item { display: flex; flex-direction: column; gap: 20px; width: 100%; }
+    .hook-label {
+      font-family: var(--mono);
+      font-size: 16px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .hook-label span { color: var(--accent); }
+    .hook-q {
+      font-family: var(--sans);
+      font-weight: 800;
+      font-size: 52px;
+      line-height: 1.3;
+      letter-spacing: -0.03em;
+      max-width: 12.5em;
+    }
+    .hook-q em { font-style: normal; color: var(--accent); }
+    .hook-rule {
+      width: 64px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+      flex-shrink: 0;
+    }
+
+    /* Brand: denser optical center */
+    .brand-block {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      width: 100%;
+      max-width: 940px;
+      margin: 0 auto;
+    }
+    .logo {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 176px;
+      line-height: 0.86;
+      letter-spacing: -0.07em;
+      margin-bottom: 24px;
+    }
+    .brand-def {
+      font-size: 34px;
+      line-height: 1.35;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      margin-bottom: 32px;
+    }
+    .tagline {
+      font-family: var(--mono);
+      font-size: 36px;
+      color: var(--accent);
+      line-height: 1.45;
+      padding-top: 28px;
+      border-top: 1px solid var(--line);
+      margin-bottom: 28px;
+    }
+    .tagline span { display: block; color: var(--ink); }
+    .brand-zh {
+      font-size: 38px;
+      line-height: 1.45;
+      font-weight: 500;
+    }
+    .brand-zh strong { color: var(--accent); font-weight: 700; }
+
+    .explain-wrap { width: 100%; max-width: 920px; margin: 0 auto; }
+    .explain {
+      font-size: 46px;
+      line-height: 1.42;
+      font-weight: 500;
+      display: grid;
+      gap: 44px;
+    }
+    .explain .line {
+      display: block;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .scene.active .explain .line:nth-child(1) { opacity: 1; transform: none; transition-delay: 0.05s; }
+    .scene.active .explain .line:nth-child(2) { opacity: 1; transform: none; transition-delay: 0.28s; }
+    .explain strong { color: var(--accent); font-weight: 700; }
+
+    .demo-head {
+      display: flex;
+      align-items: baseline;
+      gap: 18px;
+      margin-bottom: 18px;
+      flex-shrink: 0;
+    }
+    .demo-head .eyebrow { margin-bottom: 0; }
+    .demo-step {
+      font-family: var(--mono);
+      font-size: 18px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+    .demo-step strong { color: var(--accent); font-weight: 600; }
+
+    /* Demo: content-sized code while typing; preview fills remainder when ready */
+    .demo-stack {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 14px;
+      flex: 1 1 0;
+      min-height: 0;
+    }
+
+    .code-card, .preview-shell {
+      border-radius: 18px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .code-card {
+      flex: 1 1 auto;
+      width: 100%;
+      min-height: 56%;
+      max-height: 78%;
+      justify-content: center;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: 32px 28px;
+      font-family: var(--mono);
+      font-size: 28px;
+      line-height: 1.5;
+      color: #d7ddd4;
+      transition: min-height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), max-height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .demo-stack.has-preview {
+      justify-content: flex-start;
+    }
+    .demo-stack.has-preview .code-card {
+      flex: 0 0 auto;
+      min-height: 0;
+      max-height: 32%;
+      justify-content: flex-start;
+      padding: 20px 26px 22px;
+      font-size: 24px;
+      line-height: 1.45;
+    }
+    .code-card .bar {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 18px;
+      flex-shrink: 0;
+    }
+    .code-card .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #3a433c;
+    }
+    .code-card .dot:nth-child(1) { background: #ff6b3d; }
+    .code-card .dot:nth-child(2) { background: #d2f25c; }
+    .code-card .dot:nth-child(3) { background: #7ec8ff; }
+    .code-card .fname {
+      margin-left: 10px;
+      font-size: 16px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .code-body {
+      white-space: pre-wrap;
+      word-break: break-word;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    /* Must follow .code-body so typing stage keeps content optically centered */
+    .demo-stack:not(.has-preview) .code-card .code-body {
+      flex: 0 0 auto;
+    }
+    .code-body .tok-kw { color: var(--accent); }
+    .code-body .tok-str { color: #ffb089; }
+    .code-body .tok-title { color: #fff; font-weight: 600; }
+    .code-body .tok-body { color: #c4cbc2; }
+    .code-body .tok-link { color: #7ec8ff; }
+    .code-body .caret {
+      display: inline-block;
+      width: 2px;
+      height: 1.1em;
+      margin-left: 2px;
+      vertical-align: -0.1em;
+      background: var(--accent);
+      animation: blink 0.9s steps(1) infinite;
+    }
+    .code-body .caret.off { display: none; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .preview-shell {
+      flex: 0 0 0;
+      opacity: 0;
+      border: 1px solid transparent;
+      background: var(--th-bg);
+      transform: translateY(28px);
+      transition:
+        opacity 0.5s ease,
+        transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+        flex-grow 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
+        flex-basis 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+      box-shadow: none;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .preview-shell.show {
+      flex: 1 1 0;
+      opacity: 1;
+      border-color: rgba(216, 211, 200, 0.3);
+      transform: none;
+      box-shadow: 0 22px 50px rgba(0, 0, 0, 0.3);
+      pointer-events: auto;
+    }
+
+    .preview-chrome {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: color-mix(in srgb, var(--th-paper) 88%, #d8d3c8);
+      border-bottom: 1px solid var(--th-line);
+      font-family: var(--th-ui);
+      font-size: 16px;
+      color: var(--th-muted);
+      flex-shrink: 0;
+    }
+    .preview-chrome .theme-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: var(--th-accent-soft);
+      color: var(--th-accent);
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: 0.04em;
+    }
+    .preview-chrome .theme-pill i {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--th-accent);
+    }
+
+    .preview-page {
+      background: var(--th-paper);
+      color: var(--th-text);
+      padding: 0;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-family: var(--th-serif);
+      font-size: 20px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      border-top: 4px solid var(--th-accent);
+    }
+
+    .preview-panel {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      min-height: 0;
+      position: relative;
+      padding: 40px 36px 56px;
+      overflow: hidden;
+    }
+    .preview-panel.active { display: flex; }
+
+    /* —— theme-default–faithful fragment —— */
+    .preview-page .page {
+      display: grid;
+      gap: 0;
+      width: 100%;
+      margin: 0;
+      padding: 8px 0 0;
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.5s ease 0.08s, transform 0.5s ease 0.08s;
+    }
+    .preview-shell.show[data-mode="md"] .page { opacity: 1; transform: none; }
+    .preview-page .page > * + * { margin-top: 28px; }
+
+    .preview-page .page > h1 {
+      position: relative;
+      max-width: 10em;
+      margin: 0;
+      padding-top: 22px;
+      font-family: var(--th-serif);
+      font-weight: 600;
+      font-size: 52px;
+      line-height: 1.08;
+      letter-spacing: -0.025em;
+    }
+    .preview-page .page > h1::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 52px;
+      height: 3px;
+      background: var(--th-accent);
+    }
+
+    .preview-page ul {
+      margin: 0;
+      padding-left: 1.25em;
+      max-width: 28em;
+      font: 400 26px/1.55 var(--th-serif);
+      color: var(--th-text);
+    }
+    .preview-page li + li { margin-top: 8px; }
+
+    .preview-page blockquote {
+      margin: 0;
+      max-width: 28em;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--th-text);
+      font: 400 26px/1.55 var(--th-serif);
+    }
+    .preview-page blockquote p { margin: 0; }
+
+    .preview-page a.action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 48px;
+      margin-top: 4px;
+      padding: 12px 20px;
+      border: 1px solid var(--th-accent);
+      border-radius: 6px;
+      background: var(--th-accent);
+      color: #fff;
+      font: 650 18px/1.2 var(--th-ui);
+      letter-spacing: 0.01em;
+      text-decoration: none;
+      width: fit-content;
+    }
+
+    /* Flow hero (::: hero with children, no slots) */
+    .preview-page .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+      align-items: start;
+      min-height: 0;
+      width: 100%;
+      margin: 0;
+      padding: 12px 0 8px;
+      border-bottom: 1px solid var(--th-line);
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.5s ease 0.08s, transform 0.5s ease 0.08s;
+    }
+    .preview-shell.show[data-mode="hero"] .hero { opacity: 1; transform: none; }
+    .preview-page .hero-copy {
+      display: grid;
+      gap: 22px;
+      align-content: start;
+    }
+    .preview-page .hero-flow {
+      display: grid;
+      gap: 22px;
+    }
+    .preview-page .hero-flow > h1 {
+      margin: 0;
+      max-width: 12em;
+      font-family: var(--th-serif);
+      font-weight: 600;
+      font-size: 48px;
+      line-height: 1.12;
+      letter-spacing: -0.025em;
+    }
+    .preview-page .hero-flow > p {
+      margin: 0;
+      max-width: 22em;
+      color: var(--th-muted);
+      font: 400 26px/1.55 var(--th-serif);
+    }
+    .preview-page .hero-eyebrow:empty,
+    .preview-page .hero-title:empty,
+    .preview-page .hero-body:empty,
+    .preview-page .hero-actions:empty,
+    .preview-page .hero-media:empty { display: none; }
+
+    /* Controls: native-first theme-default chrome */
+    .preview-page .controls-stack {
+      display: grid;
+      gap: 32px;
+      width: min(100%, 28em);
+      margin: auto 0;
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.5s ease 0.08s, transform 0.5s ease 0.08s;
+    }
+    .preview-shell.show[data-mode="controls"] .controls-stack { opacity: 1; transform: none; }
+
+    .preview-page .action.control-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 12px 20px;
+      border: 1px solid #aaa69c;
+      border-radius: 6px;
+      background: #fffefa;
+      color: var(--th-text);
+      font: 650 18px/1.2 var(--th-ui);
+      letter-spacing: 0.01em;
+      cursor: default;
+    }
+
+    .preview-page .form-field {
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+    }
+    .preview-page .field-label {
+      color: var(--th-text);
+      font: 700 16px/1.35 var(--th-ui);
+      letter-spacing: 0.012em;
+    }
+    .preview-page .slider-field { width: min(100%, 28rem); }
+    .preview-page .slider-field > input[type="range"] {
+      width: 100%;
+      height: 28px;
+      margin: 0;
+      accent-color: var(--th-accent);
+      background: transparent;
+    }
+
+    .preview-page .choice-field.switch {
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+      width: fit-content;
+      color: var(--th-text);
+      font: 550 20px/1.4 var(--th-ui);
+      cursor: default;
+    }
+    .preview-page .switch > input[role="switch"] {
+      position: relative;
+      width: 48px;
+      height: 28px;
+      margin: 0;
+      appearance: none;
+      -webkit-appearance: none;
+      border: 1px solid #aaa69c;
+      border-radius: 999px;
+      background: #f5f2eb;
+      flex-shrink: 0;
+    }
+    .preview-page .switch > input[role="switch"]::after {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--th-muted);
+      content: "";
+    }
+    .preview-page .switch > input[role="switch"]:checked {
+      border-color: var(--th-accent);
+      background: var(--th-accent);
+    }
+    .preview-page .switch > input[role="switch"]:checked::after {
+      left: auto;
+      right: 3px;
+      background: #fff;
+    }
+
+    .preview-panel[data-panel="hero"],
+    .preview-panel[data-panel="controls"],
+    .preview-panel[data-panel="md"] {
+      justify-content: center;
+    }
+
+    .th-note {
+      position: absolute;
+      left: 36px;
+      right: 36px;
+      bottom: 22px;
+      margin: 0;
+      color: var(--th-muted);
+      font: 400 14px/1.4 var(--th-ui);
+      opacity: 0;
+      transition: opacity 0.4s ease 0.28s;
+    }
+    .preview-shell.show .th-note { opacity: 1; }
+
+    .themes-block {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      flex: 1 1 0;
+      min-height: 0;
+      padding-top: 8px;
+    }
+    .themes-lead {
+      font-size: 38px;
+      line-height: 1.35;
+      font-weight: 500;
+    }
+    .themes-lead strong { color: var(--accent); font-weight: 700; }
+    .theme-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      flex: 1;
+      min-height: 0;
+    }
+    .theme-swatch {
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.45s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .scene.active .theme-swatch:nth-child(1) { opacity: 1; transform: none; transition-delay: 0.06s; }
+    .scene.active .theme-swatch:nth-child(2) { opacity: 1; transform: none; transition-delay: 0.14s; }
+    .scene.active .theme-swatch:nth-child(3) { opacity: 1; transform: none; transition-delay: 0.22s; }
+    .scene.active .theme-swatch:nth-child(4) { opacity: 1; transform: none; transition-delay: 0.3s; }
+    .theme-swatch .swatch-body {
+      flex: 1;
+      padding: 32px 26px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .theme-swatch .swatch-name {
+      font-family: var(--mono);
+      font-size: 15px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .theme-swatch .swatch-title {
+      font-size: 36px;
+      line-height: 1.2;
+      font-weight: 600;
+    }
+    .theme-swatch .swatch-bar {
+      margin-top: auto;
+      height: 9px;
+      border-radius: 999px;
+      width: 48%;
+    }
+    .theme-swatch.default .swatch-body { background: linear-gradient(180deg, #fbfaf6, #f1eee7); color: #20221f; }
+    .theme-swatch.default .swatch-name { color: #285474; }
+    .theme-swatch.default .swatch-title { font-family: var(--th-serif); font-weight: 400; }
+    .theme-swatch.default .swatch-bar { background: #285474; }
+    .theme-swatch.light .swatch-body { background: linear-gradient(180deg, #ffffff, #f3f6fa); color: #152033; }
+    .theme-swatch.light .swatch-name { color: #3b6ea5; }
+    .theme-swatch.light .swatch-bar { background: #3b6ea5; }
+    .theme-swatch.dark .swatch-body { background: linear-gradient(180deg, #171a1f, #0f1216); color: #e8ecf2; }
+    .theme-swatch.dark .swatch-name { color: #8fb4ff; }
+    .theme-swatch.dark .swatch-bar { background: #8fb4ff; }
+    .theme-swatch.rich .swatch-body { background: linear-gradient(180deg, #f7f1e8, #ebe2d4); color: #1c1915; }
+    .theme-swatch.rich .swatch-name { color: #9a4a28; }
+    .theme-swatch.rich .swatch-title { font-family: var(--th-serif); font-weight: 400; }
+    .theme-swatch.rich .swatch-bar { background: #9a4a28; }
+    .themes-note {
+      font-size: 30px;
+      line-height: 1.45;
+      color: var(--muted);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.45s ease 0.42s, transform 0.45s ease 0.42s;
+      flex-shrink: 0;
+      padding-bottom: 4px;
+    }
+    .scene.active .themes-note { opacity: 1; transform: none; }
+    .themes-note strong { color: var(--accent); font-weight: 700; }
+
+    .cta {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 72px 0 48px;
+    }
+    .cta .cta-top { display: flex; flex-direction: column; }
+    .cta h2 {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: 84px;
+      letter-spacing: -0.045em;
+      line-height: 1.05;
+      margin-top: 8px;
+    }
+    .cta .meta {
+      margin-top: 28px;
+      font-size: 28px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .cta .cmd {
+      margin-top: 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 36px 38px;
+      font-family: var(--mono);
+      font-size: 30px;
+      line-height: 1.7;
+      color: var(--accent);
+    }
+    .cta .cmd .prompt { color: var(--muted); }
+    .cta .cmd .pkg { color: var(--ink); }
+    .cta .cta-foot { display: flex; flex-direction: column; gap: 14px; }
+    .cta .github {
+      margin-top: 0;
+      font-family: var(--mono);
+      font-size: 32px;
+    }
+    .cta .github span { color: var(--accent-2); }
+    .cta .license {
+      margin-top: 0;
+      font-family: var(--mono);
+      font-size: 20px;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+
+    .caption {
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      min-height: 96px;
+      display: flex;
+      align-items: flex-start;
+    }
+    .caption p {
+      font-size: 26px;
+      line-height: 1.4;
+      font-weight: 500;
+      color: var(--ink);
+    }
+
+    .progress {
+      position: absolute;
+      left: 56px;
+      right: 56px;
+      bottom: 20px;
+      height: 3px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      z-index: 20;
+    }
+    .progress > i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="glow a"></div>
+  <div class="glow b"></div>
+  <div class="glow c"></div>
+  <div class="grain"></div>
+
+  <div class="frame">
+    <div class="topbar">
+      <div><span class="mark">MDS</span> / open source</div>
+      <div id="clock">00:00</div>
+    </div>
+
+    <div class="stage">
+      <section class="scene" data-scene="hook">
+        <div class="hook-stack">
+          <div class="hook-item">
+            <div class="hook-label"><span>01</span> · Markdown</div>
+            <h1 class="hook-q">还在用 Markdown 写内容，效果却太<em>单调</em>？</h1>
+          </div>
+          <div class="hook-rule" aria-hidden="true"></div>
+          <div class="hook-item">
+            <div class="hook-label"><span>02</span> · HTML</div>
+            <h1 class="hook-q">想用 HTML 得到丰富的效果，写起来却太<em>复杂</em>？</h1>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene" data-scene="brand">
+        <div class="brand-block">
+          <div class="logo">MDS</div>
+          <p class="brand-def">一种新的标记语言</p>
+          <div class="tagline">
+            Think in Markdown.
+            <span>Render in HTML.</span>
+          </div>
+          <p class="brand-zh">
+            仍旧在写 <strong>Markdown</strong>，<br />但是渲染出<strong>网页级</strong>的效果。
+          </p>
+        </div>
+      </section>
+
+      <section class="scene" data-scene="explain">
+        <div class="explain-wrap">
+          <div class="eyebrow">核心</div>
+          <p class="explain">
+            <span class="line">你照常写 <strong>Markdown</strong>，只多写几个<strong>语义块</strong>。</span>
+            <span class="line">布局、动效和交互交给 <strong>MDS 渲染器</strong>，最后得到像 <strong>HTML</strong> 一样丰富美观的页面效果。</span>
+          </p>
+        </div>
+      </section>
+
+      <section class="scene" data-scene="demo">
+        <div class="demo-head">
+          <div class="eyebrow">写法</div>
+          <div class="demo-step" id="demoStep">示例 01 · Markdown</div>
+        </div>
+        <div class="demo-stack" id="demoStack">
+          <div class="code-card">
+            <div class="bar">
+              <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+              <span class="fname">page.mds</span>
+            </div>
+            <div class="code-body" id="codeBody"><span class="caret" id="caret"></span></div>
+          </div>
+          <div class="preview-shell" id="previewShell" data-mode="md">
+            <div class="preview-chrome">
+              <span>preview · fragment</span>
+              <span class="theme-pill"><i></i>theme-default</span>
+            </div>
+            <div class="preview-page">
+              <div class="preview-panel active" data-panel="md">
+                <main class="page">
+                  <h1>欢迎使用 MDS</h1>
+                  <ul>
+                    <li>简洁写作</li>
+                    <li>MDS 渲染</li>
+                    <li>独立发布</li>
+                  </ul>
+                  <blockquote><p>Think in Markdown.</p></blockquote>
+                  <a class="action primary" href="#">开始</a>
+                </main>
+                <p class="th-note">theme-default · MDS renderer</p>
+              </div>
+              <div class="preview-panel" data-panel="hero">
+                <section class="hero">
+                  <div class="hero-copy">
+                    <p class="hero-eyebrow"></p>
+                    <div class="hero-title"></div>
+                    <div class="hero-body"></div>
+                    <div class="hero-actions"></div>
+                    <div class="hero-flow">
+                      <h1>像写 Markdown 一样写网页</h1>
+                      <p>用语义块描述意图，交给 MDS 渲染器呈现。</p>
+                      <a class="action primary" href="#">开始</a>
+                    </div>
+                  </div>
+                  <div class="hero-media"></div>
+                </section>
+                <p class="th-note">theme-default · MDS renderer</p>
+              </div>
+              <div class="preview-panel" data-panel="controls">
+                <div class="controls-stack">
+                  <button class="action control-button" type="button">开始</button>
+                  <label class="form-field slider-field">
+                    <span class="field-label">音量</span>
+                    <input type="range" min="0" max="100" value="60" disabled />
+                  </label>
+                  <label class="form-field choice-field switch">
+                    <input type="checkbox" role="switch" checked disabled />
+                    <span>深色模式</span>
+                  </label>
+                </div>
+                <p class="th-note">theme-default · MDS renderer</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene" data-scene="themes">
+        <div class="themes-block">
+          <div>
+            <div class="eyebrow">主题</div>
+            <p class="themes-lead">提供多种<strong>默认主题</strong>，直接切换就能换一套视觉。</p>
+          </div>
+          <div class="theme-grid">
+            <div class="theme-swatch default">
+              <div class="swatch-body">
+                <div class="swatch-name">default</div>
+                <div class="swatch-title">编辑纸感</div>
+                <div class="swatch-bar"></div>
+              </div>
+            </div>
+            <div class="theme-swatch light">
+              <div class="swatch-body">
+                <div class="swatch-name">light</div>
+                <div class="swatch-title">明亮清晰</div>
+                <div class="swatch-bar"></div>
+              </div>
+            </div>
+            <div class="theme-swatch dark">
+              <div class="swatch-body">
+                <div class="swatch-name">dark</div>
+                <div class="swatch-title">深色沉浸</div>
+                <div class="swatch-bar"></div>
+              </div>
+            </div>
+            <div class="theme-swatch rich">
+              <div class="swatch-body">
+                <div class="swatch-name">rich</div>
+                <div class="swatch-title">内容增强</div>
+                <div class="swatch-bar"></div>
+              </div>
+            </div>
+          </div>
+          <p class="themes-note">不满意也可以<strong>自己定制主题</strong>。</p>
+        </div>
+      </section>
+
+      <section class="scene" data-scene="cta">
+        <div class="cta">
+          <div class="cta-top">
+            <div class="eyebrow">开始使用</div>
+            <h2>公开 Beta<br />现已上线</h2>
+            <div class="meta">Node.js 20.19+ · ESM · npm `@mds-crate`</div>
+          </div>
+          <div class="cmd">
+            <div><span class="prompt">$</span> npm i -g <span class="pkg">@mds-crate/cli@next</span></div>
+            <div><span class="prompt">$</span> mds edit ./page.mds</div>
+          </div>
+          <div class="cta-foot">
+            <div class="github">GitHub · <span>ziyu/mds</span></div>
+            <div class="license">欢迎上手反馈 · Apache-2.0</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="caption">
+      <p id="captionText"></p>
+    </div>
+  </div>
+
+  <div class="progress"><i id="progressBar"></i></div>
+
+  <audio id="voice" src="/assets/narration.mp3" preload="auto"></audio>
+
+<script>
+    const cues = [
+      { start: 0.10, end: 8.71, scene: "hook", text: "还在用 Markdown 写内容，效果却太单调？想用 HTML 得到丰富的效果，写起来却太复杂？" },
+      { start: 3.85, end: 8.71, scene: "hook", text: "想用 HTML 得到丰富的效果，写起来却太复杂？" },
+      { start: 8.71, end: 15.73, scene: "brand", text: "MDS 想帮你消除这些烦恼。仍旧在写 Markdown，但是渲染出网页级的效果。" },
+      { start: 11.58, end: 15.73, scene: "brand", text: "仍旧在写 Markdown，但是渲染出网页级的效果。" },
+      { start: 15.73, end: 27.45, scene: "explain", text: "照常写 Markdown，多几个语义块，交给 MDS 渲染器" },
+      { start: 19.15, end: 27.45, scene: "explain", text: "最后得到像 HTML 一样丰富美观的页面效果" },
+      { start: 27.45, end: 56.68, scene: "demo", text: "来看写法" },
+      { start: 28.92, end: 31.39, scene: "demo", text: "先写最基础的 Markdown" },
+      { start: 31.39, end: 37.51, scene: "demo", text: "标题、列表、引用，MDS 渲染器会渲染成漂亮的 HTML" },
+      { start: 37.51, end: 39.18, scene: "demo", text: "再写一个 hero" },
+      { start: 39.18, end: 42.51, scene: "demo", text: "标题、一句说明，再加一个按钮" },
+      { start: 42.51, end: 46.65, scene: "demo", text: "MDS 渲染器会立刻把它渲染成真正的页面" },
+      { start: 46.65, end: 51.00, scene: "demo", text: "当然，你也可以像 HTML 那样写各种控件" },
+      { start: 51.00, end: 56.68, scene: "demo", text: "比如 button、slider、switch，MDS 渲染器同样会渲染出来" },
+      { start: 56.68, end: 64.54, scene: "themes", text: "还有多种默认主题可选" },
+      { start: 59.07, end: 64.54, scene: "themes", text: "default、light、dark、rich，不满意也可以自己定制主题" },
+      { start: 64.54, end: 999, scene: "cta", text: "公开 Beta 已上线，通过下面的命令即可快速使用" },
+      { start: 69.40, end: 999, scene: "cta", text: "源代码已发布 GitHub，欢迎上手反馈" },
+    ];
+
+    const CODE_MD = `# 欢迎使用 MDS
+
+- 简洁写作
+- MDS 渲染
+- 独立发布
+
+> Think in Markdown.
+
+[开始 -> /docs]`;
+
+    const CODE_HERO = `::: hero
+# 像写 Markdown 一样写网页
+
+用语义块描述意图，交给 MDS 渲染器呈现。
+
+[开始 -> /docs]
+:::`;
+
+    const CODE_CONTROLS = `:: button label="开始"
+:: slider label="音量" min=0 max=100 value=60
+:: switch label="深色模式" checked`;
+
+    // Demo timeline (seconds)
+    const MD_TYPE_START = 28.92;
+    const MD_TYPE_END = 34.80;
+    const MD_PREVIEW_AT = 34.90;
+    const HERO_TYPE_START = 37.51;
+    const HERO_TYPE_END = 42.40;
+    const HERO_PREVIEW_AT = 42.51;
+    const CTRL_TYPE_START = 46.65;
+    const CTRL_TYPE_END = 52.80;
+    const CTRL_PREVIEW_AT = 53.00;
+
+    const audio = document.getElementById("voice");
+    const caption = document.getElementById("captionText");
+    const clock = document.getElementById("clock");
+    const progress = document.getElementById("progressBar");
+    const codeBody = document.getElementById("codeBody");
+    const previewShell = document.getElementById("previewShell");
+    const demoStack = document.getElementById("demoStack");
+    const demoStep = document.getElementById("demoStep");
+    const scenes = [...document.querySelectorAll(".scene")];
+    const panels = [...document.querySelectorAll(".preview-panel")];
+
+    let currentScene = null;
+    let lastKey = "";
+    let maxHeard = 0;
+    let sceneLocked = null;
+    let bootstrapped = false;
+
+    function escapeHtml(s) {
+      return s
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    function highlight(src) {
+      return src.split("\n").map((line) => {
+        if (/^:::/.test(line)) {
+          const rest = line.slice(3).trim();
+          if (!rest) return `<span class="tok-kw">:::</span>`;
+          return `<span class="tok-kw">:::</span> <span class="tok-str">${escapeHtml(rest)}</span>`;
+        }
+        if (/^:: /.test(line)) {
+          const rest = line.slice(3);
+          const m = rest.match(/^(\w+)(.*)$/);
+          if (m) {
+            return `<span class="tok-kw">::</span> <span class="tok-str">${escapeHtml(m[1])}</span><span class="tok-body">${escapeHtml(m[2])}</span>`;
+          }
+          return `<span class="tok-kw">::</span> <span class="tok-body">${escapeHtml(rest)}</span>`;
+        }
+        if (/^# /.test(line)) return `<span class="tok-title">${escapeHtml(line)}</span>`;
+        if (/^> /.test(line)) return `<span class="tok-str">${escapeHtml(line)}</span>`;
+        if (/^- /.test(line)) return `<span class="tok-body">${escapeHtml(line)}</span>`;
+        if (/^\[/.test(line)) return `<span class="tok-link">${escapeHtml(line)}</span>`;
+        if (!line) return "";
+        return `<span class="tok-body">${escapeHtml(line)}</span>`;
+      }).join("\n");
+    }
+
+    function setTyped(code, len) {
+      const key = `${code.length}:${len}`;
+      if (key === lastKey) return;
+      lastKey = key;
+      const slice = code.slice(0, len);
+      const done = len >= code.length;
+      codeBody.innerHTML = highlight(slice) + `<span class="caret${done ? " off" : ""}"></span>`;
+    }
+
+    function setPreview(show, mode) {
+      previewShell.classList.toggle("show", show);
+      demoStack.classList.toggle("has-preview", show);
+      if (mode) {
+        previewShell.dataset.mode = mode;
+        panels.forEach((el) => el.classList.toggle("active", el.dataset.panel === mode));
+      }
+      if (mode === "md") {
+        demoStep.innerHTML = `示例 01 · <strong>Markdown</strong>`;
+      } else if (mode === "hero") {
+        demoStep.innerHTML = `示例 02 · <strong>hero</strong>`;
+      } else if (mode === "controls") {
+        demoStep.innerHTML = `示例 03 · <strong>控件</strong>`;
+      }
+    }
+
+    function resetDemo() {
+      lastKey = "";
+      setTyped(CODE_MD, 0);
+      previewShell.classList.remove("show");
+      demoStack.classList.remove("has-preview");
+      previewShell.dataset.mode = "md";
+      panels.forEach((el) => el.classList.toggle("active", el.dataset.panel === "md"));
+      demoStep.innerHTML = `示例 01 · <strong>Markdown</strong>`;
+    }
+
+    function setScene(name) {
+      if (sceneLocked && name !== sceneLocked) return;
+      if (currentScene === name) return;
+      if (name === "demo" && currentScene !== "demo") resetDemo();
+      currentScene = name;
+      scenes.forEach((el) => {
+        el.classList.toggle("active", el.dataset.scene === name);
+      });
+    }
+
+    function easeOut(p) {
+      return 1 - Math.pow(1 - Math.min(1, Math.max(0, p)), 1.35);
+    }
+
+    function typeProgress(t, start, end, code) {
+      const p = easeOut((t - start) / (end - start));
+      setTyped(code, Math.floor(p * code.length));
+    }
+
+    function updateDemo(t) {
+      if (currentScene !== "demo") return;
+
+      if (t < MD_TYPE_START) {
+        setTyped(CODE_MD, 0);
+        setPreview(false, "md");
+        return;
+      }
+
+      // Example 1: plain Markdown
+      if (t < MD_PREVIEW_AT) {
+        typeProgress(t, MD_TYPE_START, MD_TYPE_END, CODE_MD);
+        setPreview(false, "md");
+        return;
+      }
+
+      if (t < HERO_TYPE_START) {
+        setTyped(CODE_MD, CODE_MD.length);
+        setPreview(true, "md");
+        return;
+      }
+
+      // Example 2: hero
+      if (t < HERO_PREVIEW_AT) {
+        typeProgress(t, HERO_TYPE_START, HERO_TYPE_END, CODE_HERO);
+        setPreview(false, "hero");
+        return;
+      }
+
+      if (t < CTRL_TYPE_START) {
+        setTyped(CODE_HERO, CODE_HERO.length);
+        setPreview(true, "hero");
+        return;
+      }
+
+      // Example 3: controls
+      if (t < CTRL_PREVIEW_AT) {
+        typeProgress(t, CTRL_TYPE_START, CTRL_TYPE_END, CODE_CONTROLS);
+        setPreview(false, "controls");
+        return;
+      }
+
+      setTyped(CODE_CONTROLS, CODE_CONTROLS.length);
+      setPreview(true, "controls");
+    }
+
+    function pickCue(time) {
+      let active = cues[0];
+      let matched = false;
+      for (const cue of cues) {
+        if (time >= cue.start && time < cue.end) {
+          active = cue;
+          matched = true;
+        }
+      }
+      if (!matched) {
+        for (const cue of cues) {
+          if (time >= cue.start) active = cue;
+        }
+      }
+      return active;
+    }
+
+    function tick() {
+      const dur = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 73.32;
+      let t = audio.currentTime || 0;
+
+      // Ignore accidental rewinds (browser media quirks) after playback has progressed
+      if (t + 0.4 < maxHeard && maxHeard > 2) {
+        t = maxHeard;
+      } else {
+        maxHeard = Math.max(maxHeard, t);
+      }
+
+      if (audio.ended || maxHeard >= dur - 0.15) {
+        sceneLocked = "cta";
+        t = Math.max(t, dur - 0.05, maxHeard);
+        maxHeard = Math.max(maxHeard, t);
+      }
+
+      const mm = String(Math.floor(t / 60)).padStart(2, "0");
+      const ss = String(Math.floor(t % 60)).padStart(2, "0");
+      clock.textContent = `${mm}:${ss}`;
+      progress.style.width = `${Math.min(100, (t / dur) * 100)}%`;
+
+      const active = sceneLocked
+        ? pickCue(Math.max(t, 69.40))
+        : pickCue(t);
+      setScene(sceneLocked || active.scene);
+      caption.textContent = active.text;
+      updateDemo(t);
+      requestAnimationFrame(tick);
+    }
+
+    window.__mdsPromo = {
+      play() { return audio.play(); },
+      duration() { return audio.duration || 73.32; },
+      ended() { return audio.ended; },
+      ready() { return audio.readyState >= 3; },
+      freezeCta() {
+        sceneLocked = "cta";
+        maxHeard = Math.max(maxHeard, audio.duration || 73.32);
+      },
+    };
+
+    audio.addEventListener("play", () => { bootstrapped = true; }, { once: true });
+    audio.addEventListener("ended", () => {
+      sceneLocked = "cta";
+      maxHeard = Math.max(maxHeard, audio.duration || 73.32);
+      setScene("cta");
+      caption.textContent = "源代码已发布 GitHub，欢迎上手反馈";
+    });
+
+    audio.addEventListener("loadeddata", () => {
+      if (bootstrapped || sceneLocked) return;
+      setScene("hook");
+      caption.textContent = cues[0].text;
+    });
+
+    requestAnimationFrame(tick);
+
+    const params = new URLSearchParams(location.search);
+    if (params.get("autoplay") === "1") {
+      const start = () => {
+        if (bootstrapped) return;
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      };
+      if (audio.readyState >= 3) start();
+      else audio.addEventListener("canplaythrough", start, { once: true });
+    }
+  </script>
+</body>
+</html>

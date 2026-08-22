@@ -1,0 +1,16 @@
+{
+  "name": "mds-social-intro",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "record": "node record.mjs --variant=9x16",
+    "record:landscape": "node record.mjs --variant=16x9-zh",
+    "record:landscape-en": "node record.mjs --variant=16x9-en",
+    "record:all": "npm run record && npm run record:landscape && npm run record:landscape-en",
+    "record:showcase": "node record.mjs --variant=showcase-16x9",
+    "serve": "python3 -m http.server 8765 --directory ."
+  },
+  "devDependencies": {
+    "playwright": "^1.54.2"
+  }
+}
