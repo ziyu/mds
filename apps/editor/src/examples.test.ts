@@ -210,6 +210,16 @@ All checks passed.
     expect(result.html).toContain('class="data-table-shell"');
     expect(result.html).toContain('class="message-scroller"');
     expect(result.html).not.toContain('data-fallback="true"');
+
+    const labeledCallout = renderHtmlResult(
+      parseMds(`::: callout label="MDS"
+Write content. Preview the result.
+:::`),
+      { theme }
+    );
+    expect(labeledCallout.diagnostics).toEqual([]);
+    expect(labeledCallout.html).toContain('<strong class="callout-label">MDS</strong>');
+    expect(labeledCallout.html).not.toContain('<strong class="callout-label">callout</strong>');
   });
 
   it("keeps progress atomic across every official file-authored theme", async () => {
