@@ -216,7 +216,7 @@ pre code { border: 0; background: transparent; padding: 0; color: inherit; }
   border: 2px solid var(--ink);
   border-radius: 30px 6px 30px 30px;
   background:
-    radial-gradient(circle at 83% 16%, var(--hot) 0 4.7rem, transparent 4.75rem),
+    linear-gradient(135deg, transparent 0 43%, var(--hot) 43%) top right / clamp(5.5rem, 10vw, 8rem) clamp(6.5rem, 12vw, 9.5rem) no-repeat,
     linear-gradient(145deg, transparent 0 58%, rgb(255 255 255 / 12%) 58.2% 59%, transparent 59.2%),
     var(--signal);
   box-shadow: 11px 11px 0 var(--hot);
@@ -762,7 +762,7 @@ input[type="checkbox"], input[type="radio"], input[type="range"] { width: auto; 
   border: 2px solid var(--ink);
   border-radius: 30px 6px 30px 30px;
   background:
-    radial-gradient(circle at 86% 18%, var(--hot) 0 5.5rem, transparent 5.6rem),
+    linear-gradient(110deg, transparent 0 12%, var(--hot) 12% 88%, transparent 88%) top right / 42% 0.85rem no-repeat,
     var(--signal);
   color: #fff;
   padding: clamp(3.5rem, 8vw, 7rem) clamp(1.75rem, 6vw, 6rem);

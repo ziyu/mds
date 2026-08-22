@@ -6,7 +6,7 @@
   <text x="40" y="139" fill="#15171b" font-family="Georgia,serif" font-size="52" font-weight="700">Publish with</text>
   <text x="40" y="191" fill="#2454d6" font-family="Georgia,serif" font-size="56" font-style="italic" font-weight="700">range.</text>
   <rect x="376" y="62" width="216" height="176" rx="22" fill="#2454d6" stroke="#15171b" stroke-width="2"/>
-  <circle cx="548" cy="100" r="28" fill="#f04e32"/>
+  <path d="M520 62H592V88L548 132H506Z" fill="#f04e32"/>
   <rect x="398" y="91" width="38" height="5" rx="2.5" fill="#d7ef6a"/>
   <text x="398" y="167" fill="#ffffff" font-family="Georgia,serif" font-size="24" font-weight="700">Dense content.</text>
   <text x="398" y="194" fill="#ffffff" font-family="Georgia,serif" font-size="24" font-weight="700">Clear rhythm.</text>
