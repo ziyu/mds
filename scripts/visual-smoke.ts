@@ -193,6 +193,10 @@ interface ActionStyleMetrics {
   actionVisible: boolean;
   actionContrast: boolean;
   actionUsesControlGeometry: boolean;
+  drawerExists: boolean;
+  drawerOpen: boolean;
+  drawerUsesSidePanelGeometry: boolean;
+  drawerWidth: number;
   display: string;
   width: number;
   height: number;
@@ -914,7 +918,7 @@ async function captureScreenshot(
           expression: `(async () => {
             const action = document.querySelector('button.action.command[data-action="open"][data-target="actionDetails"]');
             if (!(action instanceof HTMLButtonElement)) {
-              return { actionExists: false, actionVisible: false, actionContrast: false, actionUsesControlGeometry: false, display: '', width: 0, height: 0, viewportWidth: innerWidth };
+              return { actionExists: false, actionVisible: false, actionContrast: false, actionUsesControlGeometry: false, drawerExists: false, drawerOpen: false, drawerUsesSidePanelGeometry: false, drawerWidth: 0, display: '', width: 0, height: 0, viewportWidth: innerWidth };
             }
             const channelValues = (value) => (value.match(/[\\d.]+/g) ?? []).slice(0, 3).map(Number);
             const luminance = (value) => {
@@ -937,7 +941,19 @@ async function captureScreenshot(
             document.documentElement.style.scrollBehavior = 'auto';
             action.scrollIntoView({ block: 'center' });
             await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-            return { actionExists, actionVisible, actionContrast, actionUsesControlGeometry, display: style.display, width: rect.width, height: rect.height, viewportWidth: innerWidth };
+            const drawerAction = document.querySelector('button.action.command[data-action="show"][data-target="actionDrawer"]');
+            const drawer = document.querySelector('#actionDrawer');
+            const drawerPanel = drawer?.querySelector('[data-mds-role="overlay-panel"]');
+            const drawerExists = drawerAction instanceof HTMLButtonElement && drawer instanceof HTMLElement && drawerPanel instanceof HTMLElement;
+            if (drawerAction instanceof HTMLButtonElement) drawerAction.click();
+            await new Promise((resolve) => setTimeout(resolve, 320));
+            const drawerRect = drawerPanel instanceof HTMLElement ? drawerPanel.getBoundingClientRect() : { width: 0 };
+            const drawerOpen = drawer instanceof HTMLElement && !drawer.hidden && drawer.getAttribute('aria-hidden') === 'false';
+            const drawerWidth = drawerRect.width;
+            const drawerUsesSidePanelGeometry = innerWidth <= 560
+              ? drawerWidth <= innerWidth - 16
+              : drawerWidth <= Math.min(540, innerWidth * 0.72);
+            return { actionExists, actionVisible, actionContrast, actionUsesControlGeometry, drawerExists, drawerOpen, drawerUsesSidePanelGeometry, drawerWidth, display: style.display, width: rect.width, height: rect.height, viewportWidth: innerWidth };
           })()`,
           awaitPromise: true,
           returnByValue: true
@@ -945,7 +961,8 @@ async function captureScreenshot(
         sessionId
       );
       const actionStyles = actionEvaluated.result.value;
-      if (!actionStyles.actionExists || !actionStyles.actionVisible || !actionStyles.actionContrast || !actionStyles.actionUsesControlGeometry) {
+      if (!actionStyles.actionExists || !actionStyles.actionVisible || !actionStyles.actionContrast || !actionStyles.actionUsesControlGeometry ||
+          !actionStyles.drawerExists || !actionStyles.drawerOpen || !actionStyles.drawerUsesSidePanelGeometry) {
         throw new Error(`Rich action styling failed for ${screenshotPath}: ${JSON.stringify(actionStyles)}.`);
       }
     }
