@@ -18,9 +18,9 @@ const COVER = path.join(DIST, "cover-showcase-16x9.png");
 const RAW = path.join(DIST, "raw-editor-showcase.webm");
 
 const EXAMPLES = [
-  { id: "landing", label: "Landing", scrollMs: 3600, scrollSteps: 5 },
+  { id: "landing", label: "Landing", scrollMs: 3000, scrollSteps: 5 },
   { id: "basic", label: "Basic", scrollMs: 2000, scrollSteps: 4 },
-  { id: "motion", label: "Motion", scrollMs: 4200, scrollSteps: 6 },
+  { id: "motion", label: "Motion", scrollMs: 2000, scrollSteps: 4 },
 ];
 
 const LIVE_DEMO_CHUNKS = [
