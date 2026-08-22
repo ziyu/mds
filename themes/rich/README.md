@@ -1,6 +1,6 @@
 # @mds-crate/theme-rich
 
-Official MDS theme for documents that need data tables, charts, technical documentation, guided sequences, galleries, and conversation layouts.
+Official MDS theme for documents that need data tables, charts, technical documentation, guided sequences, galleries, and conversation layouts. Its calm editorial system keeps dense content readable with restrained color, typography-led hierarchy, and minimal container chrome.
 
 The shared `@mds-crate/blocks` package owns portable primitive semantics, actions, keyboard and focus behavior, overlays, menus, and motion lifecycle. Rich keeps only higher-level composition and theme-specific enhancement, including data-table behavior and message scrolling, while still producing a standalone theme artifact.
 

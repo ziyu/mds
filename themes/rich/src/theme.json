@@ -1,10 +1,10 @@
 {
   "name": "rich",
   "label": "Rich",
-  "description": "A dark digital-publishing workspace for dense data, technical documentation, guided content, media, and conversation.",
+  "description": "A calm editorial workspace for dense data, technical documentation, guided content, media, and conversation.",
   "author": "MDS",
   "preview": "preview.svg",
-  "tags": ["rich", "digital", "data", "docs", "conversation"],
+  "tags": ["rich", "editorial", "data", "docs", "conversation"],
   "supportedBlocks": [
     "hero",
     "cards",

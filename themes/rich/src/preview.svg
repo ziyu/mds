@@ -1,34 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-label="Rich theme preview">
-  <defs>
-    <radialGradient id="glow" cx="78%" cy="5%" r="66%">
-      <stop offset="0" stop-color="#62e6d3" stop-opacity=".22"/>
-      <stop offset="1" stop-color="#090d12" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#1a2633"/>
-      <stop offset="1" stop-color="#0e141c"/>
-    </linearGradient>
-    <pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse">
-      <circle cx="1" cy="1" r=".8" fill="#a4b0bd" opacity=".16"/>
-    </pattern>
-  </defs>
-  <rect width="640" height="400" fill="#090d12"/>
-  <rect width="640" height="400" fill="url(#glow)"/>
-  <rect width="640" height="400" fill="url(#dots)"/>
-  <rect x="24" y="20" width="592" height="36" rx="8" fill="#0e141c" stroke="#2a3745"/>
-  <circle cx="43" cy="38" r="4" fill="#c9f46b"/>
-  <text x="55" y="42" fill="#f4f2ea" font-family="Menlo,monospace" font-size="10" letter-spacing="1.4">MDS / RICH</text>
-  <text x="320" y="42" fill="#62e6d3" font-family="Menlo,monospace" font-size="9" letter-spacing="1.2" text-anchor="middle">DIGITAL PUBLISHING WORKSPACE</text>
-  <text x="594" y="42" fill="#6f7c89" font-family="Menlo,monospace" font-size="9" text-anchor="end">SYSTEM / 01</text>
-  <text x="54" y="111" fill="#62e6d3" font-family="Menlo,monospace" font-size="9" letter-spacing="1.4">RICH CONTENT / LIVE SYSTEM</text>
-  <text x="52" y="166" fill="#f4f2ea" font-family="Avenir Next Condensed,sans-serif" font-size="52" font-weight="700">DENSE IDEAS.</text>
-  <text x="52" y="214" fill="#c9f46b" font-family="Avenir Next Condensed,sans-serif" font-size="52" font-weight="700">CLEAR SIGNAL.</text>
-  <rect x="52" y="250" width="238" height="104" rx="15" fill="url(#panel)" stroke="#2a3745"/>
-  <rect x="68" y="269" width="62" height="7" rx="3.5" fill="#62e6d3" opacity=".65"/>
-  <path d="M68 294H268M68 313H230M68 332H252" stroke="#a4b0bd" stroke-opacity=".55" stroke-width="5" stroke-linecap="round"/>
-  <rect x="310" y="250" width="278" height="104" rx="15" fill="#111923" stroke="#2a3745"/>
-  <path d="M332 331H566M332 305H566M332 279H566" stroke="#62e6d3" stroke-opacity=".09"/>
-  <path d="M342 331V313M382 331V288M422 331V303M462 331V272M502 331V294M542 331V265" stroke="#c9f46b" stroke-width="11" stroke-linecap="round"/>
-  <circle cx="566" cy="93" r="49" fill="none" stroke="#62e6d3" stroke-opacity=".2"/>
-  <circle cx="566" cy="93" r="29" fill="none" stroke="#c9f46b" stroke-opacity=".35"/>
+  <rect width="640" height="400" fill="#f2eee5"/>
+  <rect x="38" y="30" width="564" height="340" rx="4" fill="#fbfaf6" stroke="#d4cec1"/>
+  <path d="M66 74H574" stroke="#aaa397"/>
+  <text x="66" y="58" fill="#5e5c55" font-family="Avenir Next,Arial,sans-serif" font-size="9" font-weight="700" letter-spacing="1.4">RICH / EDITORIAL WORKSPACE</text>
+  <text x="66" y="132" fill="#1d1d1a" font-family="Iowan Old Style,Georgia,serif" font-size="47" font-weight="600">Dense ideas,</text>
+  <text x="66" y="176" fill="#2d57a1" font-family="Iowan Old Style,Georgia,serif" font-size="47" font-style="italic">clearly arranged.</text>
+  <path d="M66 206H574" stroke="#d4cec1"/>
+  <rect x="66" y="230" width="220" height="100" rx="3" fill="#ffffff" stroke="#d4cec1"/>
+  <path d="M84 254H196M84 276H264M84 296H236M84 314H250" stroke="#817e74" stroke-width="5" stroke-linecap="round"/>
+  <rect x="308" y="230" width="266" height="100" rx="3" fill="#ffffff" stroke="#d4cec1"/>
+  <path d="M328 310H554M328 286H554M328 262H554" stroke="#d4cec1"/>
+  <path d="M338 310V294M378 310V272M418 310V288M458 310V250M498 310V280M538 310V260" stroke="#2d57a1" stroke-width="8"/>
+  <rect x="66" y="345" width="54" height="3" fill="#2d57a1"/>
 </svg>
