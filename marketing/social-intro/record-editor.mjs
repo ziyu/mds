@@ -131,21 +131,25 @@ async function waitForPreviewReady(page) {
 
 async function selectExample(page, exampleId) {
   await page.selectOption('select[aria-label="Document"]', `example:${exampleId}`);
-  await page.waitForTimeout(350);
+  await page.waitForTimeout(120);
   await waitForPreviewReady(page);
 }
 
+/** Scroll preview from top to bottom in exactly `totalMs` milliseconds. */
 async function scrollPreview(page, totalMs, steps) {
   const frame = page.frameLocator('iframe[title="MDS preview"]');
   const maxY = await frame.locator("body").evaluate(() =>
     Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) - window.innerHeight
   );
-  const stepDelay = Math.max(60, Math.floor(totalMs / Math.max(steps, 1)));
+  if (maxY <= 0 || steps <= 0) return;
 
-  for (let i = 0; i <= steps; i++) {
+  const started = Date.now();
+  for (let i = 1; i <= steps; i++) {
+    const targetTime = (totalMs * i) / steps;
     const y = Math.round((maxY * i) / steps);
     await frame.locator("html").evaluate((_, top) => window.scrollTo({ top, behavior: "auto" }), y);
-    await page.waitForTimeout(stepDelay);
+    const wait = targetTime - (Date.now() - started);
+    if (wait > 0) await page.waitForTimeout(wait);
   }
 }
 
@@ -177,18 +181,21 @@ async function typeChunks(page, chunks, chunkPauseMs = 550) {
 async function runDemo(page) {
   page.on("dialog", (dialog) => dialog.accept());
 
-  await page.goto(EDITOR_URL, { waitUntil: "networkidle", timeout: 120_000 });
+  await page.goto(EDITOR_URL, { waitUntil: "domcontentloaded", timeout: 120_000 });
   await page.waitForSelector(".app-shell", { timeout: 60_000 });
   await waitForPreviewReady(page);
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(150);
 
-  for (const example of EXAMPLES) {
+  for (let i = 0; i < EXAMPLES.length; i++) {
+    const example = EXAMPLES[i];
     console.log(`[demo] Example: ${example.label}`);
-    await selectExample(page, example.id);
+    if (i > 0) {
+      await selectExample(page, example.id);
+    }
     await resetPreviewScroll(page);
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(60);
     await scrollPreview(page, example.scrollMs, example.scrollSteps);
-    await page.waitForTimeout(350);
+    await page.waitForTimeout(100);
   }
 
   console.log("[demo] New document + live typing");
