@@ -1,6 +1,6 @@
 {
   "name": "@mds-crate/theme-default",
-  "version": "0.1.0-beta.2",
+  "version": "0.1.0-beta.3",
   "description": "Official portable default theme for MDS documents.",
   "keywords": [
     "mds",

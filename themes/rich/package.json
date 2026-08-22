@@ -1,6 +1,6 @@
 {
   "name": "@mds-crate/theme-rich",
-  "version": "0.1.0-beta.2",
+  "version": "0.1.0-beta.3",
   "description": "Official rich-content theme for MDS data, documentation, guidance, media, and conversation blocks.",
   "keywords": [
     "mds",
