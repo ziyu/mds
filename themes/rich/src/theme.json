@@ -1,10 +1,10 @@
 {
   "name": "rich",
   "label": "Rich",
-  "description": "A calm editorial workspace for dense data, technical documentation, guided content, media, and conversation.",
+  "description": "An expressive editorial publishing system for dense data, technical documentation, guided content, media, and conversation.",
   "author": "MDS",
   "preview": "preview.svg",
-  "tags": ["rich", "editorial", "data", "docs", "conversation"],
+  "tags": ["rich", "editorial", "publishing", "data", "conversation"],
   "supportedBlocks": [
     "hero",
     "cards",

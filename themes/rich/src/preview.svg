@@ -1,15 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-label="Rich theme preview">
-  <rect width="640" height="400" fill="#f2eee5"/>
-  <rect x="38" y="30" width="564" height="340" rx="4" fill="#fbfaf6" stroke="#d4cec1"/>
-  <path d="M66 74H574" stroke="#aaa397"/>
-  <text x="66" y="58" fill="#5e5c55" font-family="Avenir Next,Arial,sans-serif" font-size="9" font-weight="700" letter-spacing="1.4">RICH / EDITORIAL WORKSPACE</text>
-  <text x="66" y="132" fill="#1d1d1a" font-family="Iowan Old Style,Georgia,serif" font-size="47" font-weight="600">Dense ideas,</text>
-  <text x="66" y="176" fill="#2d57a1" font-family="Iowan Old Style,Georgia,serif" font-size="47" font-style="italic">clearly arranged.</text>
-  <path d="M66 206H574" stroke="#d4cec1"/>
-  <rect x="66" y="230" width="220" height="100" rx="3" fill="#ffffff" stroke="#d4cec1"/>
-  <path d="M84 254H196M84 276H264M84 296H236M84 314H250" stroke="#817e74" stroke-width="5" stroke-linecap="round"/>
-  <rect x="308" y="230" width="266" height="100" rx="3" fill="#ffffff" stroke="#d4cec1"/>
-  <path d="M328 310H554M328 286H554M328 262H554" stroke="#d4cec1"/>
-  <path d="M338 310V294M378 310V272M418 310V288M458 310V250M498 310V280M538 310V260" stroke="#2d57a1" stroke-width="8"/>
-  <rect x="66" y="345" width="54" height="3" fill="#2d57a1"/>
+  <rect width="640" height="400" fill="#f1eadf"/>
+  <rect width="640" height="7" fill="#f04e32"/>
+  <path d="M38 40H602" stroke="#15171b" stroke-width="2"/>
+  <text x="40" y="66" fill="#15171b" font-family="Gill Sans,Avenir Next,sans-serif" font-size="10" font-weight="700" letter-spacing="1.6">RICH / EDITORIAL PUBLISHING</text>
+  <text x="40" y="139" fill="#15171b" font-family="Georgia,serif" font-size="52" font-weight="700">Publish with</text>
+  <text x="40" y="191" fill="#2454d6" font-family="Georgia,serif" font-size="56" font-style="italic" font-weight="700">range.</text>
+  <rect x="376" y="62" width="216" height="176" rx="22" fill="#2454d6" stroke="#15171b" stroke-width="2"/>
+  <circle cx="548" cy="100" r="28" fill="#f04e32"/>
+  <rect x="398" y="91" width="38" height="5" rx="2.5" fill="#d7ef6a"/>
+  <text x="398" y="167" fill="#ffffff" font-family="Georgia,serif" font-size="24" font-weight="700">Dense content.</text>
+  <text x="398" y="194" fill="#ffffff" font-family="Georgia,serif" font-size="24" font-weight="700">Clear rhythm.</text>
+  <path d="M387 247H603V73" fill="none" stroke="#f04e32" stroke-width="8"/>
+  <rect x="40" y="245" width="244" height="112" rx="14" fill="#fffdf8" stroke="#15171b" stroke-width="2"/>
+  <rect x="40" y="245" width="244" height="9" rx="4" fill="#2454d6"/>
+  <text x="58" y="286" fill="#15171b" font-family="Georgia,serif" font-size="24" font-weight="700">Structured stories</text>
+  <path d="M58 311H260M58 330H218" stroke="#85817a" stroke-width="5" stroke-linecap="round"/>
+  <rect x="310" y="267" width="282" height="90" rx="10" fill="#15171b"/>
+  <path d="M330 335H572M330 315H572M330 295H572" stroke="#55565b"/>
+  <path d="M344 335V319M382 335V302M420 335V311M458 335V286M496 335V306M534 335V294" stroke="#d7ef6a" stroke-width="9"/>
+  <rect x="46" y="363" width="126" height="8" rx="4" fill="#f04e32"/>
 </svg>

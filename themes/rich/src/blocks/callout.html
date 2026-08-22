@@ -1,6 +1,6 @@
 <template data-block="callout note info warning danger success">
 <aside{{ attrs }} class="callout {{ type }}" role="note">
-  <strong class="callout-label">{{ type }}</strong>
+  <strong class="callout-label">{{ attr:label }}</strong>
   <div class="callout-body">{{ children }}</div>
   {{ slots }}
 </aside>
