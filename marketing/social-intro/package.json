@@ -7,7 +7,7 @@
     "record:landscape": "node record.mjs --variant=16x9-zh",
     "record:landscape-en": "node record.mjs --variant=16x9-en",
     "record:all": "npm run record && npm run record:landscape && npm run record:landscape-en",
-    "record:showcase": "node record.mjs --variant=showcase-16x9",
+    "record:showcase": "node record-editor.mjs",
     "serve": "python3 -m http.server 8765 --directory ."
   },
   "devDependencies": {

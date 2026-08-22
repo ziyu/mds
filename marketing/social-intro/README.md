@@ -14,14 +14,14 @@
 | `dist/mds-intro-9x16.mp4` | 竖版 · 抖音 / 小红书 / Shorts / Reels |
 | `dist/mds-intro-16x9.mp4` | 横版中文 · B 站 / YouTube / 网站 |
 | `dist/mds-intro-16x9-en.mp4` | 横版英文 |
-| `dist/mds-showcase-16x9.mp4` | **效果展示 · 无口播 · 基础→进阶** |
+| `dist/mds-showcase-16x9.mp4` | **Editor 录屏 · 无口播 · 示例滚动 + 实时预览** |
 | `dist/cover-showcase-16x9.png` | 效果展示封面 |
 | `POST.md` | 中文发布文案 |
 | `assets/narration.txt` / `narration-en.txt` | 口播原文 |
 | `src/index.html` | 竖版动画源 |
 | `src/landscape.html` | 横版中文动画源 |
 | `src/landscape-en.html` | 横版英文动画源 |
-| `src/showcase.html` | 效果展示动画源（无口播） |
+| `record-editor.mjs` | Editor 录屏（示例滚动 + 新建 MDS 实时预览） |
 
 ## 重新生成
 
@@ -37,20 +37,21 @@ npx playwright install chromium
 npm run record              # 竖版 9:16 中文
 npm run record:landscape    # 横版 16:9 中文
 npm run record:landscape-en # 横版 16:9 英文
-npm run record:showcase     # 效果展示 16:9 无口播
+npm run record:showcase     # Editor 录屏 16:9 无口播
 # 或一次全录：npm run record:all
 ```
 
-## 效果展示镜头结构（无口播 · ~78s）
+## 效果展示（Editor 录屏 · 无口播 · ~60s）
 
-| 时间 | 层级 | 画面 |
-|------|------|------|
-| 0–3.5s | 开场 | MDS 效果展示标题 |
-| 3.5–23s | 基础 | Markdown · Hero · Callout / Details |
-| 23–43s | 交互 | Controls · Form · Dialog |
-| 43–62.5s | 布局 | Grid · Split · Tabs |
-| 62.5–74s | 进阶 | Drawer · 四套主题 |
-| 74–78s | 收尾 | MDS + npm 安装命令 |
+1. 启动 MDS Editor，依次打开 **Landing → Basic → Components** 三个内置示例
+2. 每个示例在 Preview 面板中从上到下滚动浏览
+3. 点击 **New** 新建本地 MDS 文档，逐段输入 Markdown / 语义块，展示右侧实时预览
+
+```sh
+# 需先在仓库根目录 build 一次
+cd /workspace && pnpm build
+cd marketing/social-intro && npm run record:showcase
+```
 
 ## 介绍视频镜头结构（中文）
 

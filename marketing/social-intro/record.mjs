@@ -37,16 +37,6 @@ const VARIANTS = {
     height: 1080,
     port: 8770,
   },
-  "showcase-16x9": {
-    page: "/src/showcase.html",
-    out: "mds-showcase-16x9.mp4",
-    cover: "cover-showcase-16x9.png",
-    width: 1920,
-    height: 1080,
-    port: 8771,
-    silent: true,
-    api: "__mdsShowcase",
-  },
 };
 
 const MIME = {
