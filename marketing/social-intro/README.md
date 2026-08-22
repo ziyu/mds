@@ -43,9 +43,9 @@ npm run record:showcase     # Editor 录屏 16:9 无口播
 
 ## 效果展示（Editor 录屏 · 无口播 · ~60s）
 
-1. 启动 MDS Editor，依次打开 **Landing → Basic → Components** 三个内置示例
-2. 每个示例在 Preview 面板中从上到下滚动浏览
-3. 点击 **New** 新建本地 MDS 文档，逐段输入 Markdown / 语义块，展示右侧实时预览
+1. 启动 MDS Editor，依次打开 **Landing → Basic → Motion** 三个内置示例
+2. 每个示例在 Preview 面板中快速滚动浏览
+3. 点击 **New** 新建本地 MDS 文档，逐段输入 Markdown / 语义块 / 控件，展示右侧实时预览
 
 ```sh
 # 需先在仓库根目录 build 一次

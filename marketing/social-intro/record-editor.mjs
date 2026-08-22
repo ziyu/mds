@@ -18,9 +18,9 @@ const COVER = path.join(DIST, "cover-showcase-16x9.png");
 const RAW = path.join(DIST, "raw-editor-showcase.webm");
 
 const EXAMPLES = [
-  { id: "landing", label: "Landing", scrollMs: 9000, scrollSteps: 10 },
-  { id: "basic", label: "Basic", scrollMs: 5000, scrollSteps: 6 },
-  { id: "components", label: "Components", scrollMs: 14000, scrollSteps: 14 },
+  { id: "landing", label: "Landing", scrollMs: 3600, scrollSteps: 5 },
+  { id: "basic", label: "Basic", scrollMs: 2000, scrollSteps: 4 },
+  { id: "motion", label: "Motion", scrollMs: 4200, scrollSteps: 6 },
 ];
 
 const LIVE_DEMO_CHUNKS = [
@@ -32,9 +32,9 @@ const LIVE_DEMO_CHUNKS = [
   "用语义块描述页面结构，MDS 渲染器负责呈现。\n\n",
   "[开始 -> /docs]\n",
   ":::\n\n",
-  "::: details live label=\"实时预览\"\n",
-  "左侧编辑，右侧即时渲染。\n",
-  ":::\n",
+  ':: button label="开始"\n',
+  ':: slider label="音量" min=0 max=100 value=60\n',
+  ':: switch label="深色模式" checked\n',
 ];
 
 function run(cmd, args, options = {}) {
@@ -131,7 +131,7 @@ async function waitForPreviewReady(page) {
 
 async function selectExample(page, exampleId) {
   await page.selectOption('select[aria-label="Document"]', `example:${exampleId}`);
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(350);
   await waitForPreviewReady(page);
 }
 
@@ -140,7 +140,7 @@ async function scrollPreview(page, totalMs, steps) {
   const maxY = await frame.locator("body").evaluate(() =>
     Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) - window.innerHeight
   );
-  const stepDelay = Math.max(120, Math.floor(totalMs / Math.max(steps, 1)));
+  const stepDelay = Math.max(60, Math.floor(totalMs / Math.max(steps, 1)));
 
   for (let i = 0; i <= steps; i++) {
     const y = Math.round((maxY * i) / steps);
@@ -165,7 +165,7 @@ async function clearEditor(page) {
   await page.waitForTimeout(200);
 }
 
-async function typeChunks(page, chunks, chunkPauseMs = 700) {
+async function typeChunks(page, chunks, chunkPauseMs = 550) {
   await focusEditor(page);
   for (const chunk of chunks) {
     await page.keyboard.insertText(chunk);
@@ -180,29 +180,28 @@ async function runDemo(page) {
   await page.goto(EDITOR_URL, { waitUntil: "networkidle", timeout: 120_000 });
   await page.waitForSelector(".app-shell", { timeout: 60_000 });
   await waitForPreviewReady(page);
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(700);
 
   for (const example of EXAMPLES) {
     console.log(`[demo] Example: ${example.label}`);
     await selectExample(page, example.id);
     await resetPreviewScroll(page);
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(250);
     await scrollPreview(page, example.scrollMs, example.scrollSteps);
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(350);
   }
 
   console.log("[demo] New document + live typing");
   await page.getByRole("button", { name: "New", exact: true }).click();
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(500);
   await waitForPreviewReady(page);
   await clearEditor(page);
-  await page.waitForTimeout(400);
-  await typeChunks(page, LIVE_DEMO_CHUNKS, 900);
-  await page.waitForTimeout(2500);
+  await page.waitForTimeout(300);
+  await typeChunks(page, LIVE_DEMO_CHUNKS, 650);
+  await page.waitForTimeout(1800);
 
-  // Scroll the live preview to show callout
-  await scrollPreview(page, 3500, 4);
-  await page.waitForTimeout(1500);
+  await scrollPreview(page, 1400, 3);
+  await page.waitForTimeout(1000);
 }
 
 async function main() {
