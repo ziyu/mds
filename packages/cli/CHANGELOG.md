@@ -1,5 +1,15 @@
 # @mds-crate/cli
 
+## 0.1.0-beta.3
+
+### Patch Changes
+
+- @mds-crate/parser@0.1.0-beta.3
+- @mds-crate/renderer-html@0.1.0-beta.3
+- @mds-crate/theme-loader@0.1.0-beta.3
+- @mds-crate/theme-builder@0.1.0-beta.3
+- @mds-crate/theme-default@0.1.0-beta.3
+
 ## 0.1.0-beta.2
 
 ### Patch Changes

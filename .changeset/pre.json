@@ -24,6 +24,7 @@
   },
   "changesets": [
     "default-theme-redesign",
+    "expressive-rich-editorial",
     "foundation-controls",
     "local-editor",
     "official-appearance-themes",

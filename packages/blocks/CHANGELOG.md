@@ -1,5 +1,11 @@
 # @mds-crate/blocks
 
+## 0.1.0-beta.3
+
+### Patch Changes
+
+- @mds-crate/theme-loader@0.1.0-beta.3
+
 ## 0.1.0-beta.2
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@mds-crate/cli",
-  "version": "0.1.0-beta.2",
+  "version": "0.1.0-beta.3",
   "description": "Command-line tools and the local Editor for MDS documents and themes.",
   "keywords": [
     "mds",

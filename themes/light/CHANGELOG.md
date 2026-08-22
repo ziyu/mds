@@ -1,5 +1,12 @@
 # @mds-crate/theme-light
 
+## 0.1.0-beta.3
+
+### Patch Changes
+
+- @mds-crate/html-types@0.1.0-beta.3
+- @mds-crate/theme-loader@0.1.0-beta.3
+
 ## 0.1.0-beta.2
 
 ### Minor Changes

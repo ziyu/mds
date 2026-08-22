@@ -1,6 +1,6 @@
 {
   "name": "@mds-crate/parser",
-  "version": "0.1.0-beta.2",
+  "version": "0.1.0-beta.3",
   "description": "Parser for the Markdown-based MDS authoring language.",
   "keywords": [
     "mds",

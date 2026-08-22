@@ -1,5 +1,11 @@
 # @mds-crate/html-types
 
+## 0.1.0-beta.3
+
+### Patch Changes
+
+- @mds-crate/ast@0.1.0-beta.3
+
 ## 0.1.0-beta.2
 
 ### Patch Changes
