@@ -157,72 +157,60 @@ async function installDemoCursor(page) {
         position: fixed;
         left: 50%;
         top: 50%;
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        border: 3px solid #111;
-        background: #d2f25c;
-        box-shadow:
-          0 0 0 6px rgba(210, 242, 92, 0.35),
-          0 8px 22px rgba(0, 0, 0, 0.35);
+        width: 22px;
+        height: 22px;
         pointer-events: none;
         z-index: 2147483647;
         opacity: 0;
-        transform: translate(-50%, -50%) scale(0.6);
+        transform: translate(-14%, -8%) scale(0.86);
+        filter: drop-shadow(0 2px 6px rgba(29, 27, 23, 0.28));
         transition:
-          left 520ms cubic-bezier(0.2, 0.8, 0.2, 1),
-          top 520ms cubic-bezier(0.2, 0.8, 0.2, 1),
-          transform 160ms ease,
-          opacity 140ms ease,
-          background 120ms ease,
-          box-shadow 160ms ease;
+          left 480ms cubic-bezier(0.22, 0.82, 0.2, 1),
+          top 480ms cubic-bezier(0.22, 0.82, 0.2, 1),
+          opacity 180ms ease,
+          transform 160ms ease;
       }
       .mds-demo-cursor.is-visible {
         opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
+        transform: translate(-14%, -8%) scale(1);
       }
       .mds-demo-cursor.is-pressing {
-        background: #fff;
-        transform: translate(-50%, -50%) scale(0.72);
-        box-shadow:
-          0 0 0 10px rgba(210, 242, 92, 0.5),
-          0 4px 12px rgba(0, 0, 0, 0.28);
+        transform: translate(-14%, -8%) scale(0.9);
       }
-      .mds-demo-cursor::before {
-        content: "";
+      .mds-demo-cursor-pointer {
         position: absolute;
-        left: 50%;
-        top: 50%;
-        width: 8px;
-        height: 8px;
+        inset: 0;
+        background:
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M5 3.5 19.5 12.2l-6.1 1.5 3.1 7.2-2.7 1.1-3.1-7.3L5 17.8V3.5Z' fill='%23fffdf8' stroke='%231d1b17' stroke-width='1.35' stroke-linejoin='round'/%3E%3C/svg%3E")
+          center / contain no-repeat;
+      }
+      .mds-demo-cursor-ripple {
+        position: absolute;
+        left: 2px;
+        top: 2px;
+        width: 14px;
+        height: 14px;
         border-radius: 50%;
-        background: #111;
-        transform: translate(-50%, -50%);
-      }
-      .mds-demo-cursor::after {
-        content: "click";
-        position: absolute;
-        left: 34px;
-        top: 50%;
-        transform: translateY(-50%);
-        padding: 3px 8px;
-        border-radius: 999px;
-        background: #111;
-        color: #d2f25c;
-        font: 700 11px/1 ui-sans-serif, system-ui, sans-serif;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        white-space: nowrap;
+        border: 1.5px solid rgba(31, 84, 127, 0.55);
+        background: rgba(31, 84, 127, 0.12);
         opacity: 0;
-        transition: opacity 140ms ease;
+        transform: scale(0.4);
+        pointer-events: none;
       }
-      .mds-demo-cursor.is-visible::after { opacity: 1; }
+      .mds-demo-cursor.is-pressing .mds-demo-cursor-ripple {
+        animation: mds-demo-ripple 420ms ease-out forwards;
+      }
+      @keyframes mds-demo-ripple {
+        0% { opacity: 0.7; transform: scale(0.45); }
+        100% { opacity: 0; transform: scale(2.4); }
+      }
       .mds-demo-focus {
-        outline: 3px solid #d2f25c !important;
-        outline-offset: 5px !important;
-        box-shadow: 0 0 0 10px rgba(210, 242, 92, 0.3) !important;
-        border-radius: 12px !important;
-        transition: outline 160ms ease, box-shadow 160ms ease;
+        border-radius: 8px !important;
+        background: rgba(31, 84, 127, 0.07) !important;
+        box-shadow:
+          0 0 0 1px rgba(31, 84, 127, 0.38),
+          0 10px 28px rgba(31, 84, 127, 0.12) !important;
+        transition: background 200ms ease, box-shadow 200ms ease;
       }
     `,
   });
@@ -233,6 +221,7 @@ async function installDemoCursor(page) {
       cursor = document.createElement("div");
       cursor.className = "mds-demo-cursor";
       cursor.setAttribute("aria-hidden", "true");
+      cursor.innerHTML = '<span class="mds-demo-cursor-ripple"></span><span class="mds-demo-cursor-pointer"></span>';
       document.documentElement.append(cursor);
     }
   });
@@ -271,13 +260,20 @@ async function moveDemoCursor(page, locator) {
 
 async function pressDemoCursor(page) {
   await page.evaluate(() => {
-    document.querySelector(".mds-demo-cursor")?.classList.add("is-pressing");
+    const cursor = document.querySelector(".mds-demo-cursor");
+    if (!(cursor instanceof HTMLElement)) return;
+    // Retrigger ripple animation cleanly on each press.
+    const ripple = cursor.querySelector(".mds-demo-cursor-ripple");
+    if (ripple instanceof HTMLElement) {
+      ripple.replaceWith(ripple.cloneNode(true));
+    }
+    cursor.classList.add("is-pressing");
   });
-  await page.waitForTimeout(180);
+  await page.waitForTimeout(220);
   await page.evaluate(() => {
     document.querySelector(".mds-demo-cursor")?.classList.remove("is-pressing");
   });
-  await page.waitForTimeout(80);
+  await page.waitForTimeout(100);
 }
 
 async function setDemoFocus(page, locator, on) {
