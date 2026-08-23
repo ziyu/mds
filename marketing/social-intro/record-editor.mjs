@@ -29,18 +29,29 @@ title: Live Preview
 
 # Hello MDS
 
-Plain Markdown stays readable. Semantic blocks add the rest.
-
-- Write in Markdown
-- Rich HTML output
-- Instant preview
-
 ::: hero
 # Write pages like Markdown
 
-Describe structure with semantic blocks. MDS renders the rest.
-
 [Get started -> /docs]
+:::
+
+::: callout tone="info" label="Live"
+Left edits. Right renders.
+:::
+
+::: grid
+::: card
+## Author
+Markdown stays Markdown.
+:::
+::: card
+## Render
+Blocks become layout.
+:::
+::: card
+## Ship
+Plain HTML output.
+:::
 :::
 
 :: button label="Start"
@@ -52,6 +63,8 @@ Describe structure with semantic blocks. MDS renders the rest.
 const LIVE_DEMO_PAUSE_AT = new Set([
   LIVE_DEMO_SOURCE.indexOf("# Hello MDS"),
   LIVE_DEMO_SOURCE.indexOf("::: hero"),
+  LIVE_DEMO_SOURCE.indexOf("::: callout"),
+  LIVE_DEMO_SOURCE.indexOf("::: grid"),
   LIVE_DEMO_SOURCE.indexOf(":: button"),
   LIVE_DEMO_SOURCE.indexOf(":: slider"),
   LIVE_DEMO_SOURCE.indexOf(":: switch"),
