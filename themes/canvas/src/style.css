@@ -258,6 +258,32 @@ p {
   margin-bottom: 1rem;
 }
 
+/* Tailwind preflight clears list markers; restore them for page prose. */
+.page:not(.mds-block) > :where(ul, ol),
+.mds-flow :where(ul, ol),
+.mds-hero-flow :where(ul, ol) {
+  margin-block: 0.75rem;
+  padding-inline-start: 1.35rem;
+}
+
+.page:not(.mds-block) > ul,
+.mds-flow ul,
+.mds-hero-flow ul {
+  list-style: disc;
+}
+
+.page:not(.mds-block) > ol,
+.mds-flow ol,
+.mds-hero-flow ol {
+  list-style: decimal;
+}
+
+.page:not(.mds-block) > :where(ul, ol) > li + li,
+.mds-flow :where(ul, ol) > li + li,
+.mds-hero-flow :where(ul, ol) > li + li {
+  margin-top: 0.3rem;
+}
+
 code {
   border: 1px solid var(--color-border);
   border-radius: 0.35rem;

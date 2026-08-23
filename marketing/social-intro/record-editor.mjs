@@ -29,6 +29,8 @@ title: Live Preview
 
 # Hello MDS
 
+Plain Markdown stays readable. Semantic blocks add the rest.
+
 - Write in Markdown
 - Rich HTML output
 - Instant preview
