@@ -169,10 +169,12 @@ async function clearEditor(page) {
   await page.waitForTimeout(200);
 }
 
-async function typeChunks(page, chunks, chunkPauseMs = 550) {
+async function typeChunks(page, chunks, { charDelayMs = 28, chunkPauseMs = 420 } = {}) {
   await focusEditor(page);
   for (const chunk of chunks) {
-    await page.keyboard.insertText(chunk);
+    // Character-by-character typing so the left editor shows a real typing effect
+    // and the right preview updates progressively.
+    await page.keyboard.type(chunk, { delay: charDelayMs });
     await page.waitForTimeout(chunkPauseMs);
     await waitForPreviewReady(page).catch(() => {});
   }
@@ -204,7 +206,7 @@ async function runDemo(page) {
   await waitForPreviewReady(page);
   await clearEditor(page);
   await page.waitForTimeout(300);
-  await typeChunks(page, LIVE_DEMO_CHUNKS, 650);
+  await typeChunks(page, LIVE_DEMO_CHUNKS, { charDelayMs: 28, chunkPauseMs: 380 });
   await page.waitForTimeout(1800);
 
   await scrollPreview(page, 1400, 3);
