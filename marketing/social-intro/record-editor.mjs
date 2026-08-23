@@ -24,17 +24,17 @@ const EXAMPLES = [
 ];
 
 const LIVE_DEMO_CHUNKS = [
-  "---\ntitle: 实时预览\n---\n\n",
+  "---\ntitle: Live Preview\n---\n\n",
   "# Hello MDS\n\n",
-  "- Markdown 写作\n- HTML 级效果\n- 即时预览\n\n",
+  "- Write in Markdown\n- Rich HTML output\n- Instant preview\n\n",
   "::: hero\n",
-  "# 像写 Markdown 一样写网页\n\n",
-  "用语义块描述页面结构，MDS 渲染器负责呈现。\n\n",
-  "[开始 -> /docs]\n",
+  "# Write pages like Markdown\n\n",
+  "Describe structure with semantic blocks. MDS renders the rest.\n\n",
+  "[Get started -> /docs]\n",
   ":::\n\n",
-  ':: button label="开始"\n',
-  ':: slider label="音量" min=0 max=100 value=60\n',
-  ':: switch label="深色模式" checked\n',
+  ':: button label="Start"\n',
+  ':: slider label="Volume" min=0 max=100 value=60\n',
+  ':: switch label="Dark mode" checked\n',
 ];
 
 function run(cmd, args, options = {}) {
