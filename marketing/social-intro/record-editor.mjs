@@ -149,17 +149,180 @@ async function waitForPreviewReady(page) {
   }
 }
 
+/** Visible demo cursor + focus ring for UI click choreography. */
+async function installDemoCursor(page) {
+  await page.addStyleTag({
+    content: `
+      .mds-demo-cursor {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 3px solid #111;
+        background: #d2f25c;
+        box-shadow:
+          0 0 0 6px rgba(210, 242, 92, 0.35),
+          0 8px 22px rgba(0, 0, 0, 0.35);
+        pointer-events: none;
+        z-index: 2147483647;
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.6);
+        transition:
+          left 520ms cubic-bezier(0.2, 0.8, 0.2, 1),
+          top 520ms cubic-bezier(0.2, 0.8, 0.2, 1),
+          transform 160ms ease,
+          opacity 140ms ease,
+          background 120ms ease,
+          box-shadow 160ms ease;
+      }
+      .mds-demo-cursor.is-visible {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      .mds-demo-cursor.is-pressing {
+        background: #fff;
+        transform: translate(-50%, -50%) scale(0.72);
+        box-shadow:
+          0 0 0 10px rgba(210, 242, 92, 0.5),
+          0 4px 12px rgba(0, 0, 0, 0.28);
+      }
+      .mds-demo-cursor::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #111;
+        transform: translate(-50%, -50%);
+      }
+      .mds-demo-cursor::after {
+        content: "click";
+        position: absolute;
+        left: 34px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: #111;
+        color: #d2f25c;
+        font: 700 11px/1 ui-sans-serif, system-ui, sans-serif;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 140ms ease;
+      }
+      .mds-demo-cursor.is-visible::after { opacity: 1; }
+      .mds-demo-focus {
+        outline: 3px solid #d2f25c !important;
+        outline-offset: 5px !important;
+        box-shadow: 0 0 0 10px rgba(210, 242, 92, 0.3) !important;
+        border-radius: 12px !important;
+        transition: outline 160ms ease, box-shadow 160ms ease;
+      }
+    `,
+  });
+
+  await page.evaluate(() => {
+    let cursor = document.querySelector(".mds-demo-cursor");
+    if (!(cursor instanceof HTMLElement)) {
+      cursor = document.createElement("div");
+      cursor.className = "mds-demo-cursor";
+      cursor.setAttribute("aria-hidden", "true");
+      document.documentElement.append(cursor);
+    }
+  });
+}
+
+async function moveDemoCursor(page, locator) {
+  const box = await locator.boundingBox();
+  if (!box) throw new Error("Cannot move demo cursor: element has no bounding box");
+  const x = Math.round(box.x + box.width * 0.55);
+  const y = Math.round(box.y + box.height * 0.55);
+
+  await installDemoCursor(page);
+
+  // Appear at viewport center first, then animate to the target.
+  await page.evaluate(() => {
+    const cursor = document.querySelector(".mds-demo-cursor");
+    if (!(cursor instanceof HTMLElement)) return;
+    cursor.style.transition = "none";
+    cursor.style.left = "50%";
+    cursor.style.top = "42%";
+    cursor.classList.add("is-visible");
+    cursor.classList.remove("is-pressing");
+    void cursor.offsetWidth;
+    cursor.style.transition = "";
+  });
+  await page.waitForTimeout(180);
+  await page.evaluate(({ x, y }) => {
+    const cursor = document.querySelector(".mds-demo-cursor");
+    if (!(cursor instanceof HTMLElement)) return;
+    cursor.style.left = `${x}px`;
+    cursor.style.top = `${y}px`;
+  }, { x, y });
+  await page.mouse.move(x, y);
+  await page.waitForTimeout(620);
+}
+
+async function pressDemoCursor(page) {
+  await page.evaluate(() => {
+    document.querySelector(".mds-demo-cursor")?.classList.add("is-pressing");
+  });
+  await page.waitForTimeout(180);
+  await page.evaluate(() => {
+    document.querySelector(".mds-demo-cursor")?.classList.remove("is-pressing");
+  });
+  await page.waitForTimeout(80);
+}
+
+async function setDemoFocus(page, locator, on) {
+  await locator.evaluate((el, enabled) => {
+    el.classList.toggle("mds-demo-focus", Boolean(enabled));
+  }, on);
+}
+
+async function hideDemoCursor(page) {
+  await page.evaluate(() => {
+    document.querySelector(".mds-demo-cursor")?.classList.remove("is-visible", "is-pressing");
+    document.querySelectorAll(".mds-demo-focus").forEach((el) => el.classList.remove("mds-demo-focus"));
+  });
+}
+
 async function selectExample(page, exampleId) {
-  await page.selectOption('select[aria-label="Document"]', `example:${exampleId}`);
-  await page.waitForTimeout(120);
+  const select = page.locator('select[aria-label="Document"]');
+  const switcher = page.locator(".document-switcher");
+  await setDemoFocus(page, switcher, true);
+  await moveDemoCursor(page, select);
+  await page.waitForTimeout(1100);
+  await pressDemoCursor(page);
+  await select.click({ force: true });
+  await page.waitForTimeout(600);
+  await select.selectOption(`example:${exampleId}`);
+  await page.waitForTimeout(700);
+  await setDemoFocus(page, switcher, false);
+  await hideDemoCursor(page);
   await waitForPreviewReady(page);
 }
 
 async function selectTheme(page, themeName) {
-  const themeSelect = page.locator(".theme-select-field select");
+  const field = page.locator(".theme-select-field");
+  const themeSelect = field.locator("select");
   await themeSelect.waitFor({ state: "visible", timeout: 15_000 });
+  await setDemoFocus(page, field, true);
+  await moveDemoCursor(page, themeSelect);
+  await page.waitForTimeout(1100);
+  await pressDemoCursor(page);
+  await themeSelect.click({ force: true });
+  await page.waitForTimeout(600);
   await themeSelect.selectOption(themeName);
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(700);
+  await setDemoFocus(page, field, false);
+  await hideDemoCursor(page);
   await waitForPreviewReady(page);
 }
 
@@ -221,6 +384,7 @@ async function runDemo(page) {
   await page.goto(EDITOR_URL, { waitUntil: "domcontentloaded", timeout: 120_000 });
   await page.waitForSelector(".app-shell", { timeout: 60_000 });
   await waitForPreviewReady(page);
+  await installDemoCursor(page);
   await page.waitForTimeout(150);
 
   for (let i = 0; i < EXAMPLES.length; i++) {
@@ -228,6 +392,7 @@ async function runDemo(page) {
     console.log(`[demo] Example: ${example.label}`);
     if (i > 0) {
       await selectExample(page, example.id);
+      await hideDemoCursor(page);
     }
     await resetPreviewScroll(page);
     await page.waitForTimeout(example.settleMs ?? 1000);
@@ -237,11 +402,19 @@ async function runDemo(page) {
 
   console.log("[demo] Switch theme: canvas");
   await selectTheme(page, "canvas");
+  await hideDemoCursor(page);
   await page.waitForTimeout(2000);
 
   console.log("[demo] New document + live typing");
-  await page.getByRole("button", { name: "New", exact: true }).click();
+  const newButton = page.getByRole("button", { name: "New", exact: true });
+  await setDemoFocus(page, newButton, true);
+  await moveDemoCursor(page, newButton);
+  await page.waitForTimeout(900);
+  await pressDemoCursor(page);
+  await newButton.click();
   await page.waitForTimeout(500);
+  await hideDemoCursor(page);
+  await page.waitForTimeout(400);
   await waitForPreviewReady(page);
   await clearEditor(page);
   await page.waitForTimeout(300);
