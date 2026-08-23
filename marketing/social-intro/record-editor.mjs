@@ -135,6 +135,14 @@ async function selectExample(page, exampleId) {
   await waitForPreviewReady(page);
 }
 
+async function selectTheme(page, themeName) {
+  const themeSelect = page.locator(".theme-select-field select");
+  await themeSelect.waitFor({ state: "visible", timeout: 15_000 });
+  await themeSelect.selectOption(themeName);
+  await page.waitForTimeout(200);
+  await waitForPreviewReady(page);
+}
+
 /** Scroll preview from top to bottom in exactly `totalMs` milliseconds. */
 async function scrollPreview(page, totalMs, steps) {
   const frame = page.frameLocator('iframe[title="MDS preview"]');
@@ -199,6 +207,10 @@ async function runDemo(page) {
     await scrollPreview(page, example.scrollMs, example.scrollSteps);
     await page.waitForTimeout(100);
   }
+
+  console.log("[demo] Switch theme: canvas");
+  await selectTheme(page, "canvas");
+  await page.waitForTimeout(2000);
 
   console.log("[demo] New document + live typing");
   await page.getByRole("button", { name: "New", exact: true }).click();
