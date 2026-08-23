@@ -23,19 +23,37 @@ const EXAMPLES = [
   { id: "motion", label: "Motion", scrollMs: 2000, scrollSteps: 4, settleMs: 2000 },
 ];
 
-const LIVE_DEMO_CHUNKS = [
-  "---\ntitle: Live Preview\n---\n\n",
-  "# Hello MDS\n\n",
-  "- Write in Markdown\n- Rich HTML output\n- Instant preview\n\n",
-  "::: hero\n",
-  "# Write pages like Markdown\n\n",
-  "Describe structure with semantic blocks. MDS renders the rest.\n\n",
-  "[Get started -> /docs]\n",
-  ":::\n\n",
-  ':: button label="Start"\n',
-  ':: slider label="Volume" min=0 max=100 value=60\n',
-  ':: switch label="Dark mode" checked\n',
-];
+const LIVE_DEMO_SOURCE = `---
+title: Live Preview
+---
+
+# Hello MDS
+
+- Write in Markdown
+- Rich HTML output
+- Instant preview
+
+::: hero
+# Write pages like Markdown
+
+Describe structure with semantic blocks. MDS renders the rest.
+
+[Get started -> /docs]
+:::
+
+:: button label="Start"
+:: slider label="Volume" name="volume" min=0 max=100 value=60
+:: switch label="Dark mode" name="dark" checked
+`;
+
+/** Chunk boundaries for brief pauses (after structural sections). */
+const LIVE_DEMO_PAUSE_AT = new Set([
+  LIVE_DEMO_SOURCE.indexOf("# Hello MDS"),
+  LIVE_DEMO_SOURCE.indexOf("::: hero"),
+  LIVE_DEMO_SOURCE.indexOf(":: button"),
+  LIVE_DEMO_SOURCE.indexOf(":: slider"),
+  LIVE_DEMO_SOURCE.indexOf(":: switch"),
+]);
 
 function run(cmd, args, options = {}) {
   return new Promise((resolve, reject) => {
@@ -177,15 +195,22 @@ async function clearEditor(page) {
   await page.waitForTimeout(200);
 }
 
-async function typeChunks(page, chunks, { charDelayMs = 28, chunkPauseMs = 420 } = {}) {
+/**
+ * Type with a visible caret, but use insertText (not keydown) so Enter does not
+ * trigger the editor's ::: auto-close and corrupt the MDS structure.
+ */
+async function typeLiveDemo(page, source, { charDelayMs = 26, sectionPauseMs = 380 } = {}) {
   await focusEditor(page);
-  for (const chunk of chunks) {
-    // Character-by-character typing so the left editor shows a real typing effect
-    // and the right preview updates progressively.
-    await page.keyboard.type(chunk, { delay: charDelayMs });
-    await page.waitForTimeout(chunkPauseMs);
-    await waitForPreviewReady(page).catch(() => {});
+  for (let i = 0; i < source.length; i++) {
+    if (LIVE_DEMO_PAUSE_AT.has(i) && i > 0) {
+      await page.waitForTimeout(sectionPauseMs);
+      await waitForPreviewReady(page).catch(() => {});
+    }
+    await page.keyboard.insertText(source[i]);
+    await page.waitForTimeout(charDelayMs);
   }
+  await page.waitForTimeout(sectionPauseMs);
+  await waitForPreviewReady(page).catch(() => {});
 }
 
 async function runDemo(page) {
@@ -218,7 +243,7 @@ async function runDemo(page) {
   await waitForPreviewReady(page);
   await clearEditor(page);
   await page.waitForTimeout(300);
-  await typeChunks(page, LIVE_DEMO_CHUNKS, { charDelayMs: 28, chunkPauseMs: 380 });
+  await typeLiveDemo(page, LIVE_DEMO_SOURCE, { charDelayMs: 26, sectionPauseMs: 380 });
   await page.waitForTimeout(1800);
 
   await scrollPreview(page, 1400, 3);
