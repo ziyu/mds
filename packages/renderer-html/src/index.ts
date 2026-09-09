@@ -25,7 +25,7 @@ import {
   renderSlottedContainer
 } from "./base-renderers.js";
 import { escapeAttribute, escapeHtml } from "./escape.js";
-import { renderMarkdownResult } from "./markdown.js";
+import { renderMarkdownResult, type MarkdownRenderCache } from "./markdown.js";
 import {
   getDocumentMetadata,
   renderDocumentHead,
@@ -35,12 +35,33 @@ import {
 import { sanitizeUrl, type UrlPurpose } from "./url.js";
 
 export interface RenderHtmlOptions {
+  /** Optional bounded cache owned by the caller; keys use fully resolved Markdown. */
+  markdownCache?: MarkdownRenderCache;
+  limits?: Partial<RenderLimits>;
   title?: string;
   includeCss?: boolean;
   theme?: HtmlTheme;
   blockRenderers?: HtmlBlockRenderers;
   includeDefaultBlockRenderers?: boolean;
   knownActions?: Iterable<string>;
+}
+
+export { createMarkdownRenderCache } from "./markdown.js";
+export type { MarkdownRenderCache } from "./markdown.js";
+
+export interface RenderLimits {
+  maxDepth: number;
+  maxNodes: number;
+  /** UTF-16 code units, including shell and theme assets. */
+  maxOutputLength: number;
+}
+
+const defaultLimits: RenderLimits = { maxDepth: 128, maxNodes: 100_000, maxOutputLength: 8_000_000 };
+
+interface RenderBudget {
+  limits: RenderLimits;
+  depth: number;
+  nodes: number;
 }
 
 export interface RenderHtmlResult {
@@ -70,6 +91,8 @@ const baseTheme: HtmlTheme = {
 };
 
 interface RenderContext extends HtmlRenderContext {
+  budget: RenderBudget;
+  markdownCache: MarkdownRenderCache | undefined;
   states: Map<string, string>;
   lists: Map<string, string[]>;
   locals: Map<string, string>;
@@ -122,7 +145,14 @@ function renderHtmlParts(document: DocumentNode, options: RenderHtmlOptions): Re
   const theme = options.theme ?? baseTheme;
   const metadata = getDocumentMetadata(document.frontmatter, options.title);
   const diagnostics = [...document.diagnostics];
+  const limits = { ...defaultLimits, ...options.limits };
+  for (const [name, value] of Object.entries(limits)) {
+    if (!Number.isSafeInteger(value) || value < 1) throw new RangeError(`${name} must be a positive safe integer.`);
+  }
+  validateTree(document.children, limits);
   const context = createRenderContext({
+    budget: { limits, depth: 0, nodes: 0 },
+    markdownCache: options.markdownCache,
     states: collectStates(document.children),
     lists: collectLists(document.children),
     locals: new Map(),
@@ -142,6 +172,7 @@ function renderHtmlParts(document: DocumentNode, options: RenderHtmlOptions): Re
     scripts
   });
 
+  checkOutput(html, context);
   return {
     html,
     body,
@@ -153,6 +184,8 @@ function renderHtmlParts(document: DocumentNode, options: RenderHtmlOptions): Re
 }
 
 function createRenderContext(input: {
+  budget: RenderBudget;
+  markdownCache: MarkdownRenderCache | undefined;
   states: Map<string, string>;
   lists: Map<string, string[]>;
   locals: Map<string, string>;
@@ -174,6 +207,8 @@ function createRenderContext(input: {
       return renderChildren(
         children,
         createRenderContext({
+          budget: context.budget,
+          markdownCache: context.markdownCache,
           states: context.states,
           lists: context.lists,
           locals: nextLocals,
@@ -197,7 +232,12 @@ function createRenderContext(input: {
 }
 
 function renderChildren(children: MdsNode[], context: RenderContext): string {
-  return children.map((child) => renderNode(child, context)).filter(Boolean).join("\n");
+  let output = "";
+  for (const child of children) {
+    const html = renderNode(child, context);
+    if (html) output = checkOutput(output + (output ? "\n" : "") + html, context);
+  }
+  return output;
 }
 
 function renderDocumentBody(children: MdsNode[], context: RenderContext): string {
@@ -207,7 +247,37 @@ function renderDocumentBody(children: MdsNode[], context: RenderContext): string
   return hasPageBlock ? body : `<main class="page">${body}</main>`;
 }
 
+function checkOutput(html: string, context: RenderContext): string {
+  if (html.length > context.budget.limits.maxOutputLength) throw new RangeError("MDS output exceeds maxOutputLength.");
+  return html;
+}
+
+// Validate before recursive state/list collection, including caller-constructed ASTs.
+function validateTree(children: MdsNode[], limits: RenderLimits): void {
+  const stack = [{ children, depth: 1 }];
+  let nodes = 0;
+  while (stack.length) {
+    const frame = stack.pop()!;
+    if (frame.depth > limits.maxDepth) throw new RangeError("MDS tree exceeds maxDepth.");
+    for (const child of frame.children) {
+      if (++nodes > limits.maxNodes) throw new RangeError("MDS tree exceeds maxNodes.");
+      if ("children" in child) stack.push({ children: child.children, depth: frame.depth + 1 });
+    }
+  }
+}
+
 function renderNode(node: MdsNode, context: RenderContext): string {
+  const budget = context.budget;
+  if (++budget.nodes > budget.limits.maxNodes) throw new RangeError("MDS expansion exceeds maxNodes.");
+  if (++budget.depth > budget.limits.maxDepth) throw new RangeError("MDS rendering exceeds maxDepth.");
+  try {
+    return checkOutput(renderNodeWithinBudget(node, context), context);
+  } finally {
+    budget.depth -= 1;
+  }
+}
+
+function renderNodeWithinBudget(node: MdsNode, context: RenderContext): string {
   switch (node.type) {
     case "document":
       return renderChildren(node.children, context);
@@ -268,7 +338,8 @@ function renderCommandActionLink(node: ActionLinkNode, context: RenderContext): 
 }
 
 function renderMarkdownNode(node: MarkdownNode, context: RenderContext): string {
-  const rendered = renderMarkdownResult(interpolate(node.value, context));
+  const value = interpolate(node.value, context);
+  const rendered = context.markdownCache?.render(value) ?? renderMarkdownResult(value);
   for (const unsafeUrl of rendered.unsafeUrls) {
     reportUnsafeUrl(context, unsafeUrl.value, unsafeUrl.purpose, node.position);
   }
@@ -316,6 +387,8 @@ function renderBlock(block: MdsBlockNode, context: RenderContext): string {
   return renderer(
     block,
     createRenderContext({
+      budget: context.budget,
+      markdownCache: context.markdownCache,
       states: context.states,
       lists: context.lists,
       locals: context.locals,
@@ -336,16 +409,16 @@ function renderConditionBlock(
   return shouldRender ? context.renderChildren(block.children) : "";
 }
 
-function renderEachBlock(block: { listName: string; children: MdsNode[] }, context: HtmlRenderContext): string {
+function renderEachBlock(block: { listName: string; children: MdsNode[] }, context: RenderContext): string {
   const items = context.lists.get(block.listName) ?? [];
 
-  return items
-    .map((item) => {
-      const locals = new Map<string, string>();
-      locals.set("item", item);
-      return context.renderChildrenWithLocals(block.children, locals);
-    })
-    .join("\n");
+  let output = "";
+  for (const [index, item] of items.entries()) {
+    if (++context.budget.nodes > context.budget.limits.maxNodes) throw new RangeError("MDS expansion exceeds maxNodes.");
+    const html = context.renderChildrenWithLocals(block.children, new Map([["item", item]]));
+    output = checkOutput(output + (index ? "\n" : "") + html, context);
+  }
+  return output;
 }
 
 export function createBlockRenderers(options: RenderHtmlOptions = {}): HtmlBlockRenderers {

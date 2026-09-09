@@ -73,6 +73,19 @@ export const EditorPane = forwardRef<EditorPaneHandle, EditorPaneProps>(function
       parent: hostRef.current,
       extensions: [
         mdsContainerAutoClose,
+        // Large insertText/IME commits otherwise build a contenteditable DOM and
+        // ask CodeMirror to diff it back into text. Apply the native input as one
+        // transaction before that expensive DOM round trip.
+        EditorView.domEventHandlers({
+          beforeinput(event, view) {
+            if (!event.cancelable || event.isComposing || view.composing || event.inputType !== "insertText" ||
+                event.data === null || (event.data.length < 4096 && view.state.selection.main.to - view.state.selection.main.from < 4096) ||
+                view.state.selection.ranges.length !== 1) return false;
+            event.preventDefault();
+            view.dispatch(view.state.replaceSelection(event.data), { scrollIntoView: true, userEvent: "input" });
+            return true;
+          }
+        }),
         basicSetup,
         markdown(),
         mdsFoldGutter,

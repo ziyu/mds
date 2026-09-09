@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import { spawn } from "node:child_process";
 import { access, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
@@ -264,7 +265,7 @@ async function evaluate(client, sessionId, expression) {
     expression,
     awaitPromise: true,
     returnByValue: true
-  }, sessionId);
+  }, sessionId).catch((error) => { throw new Error(`${error.message} Expression: ${expression.slice(0, 160)}`); });
   if (response.exceptionDetails !== undefined) {
     throw new Error(response.exceptionDetails.text ?? `Browser evaluation failed: ${expression}.`);
   }
@@ -440,7 +441,11 @@ class CdpClient {
     const id = this.nextId;
     this.nextId += 1;
     return new Promise((resolveResult, rejectResult) => {
-      this.pending.set(id, { resolve: resolveResult, reject: rejectResult });
+      const timeout = setTimeout(() => {
+        this.pending.delete(id);
+        rejectResult(new Error(`Timed out running Chrome DevTools command ${method}.`));
+      }, 20_000);
+      this.pending.set(id, { resolve: resolveResult, reject: rejectResult, timeout });
       this.socket.send(JSON.stringify({ id, method, params, ...(sessionId === undefined ? {} : { sessionId }) }));
     });
   }
@@ -463,6 +468,10 @@ class CdpClient {
   }
 
   close() {
+    for (const pending of this.pending.values()) { clearTimeout(pending.timeout); pending.reject(new Error('CDP closed.')); }
+    this.pending.clear();
+    for (const waiter of this.eventWaiters) { clearTimeout(waiter.timeout); waiter.reject(new Error('CDP closed.')); }
+    this.eventWaiters = [];
     this.socket.close();
   }
 
@@ -472,6 +481,7 @@ class CdpClient {
       const pending = this.pending.get(message.id);
       if (pending !== undefined) {
         this.pending.delete(message.id);
+        clearTimeout(pending.timeout);
         if (message.error !== undefined) pending.reject(new Error(message.error.message ?? "Chrome DevTools command failed."));
         else pending.resolve(message.result ?? {});
       }
@@ -497,4 +507,6 @@ function delay(ms) {
   return new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
 }
 
-await main();
+export { CdpClient, startEditor, readEditorStartup, resolveChromeExecutable, launchChromeWithRetries, waitForExit, evaluate, waitForExpression, replaceEditorText, clickButton };
+
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) await main();

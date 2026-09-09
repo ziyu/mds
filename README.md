@@ -171,6 +171,7 @@ Lower-level packages:
 
 ## Documentation
 
+- [Rendering performance and preview lifecycle](./docs/PERFORMANCE.md)
 - [Language specification](./SPEC.md)
 - [Implementation plan](./IMPLEMENTATION_PLAN.md)
 - [Release plan](./docs/RELEASE_PLAN.md)

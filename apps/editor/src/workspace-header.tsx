@@ -3,6 +3,7 @@ import type { LocalEditorDocument } from "./local-document.js";
 import { serializeEditorDocumentRef } from "./editor-document.js";
 
 export interface WorkspaceHeaderProps {
+  canExportHtml?: boolean;
   activeDocumentValue: string;
   activeKind: "example" | "file" | "local";
   activeLabel: string;
@@ -97,8 +98,8 @@ export function WorkspaceHeader(props: WorkspaceHeaderProps) {
       </div>
 
       <div className="export-actions" aria-label="Export actions">
-        <button type="button" onClick={props.onCopyHtml}>Copy HTML</button>
-        <button type="button" onClick={props.onDownloadHtml}>Export</button>
+        <button type="button" onClick={props.onCopyHtml} disabled={props.canExportHtml === false}>Copy HTML</button>
+        <button type="button" onClick={props.onDownloadHtml} disabled={props.canExportHtml === false}>Export</button>
       </div>
     </header>
   );

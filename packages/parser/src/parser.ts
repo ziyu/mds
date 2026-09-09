@@ -36,9 +36,13 @@ import {
 
 export interface ParseOptions {
   filePath?: string;
+  /** Maximum nested containers (slots included). Defaults to 128. */
+  maxDepth?: number;
 }
 
 interface ParseContext {
+  depth: number;
+  maxDepth: number;
   diagnostics: Diagnostic[];
   usedBlockIds: Map<string, number>;
 }
@@ -66,10 +70,14 @@ interface ParseLineOptions {
   allowSlots?: boolean;
 }
 
-export function parseMds(source: string, _options: ParseOptions = {}): DocumentNode {
+export function parseMds(source: string, options: ParseOptions = {}): DocumentNode {
   const normalizedSource = source.replace(/\r\n?/g, "\n");
   const parsed = parseFrontmatter(normalizedSource);
+  const maxDepth = options.maxDepth ?? 128;
+  if (!Number.isSafeInteger(maxDepth) || maxDepth < 1) throw new RangeError("maxDepth must be a positive safe integer.");
   const context: ParseContext = {
+    depth: 0,
+    maxDepth,
     diagnostics: [],
     usedBlockIds: new Map()
   };
@@ -91,6 +99,20 @@ function parseLines(
   baseLine: number,
   context: ParseContext,
   options: ParseLineOptions = {}
+): ParseResult {
+  if (context.depth >= context.maxDepth) {
+    throw new RangeError(`MDS nesting exceeds maxDepth (${context.maxDepth}) at line ${baseLine + startIndex}.`);
+  }
+  context.depth += 1;
+  try {
+    return parseLinesWithinBudget(lines, startIndex, baseLine, context, options);
+  } finally {
+    context.depth -= 1;
+  }
+}
+
+function parseLinesWithinBudget(
+  lines: string[], startIndex: number, baseLine: number, context: ParseContext, options: ParseLineOptions
 ): ParseResult {
   const children: MdsNode[] = [];
   let markdownStart = startIndex;

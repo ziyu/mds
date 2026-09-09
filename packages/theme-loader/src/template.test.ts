@@ -139,3 +139,15 @@ function escapeHtml(value: string): string {
 function escapeAttribute(value: string): string {
   return escapeHtml(value).replaceAll("'", "&#39;");
 }
+
+it("evaluates each slot once even when both aggregate and named placeholders are used", () => {
+  const context = createContext();
+  let calls = 0;
+  context.renderChildren = () => String(++calls);
+  const renderer = createTemplateBlockRenderer('{{ slots }}|{{ slot:title }}|{{ slot:title }}');
+  const html = renderer({ type: 'block', blockType: 'card', children: [], slots: [
+    { type: 'slot', name: 'title', children: [] }
+  ] }, context);
+  expect(calls).toBe(2); // one content evaluation, one slot evaluation
+  expect(html).toBe('<section class="card-item" data-slot="title">2</section>|2|2');
+});
