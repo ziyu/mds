@@ -8,14 +8,59 @@ export interface InlineParseResult {
 }
 
 const inlineTokenPattern =
-  /\{\{\s*([^}]+?)\s*\}\}|\[([^\]\n]+?)\s+(->|=>|>>)\s+([^\]\n]+?)\]|\[([^\]\n]+?)\s+!(\S+)(?:\s+([^\]\n]+?))?\]/g;
+  /\{\{\s*([^}]+?)\s*\}\}|\[([^\]\n]+?)\s+(->|=>|>>)\s+([^\]\n]+?)\]|\[([^\]\n]+?)\s+!(\S+)(?:\s+([^\]\n]+?))?\]/y;
+
+// Bound failed candidates too: an unclosed run of '[' or '{{' must not
+// rescan the remaining document once for every opening delimiter.
+function* matchInlineTokens(value: string): Generator<RegExpExecArray> {
+  let consumed = 0;
+  let blockedBraces = -1;
+  let blockedBrackets = -1;
+  let bracketClose = -1;
+  let newline = -1;
+  for (const opening of value.matchAll(/\{\{|\[/g)) {
+    const index = opening.index!;
+    if (index < consumed) continue;
+    if (opening[0] === "{{") {
+      if (index <= blockedBraces) continue;
+      const close = value.indexOf("}", index + 2);
+      if (close === -1 || value[close + 1] !== "}") {
+        blockedBraces = close === -1 ? value.length : close;
+        continue;
+      }
+    } else {
+      if (index <= blockedBrackets) continue;
+      if (bracketClose < index) {
+        bracketClose = value.indexOf("]", index + 1);
+        if (bracketClose === -1) bracketClose = value.length;
+      }
+      if (newline < index) {
+        newline = value.indexOf("\n", index + 1);
+        if (newline === -1) newline = value.length;
+      }
+      if (bracketClose === value.length) {
+        blockedBrackets = value.length;
+        continue;
+      }
+    }
+    inlineTokenPattern.lastIndex = index;
+    const match = inlineTokenPattern.exec(value);
+    if (match) {
+      consumed = index + match[0].length;
+      yield match;
+    } else if (opening[0] === "[") {
+      blockedBrackets = Math.min(newline, bracketClose);
+    }
+  }
+}
 
 export function parseMarkdownInlines(value: string, startLine: number): InlineParseResult {
   const inlines: MarkdownInlineNode[] = [];
   const diagnostics: Diagnostic[] = [];
   let lastIndex = 0;
+  const positionAt = createPositionCursor(value, startLine);
 
-  for (const match of value.matchAll(inlineTokenPattern)) {
+  for (const match of matchInlineTokens(value)) {
     if (isEscaped(value, match.index ?? 0)) {
       continue;
     }
@@ -25,13 +70,13 @@ export function parseMarkdownInlines(value: string, startLine: number): InlinePa
       inlines.push({
         type: "text",
         value: value.slice(lastIndex, index),
-        position: offsetPosition(value, startLine, lastIndex, index)
+        position: positionAt(lastIndex, index)
       });
     }
 
     if (match[1] !== undefined) {
       const path = match[1].trim();
-      const position = offsetPosition(value, startLine, index, index + match[0].length);
+      const position = positionAt(index, index + match[0].length);
       if (!pathPattern.test(path)) {
         diagnostics.push({
           code: "invalid-interpolation",
@@ -46,7 +91,7 @@ export function parseMarkdownInlines(value: string, startLine: number): InlinePa
         position
       });
     } else {
-      const actionLink = buildInlineActionLink(match, offsetPosition(value, startLine, index, index + match[0].length));
+      const actionLink = buildInlineActionLink(match, positionAt(index, index + match[0].length));
       inlines.push(actionLink);
       diagnostics.push(...validateAction(actionLink));
     }
@@ -58,7 +103,7 @@ export function parseMarkdownInlines(value: string, startLine: number): InlinePa
     inlines.push({
       type: "text",
       value: value.slice(lastIndex),
-      position: offsetPosition(value, startLine, lastIndex, value.length)
+      position: positionAt(lastIndex, value.length)
     });
   }
 
@@ -162,17 +207,25 @@ function isEscaped(value: string, index: number): boolean {
   return slashCount % 2 === 1;
 }
 
-function offsetPosition(value: string, startLine: number, startOffset: number, endOffset: number): Position {
-  const start = offsetToLineColumn(value, startLine, startOffset);
-  const end = offsetToLineColumn(value, startLine, endOffset);
-  return lineRange(start.line, end.line, start.column, end.column);
-}
-
-function offsetToLineColumn(value: string, startLine: number, offset: number): { line: number; column: number } {
-  const before = value.slice(0, offset);
-  const lines = before.split("\n");
-  return {
-    line: startLine + lines.length - 1,
-    column: (lines.at(-1)?.length ?? 0) + 1
+// Tokens are consumed in source order. Scan each UTF-16 code unit at most once.
+function createPositionCursor(value: string, startLine: number) {
+  let offset = 0;
+  let line = startLine;
+  let column = 1;
+  const advance = (target: number) => {
+    while (offset < target) {
+      if (value.charCodeAt(offset++) === 10) {
+        line += 1;
+        column = 1;
+      } else {
+        column += 1;
+      }
+    }
+    return { line, column };
+  };
+  return (startOffset: number, endOffset: number): Position => {
+    const start = advance(startOffset);
+    const end = advance(endOffset);
+    return lineRange(start.line, end.line, start.column, end.column);
   };
 }

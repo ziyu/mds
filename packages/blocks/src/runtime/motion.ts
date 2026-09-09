@@ -3,6 +3,19 @@ import { createEnhancementScript } from "./create-script.js";
 const implementation = String.raw`  const supportedMotionTriggers = new Set(["load", "view", "hover", "state"]);
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let motionObserver = null;
+  const replayElements = new Set();
+  let replayFrame = 0;
+  let replayListening = false;
+  const updateReplayState = () => {
+    replayFrame = 0;
+    for (const element of replayElements) {
+      const rect = element.getBoundingClientRect();
+      if (rect.bottom < 0 || rect.top > window.innerHeight) leaveMotion(element);
+    }
+  };
+  const onReplayScroll = () => {
+    if (replayFrame === 0) replayFrame = requestAnimationFrame(updateReplayState);
+  };
 
   function setupMotion() {
     const elements = Array.from(document.querySelectorAll(
@@ -17,12 +30,22 @@ const implementation = String.raw`  const supportedMotionTriggers = new Set(["lo
     }
 
     document.documentElement.classList.add("motion-ready");
-    motionObserver = "IntersectionObserver" in window && !prefersReducedMotion
+    motionObserver ||= "IntersectionObserver" in window && !prefersReducedMotion
       ? new IntersectionObserver(handleMotionIntersections, { rootMargin: "0px 0px -10%", threshold: 0.12 })
       : null;
 
     elements.forEach((element) => {
       element.dataset.mdsMotion = "true";
+      onUnmount(element, () => {
+        motionObserver?.unobserve(element);
+        replayElements.delete(element);
+        if (replayElements.size === 0 && replayListening) {
+          window.removeEventListener("scroll", onReplayScroll);
+          cancelAnimationFrame(replayFrame);
+          replayFrame = 0;
+          replayListening = false;
+        }
+      });
       const role = element.dataset.mdsRole || "";
       const fallbackPreset = role === "reveal" || element.classList.contains("reveal")
         ? "reveal"
@@ -72,23 +95,10 @@ const implementation = String.raw`  const supportedMotionTriggers = new Set(["lo
       }
     });
 
-    const replayElements = elements.filter((element) => element.dataset.motionOnce === "false");
-    if (replayElements.length > 0) {
-      let replayFrame = 0;
-      const updateReplayState = () => {
-        replayFrame = 0;
-        for (const element of replayElements) {
-          const rect = element.getBoundingClientRect();
-          if (rect.bottom < 0 || rect.top > window.innerHeight) {
-            leaveMotion(element);
-          }
-        }
-      };
-      window.addEventListener("scroll", () => {
-        if (replayFrame === 0) {
-          replayFrame = requestAnimationFrame(updateReplayState);
-        }
-      }, { passive: true });
+    elements.filter((element) => element.dataset.motionOnce === "false").forEach((element) => replayElements.add(element));
+    if (replayElements.size > 0 && !replayListening) {
+      window.addEventListener("scroll", onReplayScroll, { passive: true });
+      replayListening = true;
     }
 
     requestAnimationFrame(() => requestAnimationFrame(() => {

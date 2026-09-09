@@ -81,6 +81,8 @@ Generated packages are artifact-first:
 - npm `files` only includes `dist/theme`, so TypeScript/React source is not installed by theme consumers;
 - `prepack` rebuilds the artifact before `npm pack` or `npm publish`.
 
+The build clears the configured output directory. Keep `mdsTheme.dist` separate from source files and build assets; configurations that would delete or overwrite a build input are rejected before any output is changed. If output is the package root (`.`), only `blocks/` is cleared, and generated files must still avoid all build inputs.
+
 Review the generated name, version, license, repository metadata, and npm access policy before publishing.
 
 ## Simple Theme

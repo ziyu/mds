@@ -27,6 +27,7 @@ const MAX_DOCUMENT_BYTES = 2 * 1024 * 1024;
 const MAX_REQUEST_BYTES = MAX_DOCUMENT_BYTES + 64 * 1024;
 const DEFAULT_DOCUMENT = "# Untitled\n";
 const SKIPPED_DIRECTORIES = new Set([".git", ".hg", ".svn", "dist", "node_modules"]);
+const pendingSaves = new Map<string, Promise<void>>();
 
 export interface EditorFileRecord {
   path: string;
@@ -322,6 +323,31 @@ async function readDocument(project: EditorProject, requestedPath: string): Prom
 }
 
 async function saveDocument(project: EditorProject, input: SaveDocumentInput): Promise<EditorFileRecord> {
+  const { absolutePath } = resolveProjectFilePath(project.root, input.path);
+  // Directory queues also cover filename aliases during concurrent creates on case-insensitive filesystems.
+  const key = await realpath(dirname(absolutePath)).catch((error: unknown) => {
+    if (isNodeError(error) && error.code === "ENOENT") {
+      return dirname(absolutePath);
+    }
+    throw error;
+  });
+  const previous = pendingSaves.get(key);
+  let release!: () => void;
+  const pending = new Promise<void>((resolvePending) => { release = resolvePending; });
+  pendingSaves.set(key, pending);
+
+  await previous;
+  try {
+    return await saveDocumentExclusive(project, input);
+  } finally {
+    release();
+    if (pendingSaves.get(key) === pending) {
+      pendingSaves.delete(key);
+    }
+  }
+}
+
+async function saveDocumentExclusive(project: EditorProject, input: SaveDocumentInput): Promise<EditorFileRecord> {
   const { relativePath, absolutePath } = resolveProjectFilePath(project.root, input.path);
   const contentBytes = Buffer.byteLength(input.content, "utf8");
   if (contentBytes > MAX_DOCUMENT_BYTES) {

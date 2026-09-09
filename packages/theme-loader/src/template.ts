@@ -5,9 +5,10 @@ export function createTemplateBlockRenderer(template: string): HtmlBlockRenderer
   return (block, context) => {
     const children = context.renderChildren(context.getContentChildren(block));
     const slotNodes = context.getSlots(block);
-    const renderedSlots = renderSlots(block, slotNodes, context);
+    const slotHtml = slotNodes.map((slot) => context.renderChildren(slot.children));
+    const renderedSlots = renderSlots(block, slotNodes, slotHtml, context);
     const namedSlots = Object.fromEntries(
-      slotNodes.map((slot) => [`slot:${slot.name}`, context.renderChildren(slot.children)])
+      slotNodes.map((slot, index) => [`slot:${slot.name}`, slotHtml[index]!])
     );
     const namedAttrs = Object.fromEntries(
       Object.keys(block.attrs ?? {}).map((name) => [`__attr:${name}`, getBlockAttr(block, name)])
@@ -67,12 +68,13 @@ function renderAttrs(block: MdsBlockNode, context: HtmlRenderContext): string {
 function renderSlots(
   block: MdsBlockNode,
   slots: ReturnType<HtmlRenderContext["getSlots"]>,
+  slotHtml: string[],
   context: HtmlRenderContext
 ): string {
   return slots
     .map(
-      (slot) =>
-        `<section class="${context.escapeAttribute(block.blockType)}-item" data-slot="${context.escapeAttribute(slot.name)}">${context.renderChildren(slot.children)}</section>`
+      (slot, index) =>
+        `<section class="${context.escapeAttribute(block.blockType)}-item" data-slot="${context.escapeAttribute(slot.name)}">${slotHtml[index]}</section>`
     )
     .join("\n");
 }

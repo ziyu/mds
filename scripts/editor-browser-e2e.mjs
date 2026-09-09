@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import { spawn } from "node:child_process";
 import { access, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
@@ -52,7 +53,49 @@ try {
   await waitForExpression(client, sessionId, `document.body.innerText.includes('UNSAVED')`);
   await clickButton(client, sessionId, "Save");
   await waitForFileContent(input, savedSource, 10_000);
-  await waitForExpression(client, sessionId, `document.body.innerText.includes('SAVED')`);
+  await waitForExpression(client, sessionId, `document.querySelector('.file-state')?.textContent === 'Saved'`);
+
+  await evaluate(client, sessionId, `(() => {
+    const originalFetch = window.fetch.bind(window);
+    window.__mdsSaveRequestCount = 0;
+    window.__mdsRestoreFetch = () => { window.fetch = originalFetch; };
+    window.fetch = async (...args) => {
+      if (args[0] === '/__mds/file' && args[1]?.method === 'PUT') {
+        window.__mdsSaveRequestCount += 1;
+        const response = await originalFetch(...args);
+        await new Promise((resolve) => { window.__mdsReleaseSave = resolve; });
+        return response;
+      }
+      return originalFetch(...args);
+    };
+  })()`);
+  const pendingSource = themedSource("Snapshot submitted before more typing.");
+  const latestSource = themedSource("New input typed while the save response is pending.");
+  await replaceEditorText(client, sessionId, pendingSource);
+  await clickButton(client, sessionId, "Save");
+  await waitForExpression(client, sessionId, `typeof window.__mdsReleaseSave === 'function'`);
+  await replaceEditorText(client, sessionId, latestSource);
+  await evaluate(client, sessionId, `(() => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: true }));
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: true }));
+  })()`);
+  if (await evaluate(client, sessionId, `window.__mdsSaveRequestCount`) !== 1) {
+    throw new Error("Repeated save shortcuts submitted concurrent writes.");
+  }
+  if (await evaluate(client, sessionId, `document.querySelector('select[aria-label="Document"]')?.disabled`) !== true) {
+    throw new Error("Document switching remained enabled during a save.");
+  }
+  await evaluate(client, sessionId, `window.__mdsRestoreFetch(); window.__mdsReleaseSave();`);
+  await waitForExpression(client, sessionId, `document.querySelector('.file-state')?.textContent === 'Unsaved'`);
+  if (await evaluate(client, sessionId, `document.querySelector('.cm-content')?.innerText.includes('New input typed while the save response is pending.')`) !== true) {
+    throw new Error("Saving discarded text entered while the response was pending.");
+  }
+  if (await readFile(input, "utf8") !== pendingSource) {
+    throw new Error("The first save did not persist its submitted snapshot.");
+  }
+  await clickButton(client, sessionId, "Save");
+  await waitForFileContent(input, latestSource, 10_000);
+  await waitForExpression(client, sessionId, `document.querySelector('.file-state')?.textContent === 'Saved'`);
 
   const externalSource = themedSource("Changed outside the packed Editor.");
   await writeFile(input, externalSource, "utf8");
@@ -80,7 +123,7 @@ try {
   editorChild = undefined;
   await expectServerClosed(editor.url, 5_000);
 
-  console.log("Packed Editor browser E2E passed: open, installed theme, save, conflict, reload, diagnostics, shutdown.");
+  console.log("Packed Editor browser E2E passed: open, installed theme, save, edits during save, repeated save shortcuts, conflict, reload, diagnostics, shutdown.");
 } finally {
   client?.close();
   if (chromeChild !== undefined) {
@@ -222,7 +265,7 @@ async function evaluate(client, sessionId, expression) {
     expression,
     awaitPromise: true,
     returnByValue: true
-  }, sessionId);
+  }, sessionId).catch((error) => { throw new Error(`${error.message} Expression: ${expression.slice(0, 160)}`); });
   if (response.exceptionDetails !== undefined) {
     throw new Error(response.exceptionDetails.text ?? `Browser evaluation failed: ${expression}.`);
   }
@@ -398,7 +441,11 @@ class CdpClient {
     const id = this.nextId;
     this.nextId += 1;
     return new Promise((resolveResult, rejectResult) => {
-      this.pending.set(id, { resolve: resolveResult, reject: rejectResult });
+      const timeout = setTimeout(() => {
+        this.pending.delete(id);
+        rejectResult(new Error(`Timed out running Chrome DevTools command ${method}.`));
+      }, 20_000);
+      this.pending.set(id, { resolve: resolveResult, reject: rejectResult, timeout });
       this.socket.send(JSON.stringify({ id, method, params, ...(sessionId === undefined ? {} : { sessionId }) }));
     });
   }
@@ -421,6 +468,10 @@ class CdpClient {
   }
 
   close() {
+    for (const pending of this.pending.values()) { clearTimeout(pending.timeout); pending.reject(new Error('CDP closed.')); }
+    this.pending.clear();
+    for (const waiter of this.eventWaiters) { clearTimeout(waiter.timeout); waiter.reject(new Error('CDP closed.')); }
+    this.eventWaiters = [];
     this.socket.close();
   }
 
@@ -430,6 +481,7 @@ class CdpClient {
       const pending = this.pending.get(message.id);
       if (pending !== undefined) {
         this.pending.delete(message.id);
+        clearTimeout(pending.timeout);
         if (message.error !== undefined) pending.reject(new Error(message.error.message ?? "Chrome DevTools command failed."));
         else pending.resolve(message.result ?? {});
       }
@@ -455,4 +507,6 @@ function delay(ms) {
   return new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
 }
 
-await main();
+export { CdpClient, startEditor, readEditorStartup, resolveChromeExecutable, launchChromeWithRetries, waitForExit, evaluate, waitForExpression, replaceEditorText, clickButton };
+
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) await main();

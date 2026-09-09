@@ -8,6 +8,9 @@ const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const themesRoot = join(workspaceRoot, "themes");
 
 export default defineConfig({
+  // Markdown's entity decoder has a DOM-free worker export. Vite otherwise
+  // selects its browser implementation, which accesses document at module load.
+  resolve: { conditions: ["worker", "module", "browser", "development|production"] },
   plugins: [
     createMdsThemeApi({
       workspaceRoot,

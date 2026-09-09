@@ -60,18 +60,25 @@ const implementation = String.raw`  function setupFloatingMenus() {
           menu.open = false;
         }
       });
-      document.addEventListener("pointerdown", (event) => {
+      const pointerdown = (event) => {
         if (menu.open && event.target instanceof Node && !menu.contains(event.target)) {
           menu.open = false;
         }
-      });
-      document.addEventListener("keydown", (event) => {
+      };
+      const keydown = (event) => {
         if (event.key === "Escape" && menu.open) {
           menu.open = false;
           trigger.focus();
         }
-      });
+      };
+      document.addEventListener("pointerdown", pointerdown);
+      document.addEventListener("keydown", keydown);
       window.addEventListener("resize", position, { passive: true });
+      onUnmount(menu, () => {
+        document.removeEventListener("pointerdown", pointerdown);
+        document.removeEventListener("keydown", keydown);
+        window.removeEventListener("resize", position);
+      });
 
       if (menu.open) {
         position();

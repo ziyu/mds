@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
-import { parseMds } from "@mds-crate/parser";
-import { renderHtmlResult, type HtmlTheme } from "@mds-crate/renderer-html";
-import { ThemeValidationError, type ThemeSummary } from "@mds-crate/theme-loader/browser";
+import { usePreview } from "./use-preview.js";
+import { ThemeValidationError, type ThemeSummary, type ThemeSource } from "@mds-crate/theme-loader/browser";
 import { DiagnosticsPane } from "./diagnostics-pane.js";
 import {
   editorDocumentLabel,
@@ -11,8 +10,6 @@ import {
   type EditorDocument
 } from "./editor-document.js";
 import {
-  splitRenderDiagnostics,
-  withDiagnosticsSource,
   type EditorDiagnostic
 } from "./editor-diagnostics.js";
 import { EditorPane, type EditorPaneHandle } from "./editor-pane.js";
@@ -34,7 +31,8 @@ import {
 import {
   buildThemePackageWithDiagnostics,
   inspectThemeWithDiagnostics,
-  themeProvider
+  themeProvider,
+  loadPreviewThemeSource
 } from "./theme-provider.js";
 import { isThemeBuildHmrPayload, type ThemeBuildHmrPayload } from "./theme-build-contract.js";
 import {
@@ -80,7 +78,7 @@ export function App() {
   const [previewSize, setPreviewSize] = useState<PreviewSize>("desktop");
   const [themes, setThemes] = useState<ThemeSummary[]>([]);
   const [previewThemeRef, setPreviewThemeRef] = useState("default");
-  const [theme, setTheme] = useState<HtmlTheme | undefined>();
+  const [theme, setTheme] = useState<ThemeSource | undefined>();
   const [themeError, setThemeError] = useState<string | undefined>();
   const [themeDiagnostics, setThemeDiagnostics] = useState<EditorDiagnostic[]>([]);
   const [themeReloadToken, setThemeReloadToken] = useState(0);
@@ -92,6 +90,7 @@ export function App() {
   const [editorSession, setEditorSession] = useState<EditorSessionPayload | null>(null);
   const [baselineSource, setBaselineSource] = useState(initialExample.source);
   const [fileOperation, setFileOperation] = useState<"idle" | "opening" | "saving" | "creating">("idle");
+  const saveInProgress = useRef(false);
   const [fileError, setFileError] = useState<string | undefined>();
   const [fileConflict, setFileConflict] = useState<EditorFileRecord | null | undefined>();
   const [newFilePath, setNewFilePath] = useState("");
@@ -184,6 +183,7 @@ export function App() {
 
   useEffect(() => {
     const handlePreviewMessage = (event: MessageEvent) => {
+      if (event.source !== window.document.querySelector<HTMLIFrameElement>('iframe[title="MDS preview"]')?.contentWindow) return;
       if (isPreviewNavigationMessage(event.data)) {
         setPreviewNotice(`Preview only: ${event.data.href}`);
         return;
@@ -293,33 +293,15 @@ export function App() {
     };
   }, [canBuildEffectiveTheme, effectiveThemeRef, hasThemeList, knownThemeRefs, themeReloadToken]);
 
-  const document = useMemo(() => parseMds(source), [source]);
-  const renderState = useMemo<RenderState>(() => {
-    try {
-      if (theme === undefined) {
-        return {
-          html: themeError === undefined ? renderLoadingDocument() : renderErrorDocument(themeError),
-          diagnostics: [...themeDiagnostics, ...withDiagnosticsSource(document.diagnostics, "parser")]
-        };
-      }
-
-      const result = renderHtmlResult(document, {
-        theme
-      });
-
-      return {
-        ...result,
-        diagnostics: [...themeDiagnostics, ...splitRenderDiagnostics(result.diagnostics, document.diagnostics)]
-      };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return {
-        html: renderErrorDocument(message),
-        diagnostics: [...themeDiagnostics, ...withDiagnosticsSource(document.diagnostics, "parser")],
-        error: message
-      };
-    }
-  }, [document, theme, themeDiagnostics, themeError]);
+  const preview = usePreview(source, theme);
+  const renderState: RenderState = {
+    html: themeError ? renderErrorDocument(themeError)
+      : preview.result?.error ? renderErrorDocument(preview.result.error)
+      : preview.result?.html ?? renderLoadingDocument(),
+    diagnostics: [...themeDiagnostics, ...(preview.result?.diagnostics ?? [])],
+    ...(preview.result?.error ? { error: preview.result.error } : {})
+  };
+  const canExportHtml = theme !== undefined && !preview.pending && !renderState.error && !themeError;
 
   const activeDocumentValue = serializeEditorDocumentRef(editorDocumentRef(activeDocument));
   const activeDocumentLabel = editorDocumentLabel(activeDocument);
@@ -376,6 +358,9 @@ export function App() {
   }, [activeFile?.path, applyOpenedFile]);
 
   const handleDocumentChange = useCallback(async (value: string) => {
+    if (fileOperation !== "idle" || saveInProgress.current) {
+      return;
+    }
     const nextDocument = parseEditorDocumentRef(value);
     if (nextDocument === undefined || value === activeDocumentValue) {
       return;
@@ -395,12 +380,13 @@ export function App() {
     if (localDocument !== undefined) {
       applyLocalDocument(localDocument);
     }
-  }, [activeDocumentValue, applyExample, applyLocalDocument, handleFileChange, hasPendingChanges, localDocuments]);
+  }, [activeDocumentValue, applyExample, applyLocalDocument, fileOperation, handleFileChange, hasPendingChanges, localDocuments]);
 
   const handleSaveFile = useCallback(async (overwrite = false) => {
-    if (activeFile === null) {
+    if (activeFile === null || fileOperation !== "idle" || saveInProgress.current) {
       return;
     }
+    saveInProgress.current = true;
     setFileOperation("saving");
     setFileError(undefined);
     try {
@@ -409,7 +395,15 @@ export function App() {
         revision: activeFile.revision,
         content: source
       }, { overwrite });
-      applyOpenedFile(result.file, result.files);
+      // Saving acknowledges the submitted snapshot; edits made while waiting stay in the editor.
+      setActiveDocument({ kind: "file", file: result.file });
+      setBaselineSource(result.file.content);
+      setFileConflict(undefined);
+      setEditorSession((session) => session === null ? null : {
+        ...session,
+        activeFile: result.file,
+        files: result.files
+      });
       setPreviewNotice(`Saved ${result.file.path}`);
     } catch (error) {
       if (error instanceof EditorSessionError && error.code === "file-conflict") {
@@ -419,9 +413,10 @@ export function App() {
         setFileError(error instanceof Error ? error.message : String(error));
       }
     } finally {
+      saveInProgress.current = false;
       setFileOperation("idle");
     }
-  }, [activeFile, applyOpenedFile, source]);
+  }, [activeFile, fileOperation, source]);
 
   const handleReloadConflict = useCallback(() => {
     if (fileConflict === null || fileConflict === undefined) {
@@ -493,10 +488,11 @@ export function App() {
   }, [applyLocalDocument, hasPendingChanges]);
 
   const handleSaveLocalDocument = useCallback(async () => {
-    if (activeLocalDocument === null) {
+    if (activeLocalDocument === null || fileOperation !== "idle" || saveInProgress.current) {
       return;
     }
 
+    saveInProgress.current = true;
     setFileOperation("saving");
     setFileError(undefined);
     try {
@@ -517,9 +513,10 @@ export function App() {
     } catch (error) {
       setFileError(error instanceof Error ? error.message : String(error));
     } finally {
+      saveInProgress.current = false;
       setFileOperation("idle");
     }
-  }, [activeLocalDocument, source]);
+  }, [activeLocalDocument, fileOperation, source]);
 
   const handleSaveDocument = useCallback(async () => {
     if (activeDocument.kind === "file") {
@@ -599,10 +596,12 @@ export function App() {
   }, [effectiveThemeRef]);
 
   const handleCopyHtml = useCallback(async () => {
+    if (!canExportHtml) return;
     await navigator.clipboard.writeText(renderState.html);
-  }, [renderState.html]);
+  }, [renderState.html, canExportHtml]);
 
   const handleDownloadHtml = useCallback(() => {
+    if (!canExportHtml) return;
     const blob = new Blob([renderState.html], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const filename = activeDocument.kind === "example"
@@ -613,7 +612,7 @@ export function App() {
     const link = documentCreateDownloadLink(url, filename);
     link.click();
     URL.revokeObjectURL(url);
-  }, [activeDocument, renderState.html]);
+  }, [activeDocument, renderState.html, canExportHtml]);
 
   const handleFoldAllMds = useCallback(() => {
     editorPaneRef.current?.foldAllMds();
@@ -630,6 +629,7 @@ export function App() {
   return (
     <main className="app-shell">
       <WorkspaceHeader
+        canExportHtml={canExportHtml}
         activeDocumentValue={activeDocumentValue}
         activeKind={activeDocument.kind}
         activeLabel={activeDocumentLabel}
@@ -685,8 +685,8 @@ export function App() {
             <strong>Save conflict</strong>
             <span>{fileError ?? "The file changed on disk after it was opened."}</span>
             <div>
-              {fileConflict === null ? null : <button type="button" onClick={handleReloadConflict}>Reload disk version</button>}
-              <button type="button" className="danger-action" onClick={() => void handleSaveFile(true)}>Overwrite disk</button>
+              {fileConflict === null ? null : <button type="button" onClick={handleReloadConflict} disabled={fileOperation !== "idle"}>Reload disk version</button>}
+              <button type="button" className="danger-action" onClick={() => void handleSaveFile(true)} disabled={fileOperation !== "idle"}>Overwrite disk</button>
             </div>
           </div>
         ) : fileError === undefined ? null : <div className="theme-error" role="alert">{fileError}</div>}
@@ -746,7 +746,7 @@ export function App() {
               {previewNotice}
             </div>
           )}
-          <PreviewPane html={renderState.html} size={previewSize} />
+          <PreviewPane html={renderState.html} size={previewSize} pending={preview.pending} documentKey={activeDocumentValue} />
         </div>
       </section>
 
@@ -786,7 +786,7 @@ function themeDiagnosticsFromError(error: unknown, message: string): EditorDiagn
 }
 
 interface ThemePreviewLoadCallbacks {
-  setTheme: (theme: HtmlTheme | undefined) => void;
+  setTheme: (theme: ThemeSource | undefined) => void;
   setThemeError: (message: string | undefined) => void;
   setThemeDiagnostics: (diagnostics: EditorDiagnostic[]) => void;
   setThemeBuildProgress: Dispatch<SetStateAction<ThemeBuildProgress | undefined>>;
@@ -802,12 +802,12 @@ async function loadThemeForPreview(
   callbacks: ThemePreviewLoadCallbacks
 ): Promise<void> {
   try {
-    const result = await themeProvider.loadThemeWithDiagnostics(ref);
+    const result = await loadPreviewThemeSource(ref);
     if (isCancelled()) {
       return;
     }
 
-    callbacks.setTheme(result.theme);
+    callbacks.setTheme(result.source);
     callbacks.setThemeDiagnostics(result.diagnostics.map(themeDiagnosticToDiagnostic));
     return;
   } catch (error) {
@@ -843,12 +843,12 @@ async function buildAndReloadThemeForPreview(
     callbacks.setThemeError(undefined);
     callbacks.setPreviewNotice(`Theme built: ${ref}`);
 
-    const loadResult = await themeProvider.loadThemeWithDiagnostics(ref);
+    const loadResult = await loadPreviewThemeSource(ref);
     if (isCancelled()) {
       return;
     }
 
-    callbacks.setTheme(loadResult.theme);
+    callbacks.setTheme(loadResult.source);
     callbacks.setThemeDiagnostics(loadResult.diagnostics.map(themeDiagnosticToDiagnostic));
   } catch (error) {
     if (isCancelled()) {
@@ -891,21 +891,18 @@ function canTryUnlistedThemeRef(ref: string): boolean {
 }
 
 function readThemeRef(source: string): string | undefined {
-  const lines = source.replace(/\r\n?/g, "\n").split("\n");
-  if (lines[0]?.trim() !== "---") {
-    return undefined;
-  }
-
-  const closeIndex = lines.findIndex((line, index) => index > 0 && line.trim() === "---");
-  if (closeIndex === -1) {
-    return undefined;
-  }
-
-  for (const line of lines.slice(1, closeIndex)) {
-    const match = line.match(/^\s*theme\s*:\s*(.*?)\s*$/);
-    if (match?.[1] !== undefined && match[1].length > 0) {
-      return stripFrontmatterQuotes(match[1]);
+  let first = true;
+  let themeRef: string | undefined;
+  for (const match of source.matchAll(/([^\r\n]*)(?:\r\n?|\n|$)/g)) {
+    const line = match[1]!;
+    if (first) {
+      if (line.trim() !== "---") return undefined;
+      first = false;
+      continue;
     }
+    if (line.trim() === "---") return themeRef;
+    const theme = line.match(/^\s*theme\s*:\s*(.*?)\s*$/);
+    if (theme?.[1] && themeRef === undefined) themeRef = stripFrontmatterQuotes(theme[1]);
   }
 
   return undefined;

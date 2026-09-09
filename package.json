@@ -41,7 +41,9 @@
     "release:verify:next": "node scripts/verify-registry-release.mjs --tag next",
     "changeset": "changeset",
     "changeset:status": "changeset status --verbose",
-    "version-packages": "changeset version"
+    "version-packages": "changeset version",
+    "test:performance": "node scripts/render-performance.mjs --check",
+    "test:preview-e2e": "node scripts/preview-browser-e2e.mjs"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

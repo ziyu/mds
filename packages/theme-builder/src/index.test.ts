@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, symlink, writeFile } from "node:fs/promises";
 import { EventEmitter } from "node:events";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -3248,6 +3248,81 @@ export default defineJsxTheme({
     await expect(buildPackageTheme(root)).rejects.toThrow(
       "mdsTheme.assets.css must point to a file inside the theme package: ."
     );
+  });
+
+  it.each([
+    { sourceDirectory: "src", dist: "src" },
+    { sourceDirectory: "src/nested", dist: "src" },
+    { sourceDirectory: "blocks", dist: "." },
+    { sourceDirectory: ".", dist: "." }
+  ])("preserves inputs when building $sourceDirectory into $dist", async ({ sourceDirectory, dist }) => {
+    const root = await mkdtemp(join(tmpdir(), "mds-theme-protected-input-"));
+    const sourcePath = join(root, sourceDirectory, "theme.json");
+    const source = JSON.stringify({ name: "protected", blocks: "blocks" });
+    const block = "<section>{{ children }}</section>";
+    await mkdir(join(root, sourceDirectory, "blocks"), { recursive: true });
+    await writeFile(sourcePath, source, "utf8");
+    await writeFile(join(root, sourceDirectory, "blocks/hero.html"), block, "utf8");
+    await writeFile(join(root, sourceDirectory, "notes.txt"), "Author notes", "utf8");
+    const manifest = JSON.stringify({ mdsTheme: { source: `${sourceDirectory}/theme.json`, dist } });
+    await writeFile(join(root, "package.json"), manifest, "utf8");
+
+    await expect(buildPackageTheme(root)).rejects.toMatchObject({
+      name: "ThemeBuildError",
+      stage: "write-artifact",
+      field: "mdsTheme.dist",
+      message: expect.stringContaining("must not delete or overwrite build input")
+    });
+    await expect(readFile(sourcePath, "utf8")).resolves.toBe(source);
+    await expect(readFile(join(root, sourceDirectory, "blocks/hero.html"), "utf8")).resolves.toBe(block);
+    await expect(readFile(join(root, sourceDirectory, "notes.txt"), "utf8")).resolves.toBe("Author notes");
+    await expect(readFile(join(root, "package.json"), "utf8")).resolves.toBe(manifest);
+  });
+
+  it("protects package assets outside the main source directory", async () => {
+    const root = await mkdtemp(join(tmpdir(), "mds-theme-protected-assets-"));
+    await mkdir(join(root, "src"));
+    await mkdir(join(root, "assets"));
+    await writeFile(join(root, "src/theme.json"), JSON.stringify({ name: "protected" }));
+    await writeFile(join(root, "assets/style.css"), ".source { color: red; }");
+    await writeFile(join(root, "assets/notes.txt"), "Author notes");
+    await writeFile(join(root, "package.json"), JSON.stringify({
+      mdsTheme: { source: "src/theme.json", dist: "assets", assets: { css: "assets/style.css" } }
+    }));
+
+    await expect(buildPackageTheme(root)).rejects.toThrow("must not delete or overwrite build input: assets/style.css");
+    await expect(readFile(join(root, "assets/style.css"), "utf8")).resolves.toBe(".source { color: red; }");
+    await expect(readFile(join(root, "assets/notes.txt"), "utf8")).resolves.toBe("Author notes");
+  });
+
+  it("detects destructive output paths through symlinked parent directories", async () => {
+    const root = await mkdtemp(join(tmpdir(), "mds-theme-protected-symlink-"));
+    await mkdir(join(root, "src/theme"), { recursive: true });
+    const source = JSON.stringify({ name: "protected" });
+    await writeFile(join(root, "src/theme/theme.json"), source);
+    await writeFile(join(root, "src/theme/notes.txt"), "Author notes");
+    await symlink(join(root, "src"), join(root, "generated"), "dir");
+    await writeFile(join(root, "package.json"), JSON.stringify({
+      mdsTheme: { source: "src/theme/theme.json", dist: "generated/theme" }
+    }));
+
+    await expect(buildPackageTheme(root)).rejects.toThrow("must not delete or overwrite build input");
+    await expect(readFile(join(root, "src/theme/theme.json"), "utf8")).resolves.toBe(source);
+    await expect(readFile(join(root, "src/theme/notes.txt"), "utf8")).resolves.toBe("Author notes");
+  });
+
+  it("allows root output when generated files and blocks do not overlap inputs", async () => {
+    const root = await mkdtemp(join(tmpdir(), "mds-theme-safe-root-output-"));
+    await mkdir(join(root, "src/blocks"), { recursive: true });
+    const source = JSON.stringify({ name: "safe-root", blocks: "blocks" });
+    await writeFile(join(root, "src/theme.json"), source);
+    await writeFile(join(root, "src/blocks/hero.html"), "<section>{{ children }}</section>");
+    await writeFile(join(root, "package.json"), JSON.stringify({ mdsTheme: { source: "src/theme.json", dist: "." } }));
+
+    await buildPackageTheme(root);
+    await expect(readJson(join(root, "theme.json"))).resolves.toMatchObject({ name: "safe-root" });
+    await expect(readFile(join(root, "blocks/hero.html"), "utf8")).resolves.toContain("<section>");
+    await expect(readFile(join(root, "src/theme.json"), "utf8")).resolves.toBe(source);
   });
 
   it("cleans stale files when writing package artifacts to a generated dist directory", async () => {

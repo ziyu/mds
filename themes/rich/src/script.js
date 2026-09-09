@@ -198,6 +198,8 @@
     setupDataTables();
   };
 
+  document.addEventListener("mds:preview-update", setup);
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", setup, { once: true });
   } else {
@@ -246,6 +248,14 @@
         update();
       });
       observer.observe(content, { childList: true, subtree: true, characterData: true });
+      const unmount = (event) => {
+        const root = event.detail?.root;
+        if (root instanceof Node && (root === scroller || root.contains(scroller))) {
+          observer.disconnect();
+          document.removeEventListener("mds:preview-unmount", unmount);
+        }
+      };
+      document.addEventListener("mds:preview-unmount", unmount);
       requestAnimationFrame(() => {
         if (follow) {
           viewport.scrollTop = viewport.scrollHeight;
@@ -258,6 +268,8 @@
   const setup = () => {
     setupMessageScrollers();
   };
+
+  document.addEventListener("mds:preview-update", setup);
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", setup, { once: true });

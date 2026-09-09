@@ -3,7 +3,9 @@ import {
   createThemeResultFromSources,
   isThemeSummaryList,
   isThemeSourceInput,
-  ThemeValidationError
+  ThemeValidationError,
+  getThemeRuntimeSourceInput,
+  validateThemeSource
 } from "@mds-crate/theme-loader/browser";
 import type { ThemeCreationResult, ThemeRegistry, ThemeSource, ThemeSummary } from "@mds-crate/theme-loader/browser";
 import {
@@ -41,6 +43,14 @@ export const themeProvider: ThemeRegistry = {
     return loadThemeWithDiagnostics(ref);
   }
 };
+
+export async function loadPreviewThemeSource(ref: string) {
+  const source = getThemeRuntimeSourceInput(await readThemeSource(`/__mds/themes/${encodeURIComponent(ref)}`));
+  const diagnostics = validateThemeSource(source);
+  const errors = diagnostics.filter((diagnostic) => diagnostic.severity === "error");
+  if (errors.length) throw new ThemeValidationError(errors);
+  return { source, diagnostics };
+}
 
 export async function loadThemeWithDiagnostics(ref: string): Promise<ThemeCreationResult> {
   const source = await readThemeSource(`/__mds/themes/${encodeURIComponent(ref)}`);

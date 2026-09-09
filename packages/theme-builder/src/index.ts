@@ -1,5 +1,5 @@
 import { unwatchFile, watchFile } from "node:fs";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { build as buildWithEsbuild } from "esbuild";
@@ -375,10 +375,12 @@ export async function buildPackageTheme(packageDirectory: string): Promise<Packa
   );
   const filesWritten = await runBuildStep(
     "write-artifact",
-    () =>
-      writeThemeSource(outputDirectory, outputSource, {
+    async () => {
+      await assertSafeBuildOutput(root, outputDirectory, inputFiles, outputSource);
+      return writeThemeSource(outputDirectory, outputSource, {
         clean: outputDirectory === root ? "blocks" : "output"
-      }),
+      });
+    },
     {
       field: "mdsTheme.dist",
       filePath: outputDirectory
@@ -1307,6 +1309,44 @@ function fileUrlToPathIfLocal(url: string): string | undefined {
 function isPathInside(path: string, directory: string): boolean {
   const relativePath = relative(directory, path);
   return relativePath.length === 0 || (!relativePath.startsWith("..") && !isAbsolute(relativePath));
+}
+
+async function assertSafeBuildOutput(
+  root: string,
+  outputDirectory: string,
+  inputFiles: string[],
+  source: ThemeSourceInput
+): Promise<void> {
+  const canonicalRoot = await realpath(root);
+  const canonicalOutput = await resolveRealPath(outputDirectory);
+  if (!isPathInside(canonicalOutput, canonicalRoot)) {
+    throw new Error(`mdsTheme.dist must stay inside the theme package directory: ${outputDirectory}.`);
+  }
+
+  // Root builds only clear blocks, but individual output files can still overwrite inputs.
+  const cleanedDirectory = await resolveRealPath(outputDirectory === root ? join(root, "blocks") : outputDirectory);
+  const outputPaths = await Promise.all(
+    [THEME_MANIFEST_FILE, ...Object.keys(source.files)].map((path) =>
+      resolveRealPath(join(outputDirectory, normalizeArtifactRelativePath(path)))
+    )
+  );
+  for (const input of inputFiles) {
+    const canonicalInput = await realpath(input);
+    if (isPathInside(canonicalInput, cleanedDirectory) || outputPaths.some((path) => isPathInside(canonicalInput, path))) {
+      throw new Error(`mdsTheme.dist must not delete or overwrite build input: ${relativeOutputPath(root, input)}.`);
+    }
+  }
+}
+
+async function resolveRealPath(path: string): Promise<string> {
+  try {
+    return await realpath(path);
+  } catch (error) {
+    if (!isNodeError(error) || error.code !== "ENOENT" || dirname(path) === path) {
+      throw error;
+    }
+    return join(await resolveRealPath(dirname(path)), basename(path));
+  }
 }
 
 export async function writeThemeSource(

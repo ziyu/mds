@@ -60,6 +60,14 @@ jobs:
         if: matrix.node-version == '24.x'
         run: pnpm test
 
+      - name: Check rendering complexity and cache reuse
+        if: matrix.node-version == '24.x'
+        run: pnpm test:performance
+
+      - name: Check Editor preview behavior and performance
+        if: matrix.node-version == '24.x'
+        run: pnpm test:preview-e2e
+
       - name: Audit packed packages
         if: matrix.node-version == '24.x'
         run: pnpm check:packages

@@ -283,6 +283,9 @@ const implementation = String.raw`  const builtInActions = new Set(["open", "clo
         continue;
       }
       overlay.dataset.mdsOverlay = "true";
+      onUnmount(overlay, () => {
+        if (activeOverlay === overlay || !overlay.hidden) closeOverlay(overlay);
+      });
       if (overlay.parentElement !== document.body) {
         document.body.append(overlay);
       }
