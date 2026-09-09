@@ -1,5 +1,16 @@
 # @mds-crate/blocks
 
+## 0.1.0-beta.4
+
+### Patch Changes
+
+- d6c289b: Render each template slot once, scan inline positions and malformed delimiters in linear time, reuse the Markdown processor, and bound parser/render expansion. Add an optional bounded Markdown cache that preserves current diagnostic positions and resolved state dependencies.
+
+  Move Editor preview compilation into a Worker with a bounded latest-revision queue and timeout recovery. Apply large text inserts directly to CodeMirror. Lifecycle-aware themes update their preview body without reloading the sandboxed iframe; unchanged interactive components retain state, and removed components release observers and global listeners. Other themes retain full-document reload behavior.
+
+- Updated dependencies [d6c289b]
+  - @mds-crate/theme-loader@0.1.0-beta.4
+
 ## 0.1.0-beta.3
 
 ### Patch Changes

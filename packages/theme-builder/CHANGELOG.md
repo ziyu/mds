@@ -1,5 +1,17 @@
 # @mds-crate/theme-builder
 
+## 0.1.0-beta.4
+
+### Patch Changes
+
+- d6c289b: Preserve edits typed while an Editor save is pending, prevent duplicate save requests, and serialize file saves so concurrent requests cannot bypass revision conflict checks.
+
+  Reject theme build outputs that would delete or overwrite source files or build assets, including overlaps through symbolic links, before modifying existing files.
+
+- Updated dependencies [d6c289b]
+  - @mds-crate/theme-loader@0.1.0-beta.4
+  - @mds-crate/blocks@0.1.0-beta.4
+
 ## 0.1.0-beta.3
 
 ### Patch Changes
