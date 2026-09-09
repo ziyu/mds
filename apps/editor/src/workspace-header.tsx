@@ -40,6 +40,7 @@ export function WorkspaceHeader(props: WorkspaceHeaderProps) {
         <select
           aria-label="Document"
           value={props.activeDocumentValue}
+          disabled={props.busyLabel !== undefined}
           onChange={(event) => props.onDocumentChange(event.target.value)}
         >
           {props.files.length > 0 ? (

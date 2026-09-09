@@ -92,6 +92,7 @@ export function App() {
   const [editorSession, setEditorSession] = useState<EditorSessionPayload | null>(null);
   const [baselineSource, setBaselineSource] = useState(initialExample.source);
   const [fileOperation, setFileOperation] = useState<"idle" | "opening" | "saving" | "creating">("idle");
+  const saveInProgress = useRef(false);
   const [fileError, setFileError] = useState<string | undefined>();
   const [fileConflict, setFileConflict] = useState<EditorFileRecord | null | undefined>();
   const [newFilePath, setNewFilePath] = useState("");
@@ -376,6 +377,9 @@ export function App() {
   }, [activeFile?.path, applyOpenedFile]);
 
   const handleDocumentChange = useCallback(async (value: string) => {
+    if (fileOperation !== "idle" || saveInProgress.current) {
+      return;
+    }
     const nextDocument = parseEditorDocumentRef(value);
     if (nextDocument === undefined || value === activeDocumentValue) {
       return;
@@ -395,12 +399,13 @@ export function App() {
     if (localDocument !== undefined) {
       applyLocalDocument(localDocument);
     }
-  }, [activeDocumentValue, applyExample, applyLocalDocument, handleFileChange, hasPendingChanges, localDocuments]);
+  }, [activeDocumentValue, applyExample, applyLocalDocument, fileOperation, handleFileChange, hasPendingChanges, localDocuments]);
 
   const handleSaveFile = useCallback(async (overwrite = false) => {
-    if (activeFile === null) {
+    if (activeFile === null || fileOperation !== "idle" || saveInProgress.current) {
       return;
     }
+    saveInProgress.current = true;
     setFileOperation("saving");
     setFileError(undefined);
     try {
@@ -409,7 +414,15 @@ export function App() {
         revision: activeFile.revision,
         content: source
       }, { overwrite });
-      applyOpenedFile(result.file, result.files);
+      // Saving acknowledges the submitted snapshot; edits made while waiting stay in the editor.
+      setActiveDocument({ kind: "file", file: result.file });
+      setBaselineSource(result.file.content);
+      setFileConflict(undefined);
+      setEditorSession((session) => session === null ? null : {
+        ...session,
+        activeFile: result.file,
+        files: result.files
+      });
       setPreviewNotice(`Saved ${result.file.path}`);
     } catch (error) {
       if (error instanceof EditorSessionError && error.code === "file-conflict") {
@@ -419,9 +432,10 @@ export function App() {
         setFileError(error instanceof Error ? error.message : String(error));
       }
     } finally {
+      saveInProgress.current = false;
       setFileOperation("idle");
     }
-  }, [activeFile, applyOpenedFile, source]);
+  }, [activeFile, fileOperation, source]);
 
   const handleReloadConflict = useCallback(() => {
     if (fileConflict === null || fileConflict === undefined) {
@@ -493,10 +507,11 @@ export function App() {
   }, [applyLocalDocument, hasPendingChanges]);
 
   const handleSaveLocalDocument = useCallback(async () => {
-    if (activeLocalDocument === null) {
+    if (activeLocalDocument === null || fileOperation !== "idle" || saveInProgress.current) {
       return;
     }
 
+    saveInProgress.current = true;
     setFileOperation("saving");
     setFileError(undefined);
     try {
@@ -517,9 +532,10 @@ export function App() {
     } catch (error) {
       setFileError(error instanceof Error ? error.message : String(error));
     } finally {
+      saveInProgress.current = false;
       setFileOperation("idle");
     }
-  }, [activeLocalDocument, source]);
+  }, [activeLocalDocument, fileOperation, source]);
 
   const handleSaveDocument = useCallback(async () => {
     if (activeDocument.kind === "file") {
@@ -685,8 +701,8 @@ export function App() {
             <strong>Save conflict</strong>
             <span>{fileError ?? "The file changed on disk after it was opened."}</span>
             <div>
-              {fileConflict === null ? null : <button type="button" onClick={handleReloadConflict}>Reload disk version</button>}
-              <button type="button" className="danger-action" onClick={() => void handleSaveFile(true)}>Overwrite disk</button>
+              {fileConflict === null ? null : <button type="button" onClick={handleReloadConflict} disabled={fileOperation !== "idle"}>Reload disk version</button>}
+              <button type="button" className="danger-action" onClick={() => void handleSaveFile(true)} disabled={fileOperation !== "idle"}>Overwrite disk</button>
             </div>
           </div>
         ) : fileError === undefined ? null : <div className="theme-error" role="alert">{fileError}</div>}

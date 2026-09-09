@@ -52,7 +52,49 @@ try {
   await waitForExpression(client, sessionId, `document.body.innerText.includes('UNSAVED')`);
   await clickButton(client, sessionId, "Save");
   await waitForFileContent(input, savedSource, 10_000);
-  await waitForExpression(client, sessionId, `document.body.innerText.includes('SAVED')`);
+  await waitForExpression(client, sessionId, `document.querySelector('.file-state')?.textContent === 'Saved'`);
+
+  await evaluate(client, sessionId, `(() => {
+    const originalFetch = window.fetch.bind(window);
+    window.__mdsSaveRequestCount = 0;
+    window.__mdsRestoreFetch = () => { window.fetch = originalFetch; };
+    window.fetch = async (...args) => {
+      if (args[0] === '/__mds/file' && args[1]?.method === 'PUT') {
+        window.__mdsSaveRequestCount += 1;
+        const response = await originalFetch(...args);
+        await new Promise((resolve) => { window.__mdsReleaseSave = resolve; });
+        return response;
+      }
+      return originalFetch(...args);
+    };
+  })()`);
+  const pendingSource = themedSource("Snapshot submitted before more typing.");
+  const latestSource = themedSource("New input typed while the save response is pending.");
+  await replaceEditorText(client, sessionId, pendingSource);
+  await clickButton(client, sessionId, "Save");
+  await waitForExpression(client, sessionId, `typeof window.__mdsReleaseSave === 'function'`);
+  await replaceEditorText(client, sessionId, latestSource);
+  await evaluate(client, sessionId, `(() => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: true }));
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: true }));
+  })()`);
+  if (await evaluate(client, sessionId, `window.__mdsSaveRequestCount`) !== 1) {
+    throw new Error("Repeated save shortcuts submitted concurrent writes.");
+  }
+  if (await evaluate(client, sessionId, `document.querySelector('select[aria-label="Document"]')?.disabled`) !== true) {
+    throw new Error("Document switching remained enabled during a save.");
+  }
+  await evaluate(client, sessionId, `window.__mdsRestoreFetch(); window.__mdsReleaseSave();`);
+  await waitForExpression(client, sessionId, `document.querySelector('.file-state')?.textContent === 'Unsaved'`);
+  if (await evaluate(client, sessionId, `document.querySelector('.cm-content')?.innerText.includes('New input typed while the save response is pending.')`) !== true) {
+    throw new Error("Saving discarded text entered while the response was pending.");
+  }
+  if (await readFile(input, "utf8") !== pendingSource) {
+    throw new Error("The first save did not persist its submitted snapshot.");
+  }
+  await clickButton(client, sessionId, "Save");
+  await waitForFileContent(input, latestSource, 10_000);
+  await waitForExpression(client, sessionId, `document.querySelector('.file-state')?.textContent === 'Saved'`);
 
   const externalSource = themedSource("Changed outside the packed Editor.");
   await writeFile(input, externalSource, "utf8");
@@ -80,7 +122,7 @@ try {
   editorChild = undefined;
   await expectServerClosed(editor.url, 5_000);
 
-  console.log("Packed Editor browser E2E passed: open, installed theme, save, conflict, reload, diagnostics, shutdown.");
+  console.log("Packed Editor browser E2E passed: open, installed theme, save, edits during save, repeated save shortcuts, conflict, reload, diagnostics, shutdown.");
 } finally {
   client?.close();
   if (chromeChild !== undefined) {

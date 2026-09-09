@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { startEditorServer, type EditorServer } from "./editor-server.js";
+import { startEditorServer, type EditorFileRecord, type EditorServer } from "./editor-server.js";
 
 const servers: EditorServer[] = [];
 const temporaryDirectories: string[] = [];
@@ -73,6 +73,75 @@ describe("MDS Editor production server", () => {
     });
     expect(created.status).toBe(201);
     await expect(readFile(join(project.root, "notes.mds"), "utf8")).resolves.toBe("# Untitled\n");
+  });
+
+  it("accepts only one concurrent save per revision and releases the queue after conflicts", async () => {
+    const project = await createProject();
+    const input = join(project.root, "index.mds");
+    await writeFile(input, "# Original\n", "utf8");
+    const server = await startTestServer(project.root, input);
+    const client = await createClient(server);
+    const original = await client.json("/__mds/file?path=index.mds") as EditorFileRecord;
+
+    const results = await Promise.all(Array.from({ length: 6 }, async (_, index) => {
+      const response = await client.response("/__mds/file", {
+        method: "PUT",
+        body: { path: original.path, revision: original.revision, content: `# Writer ${index}\n` }
+      });
+      return { status: response.status, body: await response.json() as { file: EditorFileRecord; code?: string } };
+    }));
+
+    expect(results.map((result) => result.status).sort()).toEqual([200, 409, 409, 409, 409, 409]);
+    const saved = results.find((result) => result.status === 200)!.body.file;
+    await expect(readFile(input, "utf8")).resolves.toBe(saved.content);
+    for (const conflict of results.filter((result) => result.status === 409)) {
+      expect(conflict.body).toMatchObject({ code: "file-conflict", file: saved });
+    }
+
+    const next = await client.response("/__mds/file", {
+      method: "PUT",
+      body: { path: saved.path, revision: saved.revision, content: "# Next revision\n" }
+    });
+    expect(next.status).toBe(200);
+    await expect(readFile(input, "utf8")).resolves.toBe("# Next revision\n");
+  });
+
+  it("does not overwrite a file created concurrently", async () => {
+    const project = await createProject();
+    const server = await startTestServer(project.root, project.root);
+    const client = await createClient(server);
+    const responses = await Promise.all(Array.from({ length: 6 }, (_, index) => client.response("/__mds/files", {
+      method: "POST",
+      body: { path: "new.mds", content: `# Creator ${index}\n` }
+    })));
+
+    expect(responses.map((response) => response.status).sort()).toEqual([201, 409, 409, 409, 409, 409]);
+    const created = await responses.find((response) => response.status === 201)!.json() as { file: EditorFileRecord };
+    await expect(readFile(join(project.root, "new.mds"), "utf8")).resolves.toBe(created.file.content);
+  });
+
+  it("serializes case aliases when the filesystem treats them as the same filename", async (context) => {
+    const project = await createProject();
+    const input = join(project.root, "index.mds");
+    await writeFile(input, "# Original\n");
+    if (await realpath(join(project.root, "INDEX.mds")).catch(() => null) !== input) {
+      context.skip();
+      return;
+    }
+    const server = await startTestServer(project.root, input);
+    const client = await createClient(server);
+    const original = await client.json("/__mds/file?path=index.mds") as EditorFileRecord;
+    const saved = await Promise.all(["index.mds", "INDEX.mds"].map((path) => client.response("/__mds/file", {
+      method: "PUT",
+      body: { path, revision: original.revision, content: `# Saved ${path}` }
+    })));
+    expect(saved.map((response) => response.status).sort()).toEqual([200, 409]);
+
+    const created = await Promise.all(["new.mds", "NEW.mds"].map((path) => client.response("/__mds/files", {
+      method: "POST",
+      body: { path, content: `# Created ${path}` }
+    })));
+    expect(created.map((response) => response.status).sort()).toEqual([201, 409]);
   });
 
   it("requires the session token and rejects traversal and symlink escapes", async () => {
