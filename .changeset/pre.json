@@ -25,9 +25,11 @@
   "changesets": [
     "default-theme-redesign",
     "expressive-rich-editorial",
+    "fast-bounded-preview",
     "foundation-controls",
     "local-editor",
     "official-appearance-themes",
+    "protect-authoring-content",
     "publish-default-theme",
     "release-foundation",
     "renderer-source-api",
